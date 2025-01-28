@@ -1,8 +1,8 @@
 # CSCI3100 Project
 CSCI3100 Project Structure
-    - `[README.md](/README.md)`: a log for project general description
-    - `[project.pdf](/project.pdf)`: project requirements specification
-    - `[/Documentation](/Documentation/)`: folder storing all documentations
+- [README.md](/README.md): a log for project general description
+- [project.pdf](/project.pdf): project requirements specification
+- [/Documentation](/Documentation/): folder storing all documentations
 
 ## Current Phase Requirement
 > [!IMPORTANT]
@@ -12,14 +12,14 @@ This phase requires a document for Project Requirements Specification. See `/Doc
 
 ## Schedule
 | Task | Date | Phase Deliverables | Weightings |
-| --- | --- | --- | --- |
-| - [ ] | 7 Feb | Requirements Specification (1st Version) | 10% |
-| - [ ] | 7 Mar | Design and Implementation (1st Version) | 15% |
-| - [ ] | 18 Apr | Requirements Specification (Final Version) | 5% |
-| - [ ] | 18 Apr | Design and Implementation (Final Version) | 10% |
-| - [ ] | 2 May | Project Demo | 45% |
-| - [ ] | 9 May | Testing Document | 10% |
-| - [ ] | 9 May | Release Notes and User Manual | 5% |
+| --- | --- | --- | :---: |
+| [ ] | 7 Feb | Requirements Specification (1st Version) | 10% |
+| [ ] | 7 Mar | Design and Implementation (1st Version) | 15% |
+| [ ] | 18 Apr | Requirements Specification (Final Version) | 5% |
+| [ ] | 18 Apr | Design and Implementation (Final Version) | 10% |
+| [ ] | 2 May | Project Demo | 45% |
+| [ ] | 9 May | Testing Document | 10% |
+| [ ] | 9 May | Release Notes and User Manual | 5% |
 
 
 ## Grading
@@ -39,7 +39,10 @@ This project accounts for **30%** of the course grade, including:
 ## Log History
 | Date | Comments | Revised By |
 | --- | --- | --- |
+| 28 Jan | README.md format updated | Edwin |
 | 28 Jan | README.md created | Edwin |
 
 ## Useful Links
 [README Formatting Syntax](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax)
+
+[Git Commands](https://www.geeksforgeeks.org/useful-github-commands/)

@@ -35,3 +35,14 @@ The requirements specification document must include all necessary information i
     - Summarization of functional requirements
     - Actors
     - Use Cases with diagrams
+
+## Log History
+| Date | Comments | Revised By |
+| --- | --- | --- |
+| 28 Jan | README.md format updated | Edwin |
+| 28 Jan | README.md created | Edwin |
+
+## Useful Links
+[README Formatting Syntax](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax)
+
+[Git Commands](https://www.geeksforgeeks.org/useful-github-commands/)
