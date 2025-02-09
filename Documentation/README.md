@@ -1,7 +1,7 @@
 # Documentation
 
 > [!IMPORTANT]
-> 7 Feb | Documentation: Requirements Specification (1st Version)
+> 7 Mar | Design and Implementation (1st Version)
 
 General Format:
 - Font, Font Size, and Styles
@@ -15,6 +15,16 @@ General Format:
     - Group ID
     - Names and SIDs of group members
     - Department
+
+## Design and Implementation
+
+Submit a developer-oriented document that specifies all the design details and implementation considerations. Including:
+- UML Diagrams (Recommended)
+- Module-level design with responsibilities and interactions
+- Database design
+- Coding standards
+
+This document serves as a developer guide. The main body of the design document should not exceed 20 pages. The filename should be “Group**_Design_Implementation”, where ** is the group ID. Marks will be deducted if the format requirements are not met.
 
 ## Requirements Specification
 
@@ -38,7 +48,8 @@ The requirements specification document must include all necessary information i
 
 ## Log History
 | Date | Comments | Revised By |
-| --- | --- | --- |
+| :---: | --- | --- |
+| 09 Feb | Design and Implementation added | Edwin |
 | 28 Jan | README.md format updated | Edwin |
 | 28 Jan | README.md created | Edwin |
 

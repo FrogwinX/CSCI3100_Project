@@ -1,19 +1,39 @@
-# CSCI3100 Project
-CSCI3100 Project Structure
-- [README.md](/README.md): a log for project general description
-- [project.pdf](/project.pdf): project requirements specification
-- [/Documentation](/Documentation/): folder storing all documentations
+# FlowChat
+
+FlowChat, is a web-based discussion forum designed to provide an engaging and user-friendly
+platform for individuals to connect, communicate, and share ideas.
+
+FlowChat provides essential features such as account management, a vibrant discussion forum,
+and robust messaging capabilities. Users will have the ability to create and manage their pro-
+files, post content, comment on discussions, follow other users, and send direct messages. With
+a focus on discussion engagements, FlowChat fosters a vibrant online community.
 
 ## Current Phase Requirement
 > [!IMPORTANT]
-> 7 Feb | Documentation: Requirements Specification (1st Version)
+> 16 Feb | #0 Project Initialization
 
-This phase requires a document for Project Requirements Specification. See `/Documentation`.
+Project Initialization Phase aims to setup frontend, backend project structures and database server on Azure. It also prepares the UI Design Interface, API Specifications and database schema table designs for the next phase #1 Account Management.
 
-## Schedule
+## Development Schedule
+| Task | Date | Development |
+| :---: | :---: | --- |
+| [ ] | 10 Feb ~ 16 Feb | #0 Project Initialization |
+| [ ] | 17 Feb ~ 23 Feb | #1 Account Management |
+| [ ] | 24 Feb ~ 02 Mar | #1 Account Management |
+| [ ] | 03 Mar ~ 09 Mar | #4 Discussion Forum |
+| [ ] | 10 Mar ~ 16 Mar | #4 Discussion Forum |
+| [ ] | 17 Mar ~ 23 Mar | #4 Discussion Forum |
+| [ ] | 24 Mar ~ 30 Mar | #3 Personal Profile |
+| [ ] | 31 Mar ~ 06 Apr | #2 Administrative Management |
+| [ ] | 07 Apr ~ 13 Apr | #5 Direct Message |
+| [ ] | 14 Apr ~ 20 Apr | #5 Direct Message |
+| [ ] | 21 Apr ~ 01 May | #6 Office Mode |
+
+
+## Task Schedule
 | Task | Date | Phase Deliverables | Weightings |
-| --- | --- | --- | :---: |
-| [ ] | 7 Feb | Requirements Specification (1st Version) | 10% |
+| :---: | :---: | --- | :---: |
+| [v] | 10 Feb | Requirements Specification (1st Version) | 10% |
 | [ ] | 7 Mar | Design and Implementation (1st Version) | 15% |
 | [ ] | 18 Apr | Requirements Specification (Final Version) | 5% |
 | [ ] | 18 Apr | Design and Implementation (Final Version) | 10% |
@@ -38,7 +58,8 @@ This project accounts for **30%** of the course grade, including:
 
 ## Log History
 | Date | Comments | Revised By |
-| --- | --- | --- |
+| :---: | --- | --- |
+| 09 Feb | Development Schedule added | Edwin |
 | 28 Jan | README.md format updated | Edwin |
 | 28 Jan | README.md created | Edwin |
 
