@@ -1,0 +1,438 @@
+\documentclass[11pt, a4paper]{article}
+\usepackage{sectsty}
+\usepackage[T1]{fontenc}
+\usepackage{mathptmx}
+\usepackage{listings}
+\usepackage{underscore}
+\usepackage{graphicx}
+\setlength{\parindent}{0pt}
+\usepackage{longtable}
+\usepackage[bookmarks=true]{hyperref}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{array}
+\usepackage[hmargin=2.5cm,vmargin=2.5cm]{geometry} % set margin
+\usepackage{svg}
+\usepackage{float}
+
+\sectionfont{\fontsize{11pt}{11pt}\selectfont}
+\subsectionfont{\fontsize{11pt}{11pt}\selectfont}
+\subsubsectionfont{\normalfont\itshape\fontsize{11pt}{11pt}\selectfont}
+
+\hypersetup{
+    bookmarks=false,    % show bookmarks bar?
+    pdftitle={Software Requirement Specification},    % title
+    pdfauthor={LAM Tsz Kit, NG Chun Faat, CHU Ming Kong, CHOI Ho Yan, CHAN Yuet Xing},       % author
+    pdfkeywords={Software Requirement Specification, FlowChat, }, % list of keywords
+    colorlinks=true,       % false: boxed links; true: colored links
+    linkcolor=blue,       % color of internal links
+    citecolor=black,       % color of links to bibliography
+    filecolor=black,        % color of file links
+    urlcolor=purple,        % color of external links
+    linktoc=page            % only page is linked
+}%
+\def\myversion{1.0}
+\def\submitdate{February 10, 2025}
+%\title{%
+
+%}
+\usepackage{hyperref}
+\begin{document}
+
+\begin{flushright}
+    \rule{16cm}{2pt}\vskip1cm
+
+        SOFTWARE REQUIREMENTS\\ SPECIFICATION\\
+        \vspace{1cm}
+        for\\
+        \vspace{1cm}
+        FlowChat\\
+        \vspace{1cm}
+        {Version \myversion}\\
+        \vspace{1cm}
+        Prepared by :  Group A7\\
+        \vspace{0.5cm}
+        LAM Tsz Kit (1155194085)\\
+        NG Chun Faat (1155194596)\\
+        CHU Ming Kong (1155194293)\\
+        CHOI Ho Yan (1155194468)\\
+        CHAN Yuet Xing (1155194086)\\
+        \vspace{1cm}
+        Submitted to : Dr. LAM Tak Kei\\
+        \vspace{1cm}
+        Course CSCI3100\\
+        Department of Computer Science and Engineering\\
+        \vspace{1.cm}
+        \submitdate
+
+\end{flushright}
+
+\newpage
+\tableofcontents
+
+\section{Document Revision History}
+\begin{center}
+\begin{tabular}{|>{\centering\arraybackslash}m{0.1\linewidth}|>{\raggedright\arraybackslash}m{0.25\linewidth}|>{\centering\arraybackslash}m{0.15\linewidth}|m{0.3\linewidth}|} \hline
+     Version&  Revised By&  Revision Date& Comments\\ \hline 
+    0.1 &   LAM Tsz Kit, \newline
+            NG Chun Faat, \newline
+            CHU Ming Kong, \newline
+            CHOI Ho Yan, \newline
+            CHAN Yuet Xing & 3 Feb 2025 & Initial Draft \\ \hline  
+        
+    0.2 &   LAM Tsz Kit, \newline
+            NG Chun Faat, \newline
+            CHAN Yuet Xing & 5 Feb 2025 & 
+            Assumptions and Dependencies and List of Requirements Completed \\ \hline 
+
+    1.0 &   LAM Tsz Kit, \newline
+            NG Chun Faat, \newline
+            CHU Ming Kong, \newline
+            CHOI Ho Yan, \newline
+            CHAN Yuet Xing & 9 Feb 2025 & All Completed and Finalized \\ \hline 
+\end{tabular}
+\end{center}
+
+\section{Introduction}
+\subsection{Overview}
+FlowChat, is a web-based discussion forum designed to provide an engaging and user-friendly platform for individuals to connect, communicate, and share ideas. \\
+
+FlowChat provides essential features such as account management, a vibrant discussion forum, and robust messaging capabilities. Users will have the ability to create and manage their profiles, post content, comment on discussions, follow other users, and send direct messages. With a focus on discussion engagements, FlowChat fosters a vibrant online community. \\
+
+This document serves as a comprehensive guide for developers and consumers to understand the key requirements and specifications of FlowChat. It specifies the operational assumptions, system architecture, lists of requirements and use cases.
+
+\bigskip
+\subsection{Definitions, acronyms, and abbreviations}
+\begin{center}
+\begin{tabular}{|>{\centering\arraybackslash}p{0.4\linewidth}|>{\centering\arraybackslash}p{0.4\linewidth}|} \hline
+     Term, Acronym, or Abbreviation&  Definition\\ \hline 
+     2FA&  Two-Factor Authentication\\ \hline 
+     OS&  Operating System\\ \hline 
+\end{tabular}
+\end{center}
+
+\bigskip
+\subsection{References}
+\begin{center}
+\begin{tabular}{|>{\centering\arraybackslash}m{0.1\linewidth}|>{\centering\arraybackslash}m{0.3\linewidth}|>{\centering\arraybackslash}m{0.15\linewidth}|>{\centering\arraybackslash}m{0.15\linewidth}|>{\centering\arraybackslash}m{0.1\linewidth}|} \hline
+     Ref No.& Reference& Date& Published By& Source\\ \hline 
+     1&  JavaScript Environment Requirements&  Aug 16, 2021& Meta Platforms, Inc& \href{https://legacy.reactjs.org/docs/javascript-environment-requirements.html}{React.js Docs}\\\hline 
+\end{tabular}
+\end{center}
+
+\bigskip\bigskip
+
+\section{Assumptions and Dependencies}
+\noindent The following assumptions and dependencies are made to facilitate standard usage of the app.\\[1cm]
+\begin{center}
+\vspace{-0.5cm}
+\begin{tabular}{|>{\centering\arraybackslash}p{0.05\linewidth}|>{\centering\arraybackslash}p{0.15\linewidth}|p{0.7\linewidth}|} \hline
+ No. & Title& Description\\ \hline 
+ 1&  Operating System&Any OS including Windows, Linux, Android, and others that are released within the last 5 years with a web browser installed.\\ \hline 
+ 2&   Web Browser&Support all modern web browsers, including Firefox and Chrome\\ \hline 
+ 3&   Supported Language&The interface will be in English, while users can post contents on the platform in any languages.\\ \hline 
+ 4&   User Connectivity&All users are expected to have Internet connection and web browsing ability.\\ \hline 
+ 5&   Screen Resolution&The optimal minimum windows size is 1920x1080.\\ \hline
+ 6& Hardware &A device of at least dual-core 2 GHz CPU and 2 GB of RAM.\\\hline 
+\end{tabular}
+\end{center}
+
+\bigskip\bigskip
+
+\section{High-Level System Architecture}
+\begin{center}
+\includegraphics[width=0.9\linewidth]{Three-Tier System Architecture.png}
+\end{center}
+
+\section{Functional Requirements}
+
+\subsection{List of Requirements}
+The following outline the essential capabilities and features for the application.
+
+\subsubsection{Account Management}
+\begin{tabular}{|>{\centering\arraybackslash}m{0.1\linewidth}|>{\centering\arraybackslash}m{0.2\linewidth}|m{0.6\linewidth}|} \hline
+     No.&  Title&Description\\ \hline 
+     R1.1&   Account Sign-up &New users can create account using email and password. They will be redirected to set user profile information.\\ \hline 
+     R1.2&   Log-in Function&In order to perform any operation to discussion forum, users and administrators must use their registered name or email, together with password, to log in.\\ \hline 
+     R1.3&   Log-out Function&Users and administrators cannot perform any operation to the discussion forum after logging out.\\ \hline 
+     R1.4&   Password Reset &When users forget their password during log-in session, they can reset password through email. When the users want to change their password, they can reset a new password using their old password.\\ \hline 
+     R1.5&   Account Deletion&User cannot log in to the forum after deleting their account.\\\hline
+ R1.6& Licence Management&Each user should have a single licence key to access all application interfaces. Administrator should have one additional license key to access administrative interface.\\\hline
+\end{tabular}
+
+\smallskip
+
+\subsubsection{Administrative Management}
+\begin{tabular}{|>{\centering\arraybackslash}m{0.1\linewidth}|>{\centering\arraybackslash}m{0.2\linewidth}|m{0.6\linewidth}|} \hline
+     No.&  Title&Description\\ \hline 
+     R2.1&   Administrative Interface&This interface allows administrators to select, view and modify information of user accounts, user profiles, post, comment, and direct messages.\\\hline
+\end{tabular}
+
+\smallskip
+
+\subsubsection{Personal Profile}
+\begin{tabular}{|>{\centering\arraybackslash}m{0.1\linewidth}|>{\centering\arraybackslash}m{0.2\linewidth}|m{0.6\linewidth}|} \hline
+     No.&  Title&Description\\ \hline 
+     R3.1&   User Information Management&Users can edit their display name, avatar icon and text description.\\ \hline 
+     R3.2&   Previous Post Review&Users can review basic information (such as post title, one-line description, number of likes, etc.) about their created posts. They can be redirected to the corresponding post content when they click the post.\\ \hline 
+     R3.3&   Following System&Users can follow another users in an unidirectional way. They can see lists of their follower names and following people names respectively.\\ \hline
+     R3.4& Privacy Setting&Users can set whether they can be followed by others; whether they are anonymous when creating posts and comments.\\\hline
+\end{tabular}
+
+\smallskip
+
+\subsubsection{Discussion Forum}
+\begin{tabular}{|>{\centering\arraybackslash}m{0.1\linewidth}|>{\centering\arraybackslash}m{0.2\linewidth}|m{0.6\linewidth}|} \hline
+     No.&  Title&Description\\ \hline 
+     R4.1&   Post View&The homepage contains lists of post previews. The post previews include post titles, one-line description, number of likes and dislikes. The post viewlists should include latest list, recommended list, and following list. Users can see the full content of the post after clicking the preview.\\ \hline 
+     R4.2&   Post Creation&Users can create a new post. A new post must contain a post title, post description with limited words.  A new post may contain image(s) with limited size.\\ \hline 
+     R4.3&   Post Update &Users can edit the posts they created. Any changes should follow the rules of post creation.\\ \hline 
+     R4.4&   Post Deletion&Users can remove the posts they created. They cannot un-do this operation.\\ \hline 
+     R4.5&   Post Blocking&Users can select posts to be invisible to them.\\ \hline 
+     R4.6&   Comment&Comments are another forms of posts, which can also perform creation, update, deletion and blocking. Comments are attached and displayed under one particular post. \\\hline
+     R4.7& Like-Dislike Function&Two toggle buttons, and the number of likes and dislikes are attached to each post and comment. The two buttons are either both unchecked or only one button is checked.\\\hline
+ R4.8& Share Function&Users can share a post with a link to others. People who click the link will be directed to the forum log-in page. After logging in, they will be directed to the corresponding post. \\\hline
+ R4.9& Recommendation System&Individual user post browsing behaviours should be recorded and analyzed for the their own recommendation system, which is embedded into recommended post list. The recommended list should display posts that interest users.\\\hline
+ R4.10& Search Function&Users can use keywords to search posts and user names.\\\hline
+\end{tabular}
+
+\smallskip
+
+\subsubsection{Direct Message}
+\begin{tabular}{|>{\centering\arraybackslash}m{0.1\linewidth}|>{\centering\arraybackslash}m{0.2\linewidth}|>{\raggedright\arraybackslash}m{0.6\linewidth}|} \hline
+     No.&  Title&Description\\ \hline 
+     R5.1&   Chat Selection&Users can select other users in the following list to have an one-to-one conversation space. All the chat information will be automatically saved and retrieved.\\ \hline 
+     R5.2&   Text Message&Users can send one text message with a limit of 300 words at each time to the following users.\\ \hline 
+     R5.3&   Image Share&Users can send one image with a limited size at each time to the following users.\\ \hline 
+     R5.4&   Post Share&Users can share the post links using the share function to the following users.\\\hline
+ R5.5& Voice Message&Users can send one audio with a limit of two minutes at each time to the following users.\\\hline
+\end{tabular}
+
+\bigskip
+
+\subsection{Actors}
+This section identifies the roles and interactions of key actors involved in the application.
+\subsubsection{User}
+Users must sign up before using the application and are responsible for creating, sharing, managing and ensuring that their content complies with the platform's Terms of Service.
+\subsubsection{Administrator}
+The administrator is also an user but has full access to the application, including the administrative interface, the user database, and all user-generated content. They are responsible for providing user assistance, overseeing content moderation, and maintaining the platform.
+
+
+
+\subsection{Use Cases and Diagrams}
+The following use cases outline various interactions within the application, detailing the event flow and potential exceptions, accompanied by diagrams for visual clarity.
+
+\subsubsection{Login}
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.6\textwidth]{login.svg}
+\end{figure}
+
+\textbf{Initiator: }Any Actor\\
+\textbf{Description: }The use case allows the actor to log into the platform and access the web application with the corresponding privileges.\\
+\textbf{Basic Flow of Events: }The actor is prompted to enter their email and password the first time they access the web app. The app looks up the email against existing user [E1] and verify the password [E2], then grants user access to the app if the credentials are correct.\\
+\textbf{Exceptional Flow of Events:}\\
+\textbf{E1: User does not exist for the input email. }An error message, "No user found associated with the given email" will be displayed.\\
+\textbf{E2: Incorrect Password Inputted.} An error message, "Incorrect Password" will be displayed.
+
+
+\subsubsection{Password Reset}
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.7\textwidth]{"password reset.svg"}
+\end{figure}
+
+\textbf{Initiator: }User\\
+\textbf{Description: }The use case allows users to reset their password using their old password or by email if they forget their password.\\
+\textbf{ Preconditions }\\
+Users have access to the email addresses they provided during sign-up.\\
+\textbf{ Basic Flow of Events: }Users can click "Forgot Password" if they have forgotten their password, or they can enter the original password.\\
+If users click "Forgot password", the \textit{A1: Reset Password Through Email} alternative flow is performed.\\
+If users type the old password, the \textit{A2: Reset Password Through Old Password} alternative flow is performed.\\
+\textbf{ Alternative Flow of Events: }\\
+\textbf{A1: Reset Password Through Email}\\
+The system sends a password reset link to users' email accounts. Users click on the link to reset their passwords.\\
+\textbf{A2: Reset Password Through Old Password}\\
+The system verifies that the password is the old one [E1], then allows users to enter a new password and set it as their login password.\\
+\textbf{ Exceptional Flow of Events:}\\
+\textbf{E1: Incorrect Password Inputted.} An error message "Incorrect Password" will be displayed.
+
+
+\subsubsection{Account Deletion}
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.5\textwidth]{"account deletion.svg"}
+\end{figure}
+
+\textbf{Initiator: }User\\
+\textbf{Description: }The use case allows users to delete their accounts. All posts and comments created by users will have the creator displayed as "[Deleted User]" instead of their display name, and the sign-up email can be used again.\\
+\textbf{Basic Flow of Events: }The system asks for confirmation, and users must agree [E1]. Then, the system deletes the sign-up email and renames the users' display names in posts and comments to "[Deleted User]" in the database.\\
+\textbf{ Exceptional Flow of Events:}\\
+\textbf{E1: Deletion is cancelled.} A message, "Deletion is cancelled" will be displayed.\
+
+\subsubsection{Administrative Management}
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=1\textwidth]{"administrative management.svg"}
+\end{figure}
+
+\textbf{Initiator: }Administrator\\
+\textbf{Description: }The use case allows administrators to select, view and modify information of user accounts, user profiles, posts, comments and direct messages.\\
+\textbf{Basic Flow of Events: }Administrators can select different operations to do in the administrative interface.\\
+If administrators search users, the \textit{A1: View Users} alternative flow is performed.\\
+If administrators search posts, the \textit{A2: View Posts} alternative flow is performed.\\
+If administrators search comments, the \textit{A3: View Comments} alternative flow is performed.\\
+\textbf{ Alternative Flow of Events: }\\
+\textbf{A1: View Users}\\
+The system searches for the user's display name [E1], then navigates to that user's profile page. Administrators can view and modify information related to user accounts, profiles, and direct messages to other users.\\
+\textbf{A2: View Posts}\\
+The system searches for relevant posts [E1], then shows a list of relevant posts. Administrators can click on one of the post previews to view and modify any information of that post.\\
+\textbf{A3: View Comments}\\
+The system searches for relevant comments [E1], then shows a list of relevant comments. Administrators can click on one of the comment previews to view and modify any information of that comment.\\
+\textbf{E1: Input keyword does not exist.} An error message "No such keyword" will be displayed.\\
+
+
+\subsubsection{User Information Management}
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.5\textwidth]{"user information management.svg"}
+\end{figure}
+
+\textbf{Initiator: }User\\
+\textbf{Description: }The use case allows users to edit their user information.\\
+\textbf{Basic Flow of Events: }Users can edit their display name, avatar icon and text description.\\
+If users choose to edit their display name, the \textit{A1: Edit Display Name} alternative flow is performed.\\
+If users choose to edit their avatar icon, the \textit{A2: Edit Avatar icon} alternative flow is performed.\\
+If users choose to edit their text description, the \textit{A3: Edit Text Description} alternative flow is performed.\\
+\textbf{Alternative Flow of Events: }\\
+\textbf{A1: Edit Display Name}\\
+The system prompts users to enter their new display name [E1], which will be used as the new display name.\\
+\textbf{A2: Edit Avatar icon}\\
+The system prompts users to upload their new avatar icon [E1], which will be used as the new avatar icon.\\
+\textbf{A3: Edit Text Description}\\
+The system prompts users to enter their new text description [E1], which will be used as the new text description.\\
+\textbf{ Exceptional Flow of Events:}\\
+\textbf{E1: Edit is cancelled.} A message "Edit is cancelled" will be displayed and the original information will be kept.\\
+
+\subsubsection{Previous Post Review}
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.65\textwidth]{"previous post review.svg"}
+\end{figure}
+
+\textbf{Initiator: }User\\
+\textbf{Description: }The use case allows users to review basic information about their created post.\\
+\textbf{Basic Flow of Events: }Users can review post title, a one-line description, number of likes and other details about their created post. \\
+If users click on the post content, the \textit{A1: Redirect To Post} alternative flow is performed.\\
+\textbf{Alternative Flow of Events: }\\
+\textbf{A1: Redirect To Post}\\
+The system redirects users to the corresponding post webpage.
+
+
+\subsubsection{Following System}
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.65\textwidth]{"following system.svg"}
+\end{figure}
+
+\textbf{Initiator: }User\\
+\textbf{Description: }The use case allows users to follow others in a unidirectional way and see a list of their followers along with the names of users they are following.\\
+\textbf{Basic Flow of Events: }Users can view a list of their followers and the names of users they are following. The system provides a search function for users to type the display name of the user they want to follow.\\
+If users type a display name in the space provided, the \textit{A1: Follow Users} alternative flow is performed.\\
+If users click one of the users in the following list and then click the unfollow button, the \textit{A2: Unfollow Users} alternative flow is performed.\\
+\textbf{Alternative Flow of Events: }\\
+\textbf{A1: Follow Users}\\
+The system searches for the user's display name [E1], then navigates to that user's profile page. Users click the follow button to add the corresponding users to the following list.\\
+\textbf{A2: Unfollow Users}\\
+The system removes that user from the following list.\\
+\textbf{ Exceptional Flow of Events:}\\
+\textbf{E1: Display name does not exist.} An error message "No such user" will be displayed, and no new user will be added to the following list.\\
+
+
+\subsubsection{Post Operation}
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.7\textwidth]{"post operation.svg"}
+\end{figure}
+
+\textbf{Initiator: }User\\
+\textbf{Description: }The use case allows users to create, view posts, and update, delete the posts they created.\\
+\textbf{Basic Flow of Events: }The system displays lists of post previews on the homepage, including post titles, one-line descriptions, and the number of likes and dislikes. There is a button for user to create new posts.\\
+If users click on the preview, the \textit{A1: View Full Content} alternative flow is performed.\\
+If users click the button to create a new post, the \textit{A2: Create Post} alternative flow is performed.\\
+After creating a post, if users click the update button on the post, the \textit{A3: Update Post} alternative flow is performed.\\
+After creating a post, if users click the delete button on the post, the \textit{A4: Delete Post} alternative flow is performed.\\
+\textbf{Alternative Flow of Events: }\\
+\textbf{A1: View Full Content}\\
+The system displays information about the post, including the title, full description, and the number of likes and dislikes.\\
+\textbf{A2: Create Posts}\\
+The system prompts users to enter a new post title and post description [E1], then saves the post to the database.\\
+\textbf{A3: Update Posts}\\
+The system prompts users to edit the post title and post description [E2], then saves the changes to the database.\\
+\textbf{A4: Delete Posts}\\
+The system asks for user confirmation to delete the entire post [E3], then deletes the data in the database.\\
+\textbf{ Exceptional Flow of Events:}\\
+\textbf{E1: Creation is cancelled } A message "Post creation is cancelled" will be displayed, and no new post will be created\\
+\textbf{E2: Update is cancelled } A message "Post update is cancelled" will be displayed, and the original post will be kept\\
+\textbf{E3: Deletion is cancelled } A message "Post deletion is cancelled" will be displayed, and the post will be kept.\\
+
+
+\subsubsection{Post Interaction}
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.65\textwidth]{"post interaction.svg"}
+\end{figure}
+
+\textbf{Initiator: }User\\
+\textbf{Description: }The use case allows users to interact with posts, such as commenting in posts, liking or disliking comments and posts, and sharing posts with others. Users will not see comments from blocked users.\\
+\textbf{Basic Flow of Events: }The system displays comments under the post, along with the number of likes and dislikes for each post and comment. Users can comment on posts, like or dislike comments and posts, share posts with others by clicking the corresponding buttons.\\
+If users click the comment button, the \textit{A1: Create Comment} alternative flow is performed.\\
+If users click the like or dislike buttons, the \textit{A2: Like Or Dislike} alternative flow is performed.\\
+If users click the share button, the \textit{A3: Share} alternative flow is performed.\\
+\textbf{Alternative Flow of Events: }\\
+\textbf{A1: Create Comment}\\
+The system prompts users to enter comments [E1]. Users can choose to update or delete their comments later.\\
+\textbf{A2: Like Or Dislike}\\
+The system will add one to the like or dislike count. Users can choose to undo the change by clicking the toggle button again.\\
+\textbf{A3: Share}\\
+The system generates a link for the post that users can share.\\
+\textbf{E1: Comment creation is cancelled.} A message "Comment creation is cancelled" will be displayed.\\
+
+
+\subsubsection{Direct Message}
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{"direct message.svg"}
+\end{figure}
+
+\textbf{Initiator: }User\\
+\textbf{Description: }The use case allows users to have one-to-one conversations with other users who are in the following list. Users can send text messages, images, voice messages and share posts with others.\\
+\textbf{Preconditions }\\
+Users must have at least one user in the following list.\\
+\textbf{ Basic Flow of Events: }Users select one user they want to chat with from the following list. The system displays all the messages exchanged between them and provides a space for users to enter text messages.\\
+If users type some text and click the send message button, the \textit{A1: Send Text Message} alternative flow is performed.\\
+If users click the share button, the \textit{A2: Share} alternative flow is performed.\\
+If users click the voice message button, the \textit{A3: Voice Message} alternative flow is performed.\\
+\textbf{Alternative Flow of Events: }\\
+\textbf{A1: Send Text Message}\\
+The system sends the text message to the corresponding user.\\
+\textbf{A2: Share}\\
+The system prompts for users to send image or post [E1]. Users upload the image or select the post they want to share.\\
+\textbf{A3: Voice Message}\\
+The system records sound from the user and sends the recording as a voice message [E2].\\
+\textbf{E1: Share is cancelled.} A message "Share is cancelled" will be displayed.\\
+\textbf{E2: Voice message is cancelled.} A message "Voice message is cancelled" will be displayed.\\
+
+
+
+\end{document}
