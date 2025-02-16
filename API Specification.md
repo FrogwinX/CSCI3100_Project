@@ -19,11 +19,12 @@ API Development Process:
 ## System
 
 1. `GET` : https://flowchatbackend.azurewebsites.net/api/System/getAllInfo
+
 Description: get all system information, including version, feature and description
 Query Params: None
 Path Params: None
 Response Body:
-<code>
+
 [
     {
         "version": "0.1",
@@ -31,9 +32,10 @@ Response Body:
         "description": "Setup a database table for storing system info"
     }
 ]
-</code>
+
 
 2. `GET` : https://flowchatbackend.azurewebsites.net/api/System/getInfoByVersion?version={version}
+
 Description: get the system information, including version, feature and description, by a specified version
 Query Params: version={version}
 Path Params: None
