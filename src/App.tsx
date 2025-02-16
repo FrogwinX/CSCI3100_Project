@@ -7,9 +7,14 @@ function App() {
   const fetchAppName = async () => {
     try {
       const response = await axios.get(
-        "https://flowchatbackend.azurewebsites.net/api/System/getWebName"
-      );
-      setAppName(response.data);
+        "https://flowchatbackend.azurewebsites.net/api/System/getAllInfo"
+      )
+      .then((res) => {
+        const json = res.data[0];
+        console.log('json', json);
+        setAppName(json.feature);
+      });
+      
     } catch (error) {
       console.error("Error fetching the app name:", error);
     }
