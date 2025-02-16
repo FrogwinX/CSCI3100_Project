@@ -59,6 +59,7 @@ This project accounts for **30%** of the course grade, including:
 ## Log History
 | Date | Comments | Revised By |
 | :---: | --- | --- |
+| 16 Feb | API Specification added | Edwin |
 | 09 Feb | Development Schedule added | Edwin |
 | 28 Jan | README.md format updated | Edwin |
 | 28 Jan | README.md created | Edwin |
