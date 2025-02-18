@@ -1,29 +1,24 @@
 import { useState } from "react";
-import axios from "axios";
 
 function App() {
-  const [appName, setAppName] = useState("Unkown");
+  const [count, setCount] = useState(0);
 
-  const fetchAppName = async () => {
-    try {
-      const response = await axios.get(
-        "https://flowchatbackend.azurewebsites.net/api/System/getWebName"
-      );
-      setAppName(response.data);
-    } catch (error) {
-      console.error("Error fetching the app name:", error);
-    }
+  const addCount = async () => {
+    setCount(count + 1);
   };
 
   return (
-    <div className="flex place-content-center place-items-center h-screen">
-      <div className="card bg-primary size-fit card-xl">
+    <div className="flex bg-base-200 place-content-center place-items-center h-screen">
+      <div className="card bg-base-100 size-fit card-xl">
         <div className="card-body">
-          <h2 className="card-title">App Name</h2>
-          <p>{appName}</p>
+          <h2 className="card-title text-base-content">Click Counter</h2>
+          <p className="text-base-content">{count}</p>
           <div className="justify-end card-actions">
-            <button onClick={fetchAppName} className="btn">
-              Fetch name from API
+            <button
+              onClick={addCount}
+              className="btn bg-primary text-primary-content"
+            >
+              Add
             </button>
           </div>
         </div>
