@@ -1,5 +1,16 @@
 # Backend
 
+- Recommended IDE: IntelliJ IDEA CE
+- Java Version: Java SE 21
+- Build Automation Tool: Maven
+- API Localhost Testing: http://localhost:8080/swagger-ui/index.html#/
+- API Deployment Testing: Postman
+- Source Control Visualization: Sourcetree
+- Database Local Access:
+  - Username: flowchatadmin
+  - Password: joccy8-qackyw-riVvaf
+
+
 ## Account Management
 For each API requirement, please refer to corresponding issue.
 
