@@ -10,24 +10,24 @@ a focus on discussion engagements, FlowChat fosters a vibrant online community.
 
 ## Current Phase Requirement
 > [!IMPORTANT]
-> 16 Feb | #0 Project Initialization
+> 02 Mar | #1 Account Management
 
 Project Initialization Phase aims to setup frontend, backend project structures and database server on Azure. It also prepares the UI Design Interface, API Specifications and database schema table designs for the next phase #1 Account Management.
 
 ## Development Schedule
 | Task | Date | Development |
-| :---: | :---: | --- |
-| [ ] | 10 Feb ~ 16 Feb | #0 Project Initialization |
-| [ ] | 17 Feb ~ 23 Feb | #1 Account Management |
-| [ ] | 24 Feb ~ 02 Mar | #1 Account Management |
-| [ ] | 03 Mar ~ 09 Mar | #4 Discussion Forum |
-| [ ] | 10 Mar ~ 16 Mar | #4 Discussion Forum |
-| [ ] | 17 Mar ~ 23 Mar | #4 Discussion Forum |
-| [ ] | 24 Mar ~ 30 Mar | #3 Personal Profile |
-| [ ] | 31 Mar ~ 06 Apr | #2 Administrative Management |
-| [ ] | 07 Apr ~ 13 Apr | #5 Direct Message |
-| [ ] | 14 Apr ~ 20 Apr | #5 Direct Message |
-| [ ] | 21 Apr ~ 01 May | #6 Office Mode |
+|:----:| :---: | --- |
+| [v]  | 10 Feb ~ 16 Feb | #0 Project Initialization |
+| [ ]  | 17 Feb ~ 23 Feb | #1 Account Management |
+| [ ]  | 24 Feb ~ 02 Mar | #1 Account Management |
+| [ ]  | 03 Mar ~ 09 Mar | #4 Discussion Forum |
+| [ ]  | 10 Mar ~ 16 Mar | #4 Discussion Forum |
+| [ ]  | 17 Mar ~ 23 Mar | #4 Discussion Forum |
+| [ ]  | 24 Mar ~ 30 Mar | #3 Personal Profile |
+| [ ]  | 31 Mar ~ 06 Apr | #2 Administrative Management |
+| [ ]  | 07 Apr ~ 13 Apr | #5 Direct Message |
+| [ ]  | 14 Apr ~ 20 Apr | #5 Direct Message |
+| [ ]  | 21 Apr ~ 01 May | #6 Office Mode |
 
 
 ## Task Schedule
