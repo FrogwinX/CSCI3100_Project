@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 
 @Data
 @Entity
-@Table(schema = "SYSTEM", name = "INFO")
+@Table(schema = "SYSTEM", name = "Info")
 public class SystemModel {
     @Id
     private String version;
