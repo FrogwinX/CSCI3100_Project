@@ -40,12 +40,18 @@ public class SystemController {
         ResponseBody responseBody = new ResponseBody();
         try {
             SystemModel data = systemService.getInfoByVersion(version);
-            responseBody.setMessage("Success");
-            Map<String, Object> info = new HashMap<>();
-            info.put("version", data.getVersion());
-            info.put("feature", data.getFeature());
-            info.put("description", data.getDescription());
-            responseBody.setData(info);
+            if (data != null) {
+                responseBody.setMessage("Success");
+                Map<String, Object> info = new HashMap<>();
+                info.put("version", data.getVersion());
+                info.put("feature", data.getFeature());
+                info.put("description", data.getDescription());
+                responseBody.setData(info);
+            }
+            else {
+                responseBody.setMessage("Version is incorrect");
+                responseBody.setData(null);
+            }
         }
         catch (Exception e) {
             responseBody.setMessage("Fail: " + e);
