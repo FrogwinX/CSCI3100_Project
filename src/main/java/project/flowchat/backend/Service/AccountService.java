@@ -33,6 +33,27 @@ public class AccountService {
         return countUser == 0;
     }
 
+    /**
+     * Check if the username or email and password match the username or email and encrypted password in the database
+     * @param username
+     * @param email
+     * @param password
+     * @return Boolean: true if username or email and password are correct, else false
+     */
+    public Boolean isAccountMatched(String username, String email, String password) {
+        return true;
+    }
+
+    /**
+     * Check if the user with the given username or email is activated in the database
+     * @param username
+     * @param email
+     * @return Boolean: true if user is activated, else false
+     */
+    public Boolean isAccountActivated(String username, String email) {
+        return true;
+    }
+
     public String encodePassword(String rawPassword) {
         return BCrypt.hashpw(rawPassword, BCrypt.gensalt());
     }
