@@ -1,9 +1,15 @@
 package project.flowchat.backend.Service;
 
 import lombok.AllArgsConstructor;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import project.flowchat.backend.Model.UserAccountModel;
 import project.flowchat.backend.Repository.AccountRepository;
 
 @AllArgsConstructor
@@ -40,7 +46,13 @@ public class AccountService {
      * @return Boolean: true if username or email and password are correct, else false
      */
     public Boolean isAccountMatched(String usernameOrEmail, String password) {
-        return true;
+        String hashPassword = accountRepository.findHashPasswordWithUsernameOrEmail(usernameOrEmail);
+        if (hashPassword == null) {
+            return false;
+        }
+        else {
+            return isPasswordCorrect(password, hashPassword);
+        }
     }
 
     /**
@@ -50,6 +62,20 @@ public class AccountService {
      */
     public Boolean isAccountActivated(String usernameOrEmail) {
         return true;
+    }
+
+    /**
+     * Get user login information from database and generate token
+     * @param usernameOrEmail
+     * @return Map<String, Object>: user login information with given username or email
+     */
+    public Map<String, Object> getUserLoginInfo(String usernameOrEmail)  {
+        Map<String, Object> userLoginInfo = new HashMap<>();
+
+        UserAccountModel userInfoFromDatabase = accountRepository.findUserInfoWithUsernameOrEmail(usernameOrEmail);
+
+        
+        return userLoginInfo;
     }
 
     public String encodePassword(String rawPassword) {

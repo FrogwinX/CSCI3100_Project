@@ -5,6 +5,7 @@ import org.hibernate.annotations.Cache;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import project.flowchat.backend.Model.ResponseBody;
+import project.flowchat.backend.Model.UserAccountModel;
 import project.flowchat.backend.Service.AccountService;
 
 import java.util.HashMap;
@@ -72,7 +73,16 @@ public class AccountController {
             Boolean isAccountActivated = accountService.isAccountActivated(usernameOrEmail);
             info.put("isAccountMatched", isAccountMatched);
             info.put("isAccountActivated", isAccountActivated);
-            responseBody.setMessage("Username or email and password are correct");
+            if (isAccountMatched) {
+                Map<String, Object> userLoginInfo = accountService.getUserLoginInfo(usernameOrEmail);
+                responseBody.setMessage("Username or email and password are correct");
+                info.put("user", userLoginInfo);
+            }
+            else {
+                responseBody.setMessage("Username or email and password are not correct");
+                info.put("user", null);
+            }
+            
             responseBody.setData(info);
         }
         catch (Exception e) {
