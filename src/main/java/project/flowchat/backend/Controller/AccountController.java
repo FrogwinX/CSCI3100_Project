@@ -64,12 +64,12 @@ public class AccountController {
     }
 
     @GetMapping("login")
-    private ResponseBody login(@RequestParam String username, @RequestParam String email, @RequestParam String password) {
+    private ResponseBody login(@RequestParam String usernameOrEmail, @RequestParam String password) {
         ResponseBody responseBody = new ResponseBody();
         try {
             Map<String, Object> info = new HashMap<>();
-            Boolean isAccountMatched = accountService.isAccountMatched(username, email, password);
-            Boolean isAccountActivated = accountService.isAccountActivated(username, email);
+            Boolean isAccountMatched = accountService.isAccountMatched(usernameOrEmail, password);
+            Boolean isAccountActivated = accountService.isAccountActivated(usernameOrEmail);
             info.put("isAccountMatched", isAccountMatched);
             info.put("isAccountActivated", isAccountActivated);
             responseBody.setMessage("Username or email and password are correct");
