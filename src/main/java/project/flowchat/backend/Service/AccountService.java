@@ -71,8 +71,12 @@ public class AccountService {
      */
     public Map<String, Object> getUserLoginInfo(String usernameOrEmail)  {
         Map<String, Object> userLoginInfo = new HashMap<>();
-
         UserAccountModel userInfoFromDatabase = accountRepository.findUserInfoWithUsernameOrEmail(usernameOrEmail);
+        String role = (userInfoFromDatabase.getRoleId() == 1) ? "admin" : "user";
+
+        userLoginInfo.put("id", userInfoFromDatabase.getUserId());
+        userLoginInfo.put("username", userInfoFromDatabase.getUsername());
+        userLoginInfo.put("roles", role);
 
         
         return userLoginInfo;
