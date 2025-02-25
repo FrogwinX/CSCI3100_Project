@@ -19,6 +19,8 @@ public class AccountService {
     @Autowired
     private final AccountRepository accountRepository;
 
+    private final JWTService jwtService;
+
     /**
      * Check if the input username is unique by counting all the usernames in database
      * @param username
@@ -74,6 +76,7 @@ public class AccountService {
         UserAccountModel userInfoFromDatabase = accountRepository.findUserInfoWithUsernameOrEmail(usernameOrEmail);
         String role = (userInfoFromDatabase.getRoleId() == 1) ? "admin" : "user";
 
+        userLoginInfo.put("token", jwtService.generateToken(userInfoFromDatabase));
         userLoginInfo.put("id", userInfoFromDatabase.getUserId());
         userLoginInfo.put("username", userInfoFromDatabase.getUsername());
         userLoginInfo.put("roles", role);
