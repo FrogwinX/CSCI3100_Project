@@ -2,7 +2,8 @@
 
 - Create a new branch with `git checkout -b frontend-NEW-COMPONENT-NAME` before building a new component (replace "NEW-COMPONENT-NAME" with the actual component name)
 - Organize the files with reference to [Project Directories](#project-directories)
-- Colour **ALL** component explicitly by following the [colour guideline](https://v5.daisyui.com/docs/colors/)
+- Colour components by following the [colour guideline](https://v5.daisyui.com/docs/colors/)
+- Use `npm run dev` to start a development server to see real-time file changes
 - Have others to review your code before merging the component branch to the frontend branch
 
 ## Project Directories
