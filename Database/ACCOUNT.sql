@@ -1,32 +1,33 @@
 CREATE SCHEMA [ACCOUNT]
 GO
 
-CREATE TABLE [ACCOUNT].[UserAccount] (
-  [userId] integer PRIMARY KEY NOT NULL IDENTITY(1, 1),
+CREATE TABLE [ACCOUNT].[User_Account] (
+  [user_id] integer PRIMARY KEY NOT NULL IDENTITY(1, 1),
   [username] varchar(50) UNIQUE NOT NULL,
   [email] varchar(100) UNIQUE NOT NULL,
-  [passwordHash] varchar(255) NOT NULL,
-  [isActive] bit NOT NULL DEFAULT (0),
-  [roleId] integer NOT NULL,
-  [createdAt] datetime NOT NULL,
-  [updatedAt] datetime NOT NULL
+  [password_hash] varchar(255) NOT NULL,
+  [is_active] bit NOT NULL DEFAULT (0),
+  [role_id] integer NOT NULL,
+  [created_at] datetime NOT NULL,
+  [updated_at] datetime NOT NULL
 )
 GO
 
 CREATE TABLE [ACCOUNT].[Role] (
-  [roleId] integer PRIMARY KEY NOT NULL IDENTITY(1, 1),
-  [roleName] varchar(20) UNIQUE NOT NULL
+  [role_id] integer PRIMARY KEY NOT NULL IDENTITY(1, 1),
+  [role_name] varchar(20) UNIQUE NOT NULL
 )
 GO
 
 CREATE TABLE [ACCOUNT].[License] (
-  [licenseId] integer PRIMARY KEY NOT NULL IDENTITY(1, 1),
-  [key] varchar(16) UNIQUE NOT NULL,
-  [createdAt] datetime NOT NULL,
-  [expiresAt] datetime,
-  [isUsed] bit NOT NULL DEFAULT (0)
+  [license_id] integer PRIMARY KEY NOT NULL IDENTITY(1, 1),
+  [license_key] varchar(16) NOT NULL,
+  [email] varchar(100) NOT NULL,
+  [created_at] datetime NOT NULL,
+  [expires_at] datetime NOT NULL,
+  [is_available] bit NOT NULL DEFAULT (1)
 )
 GO
 
-ALTER TABLE [ACCOUNT].[UserAccount] ADD FOREIGN KEY ([roleId]) REFERENCES [ACCOUNT].[Role] ([roleId])
+ALTER TABLE [ACCOUNT].[User_Account] ADD FOREIGN KEY ([role_id]) REFERENCES [ACCOUNT].[Role] ([role_id])
 GO
