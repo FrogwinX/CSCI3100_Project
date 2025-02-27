@@ -1,33 +1,28 @@
 {
   "name": "flowchat",
+  "version": "0.1.0",
   "private": true,
-  "version": "0.0.0",
-  "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
   },
   "dependencies": {
-    "@tailwindcss/vite": "^4.0.6",
-    "axios": "^1.7.9",
+    "daisyui": "^5.0.0-beta.9",
+    "next": "15.2.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "tailwindcss": "^4.0.6"
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
-    "@eslint/js": "^9.19.0",
-    "@types/react": "^19.0.8",
-    "@types/react-dom": "^19.0.3",
-    "@vitejs/plugin-react-swc": "^3.5.0",
-    "daisyui": "^5.0.0-beta.8",
-    "eslint": "^9.19.0",
-    "eslint-plugin-react-hooks": "^5.0.0",
-    "eslint-plugin-react-refresh": "^0.4.18",
-    "globals": "^15.14.0",
-    "typescript": "~5.7.2",
-    "typescript-eslint": "^8.22.0",
-    "vite": "^6.1.0"
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "15.2.0",
+    "tailwindcss": "^4",
+    "typescript": "^5"
   }
 }

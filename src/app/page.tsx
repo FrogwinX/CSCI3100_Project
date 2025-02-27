@@ -1,6 +1,8 @@
+"use client";
+
 import { useState } from "react";
 
-function App() {
+export default function Home() {
   const [count, setCount] = useState(0);
 
   const addCount = async () => {
@@ -26,5 +28,3 @@ function App() {
     </div>
   );
 }
-
-export default App;
