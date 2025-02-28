@@ -69,11 +69,9 @@ public class AccountController {
         ResponseBody responseBody = new ResponseBody();
         try {
             Map<String, Object> info = new HashMap<>();
-            Boolean isAccountMatched = accountService.isAccountMatched(usernameOrEmail, password);
-            Boolean isAccountActivated = accountService.isAccountActivated(usernameOrEmail);
-            info.put("isAccountMatched", isAccountMatched);
-            info.put("isAccountActivated", isAccountActivated);
-            if (isAccountMatched) {
+            Boolean isAccountActive = accountService.isAccountActive(usernameOrEmail, password);
+            info.put("isAccountActive", isAccountActive);
+            if (isAccountActive) {
                 Map<String, Object> userLoginInfo = accountService.getUserLoginInfo(usernameOrEmail);
                 responseBody.setMessage("Username or email and password are correct");
                 info.put("user", userLoginInfo);

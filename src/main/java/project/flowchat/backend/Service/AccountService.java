@@ -47,7 +47,7 @@ public class AccountService {
      * @param password
      * @return Boolean: true if username or email and password are correct, else false
      */
-    public Boolean isAccountMatched(String usernameOrEmail, String password) {
+    public Boolean isAccountActive(String usernameOrEmail, String password) {
         String hashPassword = accountRepository.findHashPasswordWithUsernameOrEmail(usernameOrEmail);
         if (hashPassword == null) {
             return false;
@@ -55,15 +55,6 @@ public class AccountService {
         else {
             return isPasswordCorrect(password, hashPassword);
         }
-    }
-
-    /**
-     * Check if the user with the given username or email is activated in the database
-     * @param usernameOrEmail
-     * @return Boolean: true if user is activated, else false
-     */
-    public Boolean isAccountActivated(String usernameOrEmail) {
-        return true;
     }
 
     /**
