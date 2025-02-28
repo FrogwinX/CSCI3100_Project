@@ -8,6 +8,8 @@ import project.flowchat.backend.Model.UserAccountModel;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
@@ -39,7 +41,14 @@ public class JWTService {
      * @return String: JWT for user with that username
      */
     public String generateToken(UserAccountModel user) {
+        Map<String, Object> claims = new HashMap<>();
+        String role = (user.getRoleId() == 1) ? "admin" : "user";
+        claims.put("role", role);
+        claims.put("id", user.getUserId());
         return Jwts.builder()
+                .claims()
+                .add(claims)
+                .and()
                 .subject(user.getUsername())
                 .signWith(getKey())
                 .compact();
