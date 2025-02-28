@@ -64,10 +64,13 @@ public class AccountController {
     }
 
     @PostMapping("registerAccount")
-    private ResponseBody registerAccount(@RequestParam String username, String email, String password, String licenseKey) {
+    private ResponseBody registerAccount(@RequestBody Map<String, String> requestBody) {
         ResponseBody responseBody = new ResponseBody();
         try {
-            Map<String, Object> data = accountService.registerAccount(username, email, password, licenseKey);
+            Map<String, Object> data = accountService.registerAccount(  requestBody.get("username"),
+                                                                        requestBody.get("email"),
+                                                                        requestBody.get("password"),
+                                                                        requestBody.get("licenseKey"));
             UserAccountModel account = (UserAccountModel) data.get("account");
             String message = (String) data.get("message");
             data = new HashMap<>();
@@ -95,11 +98,11 @@ public class AccountController {
     }
 
     @PostMapping("requestLicenseKey")
-    private ResponseBody requestLicenseKey(@RequestParam String email) {
+    private ResponseBody requestLicenseKey(@RequestBody Map<String, String> requestBody) {
         ResponseBody responseBody = new ResponseBody();
         try {
             Map<String, Object> data = new HashMap<>();
-            Boolean isSuccess = accountService.requestLicenseKey(email);
+            Boolean isSuccess = accountService.requestLicenseKey(requestBody.get("email"));
             data.put("isSuccess", isSuccess);
             if (isSuccess) {
                 responseBody.setMessage("A new license key is generated and sent");
@@ -117,11 +120,12 @@ public class AccountController {
     }
 
     @PostMapping("requestAuthenticationCode")
-    private ResponseBody requestAuthenticationCode(@RequestParam String email) {
+    private ResponseBody requestAuthenticationCode(@RequestBody Map<String, String> requestBody) {
         ResponseBody responseBody = new ResponseBody();
         try {
             Map<String, Object> data = new HashMap<>();
-            Boolean isSuccess = accountService.requestAuthenticationCode(email);
+            System.out.println(requestBody.get("email"));
+            Boolean isSuccess = accountService.requestAuthenticationCode(requestBody.get("email"));
             data.put("isSuccess", isSuccess);
             if (isSuccess) {
                 responseBody.setMessage("A new authentication code is generated and sent");
