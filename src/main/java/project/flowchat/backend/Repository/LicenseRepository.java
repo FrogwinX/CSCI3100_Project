@@ -10,8 +10,8 @@ import project.flowchat.backend.Model.LicenseModel;
 
 @Repository
 public interface LicenseRepository extends JpaRepository<LicenseModel, Integer> {
-    @NativeQuery(value = "SELECT is_available FROM ACCOUNT.License WHERE email = ?1 AND license_key = ?2")
-    Boolean isLicenseKeyAvailable(String email, String key);
+    @NativeQuery(value = "SELECT * FROM ACCOUNT.License WHERE email = ?1 AND license_key = ?2")
+    LicenseModel getKeyInfo(String email, String key);
 
     @Modifying
     @Transactional

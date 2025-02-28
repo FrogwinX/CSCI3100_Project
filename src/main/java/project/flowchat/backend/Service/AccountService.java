@@ -1,16 +1,24 @@
 package project.flowchat.backend.Service;
 
+
+import jakarta.mail.internet.MimeMessage;
 import lombok.AllArgsConstructor;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import project.flowchat.backend.Model.LicenseModel;
 import project.flowchat.backend.Model.UserAccountModel;
 import project.flowchat.backend.Repository.LicenseRepository;
 import project.flowchat.backend.Repository.UserAccountRepository;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -22,6 +30,7 @@ public class AccountService {
     @Autowired
     private final UserAccountRepository userAccountRepository;
     private final LicenseRepository licenseRepository;
+    private JavaMailSender mailSender;
 
     private static final Integer USERROLEID = 2;
 
@@ -57,6 +66,46 @@ public class AccountService {
         return BCrypt.checkpw(rawPassword, hashPassword);
     }
 
+    private static String convertHtml2String(String htmlPath, String key) throws Exception {
+        try {
+            StringBuilder htmlBody = new StringBuilder();
+            BufferedReader br = new BufferedReader(new FileReader(htmlPath));
+            String nextline;
+            while ((nextline = br.readLine()) != null) {
+                if (nextline.contains("<div class=\"key\">")) {
+                    nextline = "<div class=\"key\">";
+                    for (int i = 0; i < 4; i++) {
+                        nextline += "" + key.charAt(4 * i) + key.charAt(4 * i + 1) + key.charAt(4 * i + 2) + key.charAt(4 * i + 3);
+                        if (i < 3) {
+                            nextline += " - ";
+                        }
+                    }
+                    nextline += "</div>";
+                }
+                htmlBody.append(nextline);
+            }
+            return htmlBody.toString();
+        }
+        catch (Exception e) {
+            throw e;
+        }
+    }
+
+    @Async
+    private void sendEmail(String userEmail, String key, String subject, String htmlPath) throws Exception {
+        try {
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage, true);
+            mimeMessageHelper.setTo(userEmail);
+            mimeMessageHelper.setSubject(subject);
+            mimeMessageHelper.setText(convertHtml2String(htmlPath, key), true);
+            mailSender.send(mimeMessage);
+        }
+        catch (Exception e) {
+            throw e;
+        }
+    }
+
     private static String generateLicenseKey() {
         Random rand = new Random();
         int num;
@@ -70,9 +119,9 @@ public class AccountService {
         return key;
     }
 
-    private void saveLicenseKey(String email) {
+    private void saveLicenseKey(String email, String key) {
         LicenseModel licenseModel = new LicenseModel();
-        licenseModel.setLicenseKey(generateLicenseKey());
+        licenseModel.setLicenseKey(key);
         licenseModel.setEmail(email);
         licenseModel.setCreatedAt(ZonedDateTime.now(ZoneId.of("Asia/Hong_Kong")));
         licenseModel.setExpiresAt(ZonedDateTime.now(ZoneId.of("Asia/Hong_Kong")).plusWeeks(1));
@@ -81,12 +130,25 @@ public class AccountService {
         licenseRepository.save(licenseModel);
     }
 
-    private Boolean isLicenseKeyAvailable(String email, String key) {
-        return licenseRepository.isLicenseKeyAvailable(email, key);
-    }
-
     private void setLicenseKeyUnavailable(String email, String key) {
         licenseRepository.setLicenseKeyUnavailable(email, key);
+    }
+
+    private String isLicenseKeyAvailable(String email, String key) {
+        LicenseModel licenseModel = licenseRepository.getKeyInfo(email, key);
+        if (licenseModel == null) {
+            return "Key not match";
+        }
+        else if (!licenseModel.getIsAvailable()) {
+            return "Key is not available";
+        }
+        ZonedDateTime keyExpiredTime = licenseModel.getExpiresAt();
+        Comparator<ZonedDateTime> timeComparator = Comparator.naturalOrder();
+        if (timeComparator.compare(ZonedDateTime.now(ZoneId.of("Asia/Hong_Kong")), keyExpiredTime) > 0) {
+            setLicenseKeyUnavailable(email, key);
+            return "Key is expired";
+        }
+        return "Key is available";
     }
 
     private UserAccountModel createAccount(String username, String email, String password) {
@@ -105,29 +167,32 @@ public class AccountService {
         Map<String, Object> data = new HashMap<>();
         String message = "";
         if (!isUsernameUnique(username)) {
-            message = "Username is not unique.";
+            message = "Username is not unique";
             data.put("account", null);
             data.put("message", message);
             return data;
         }
         if (!isEmailUnique(email)) {
-            message = "Email is not unique.";
+            message = "Email is not unique";
             data.put("account", null);
             data.put("message", message);
             return data;
         }
 
-        Boolean isKeyAvailable = isLicenseKeyAvailable(email, licenseKey);
-        if (isKeyAvailable == null || !isKeyAvailable) {
-            message = "Email and license key are mismatched.";
-            data.put("account", null);
-            data.put("message", message);
-            return data;
+        String keyMessage = isLicenseKeyAvailable(email, licenseKey);
+        switch (keyMessage) {
+            case "Key not match":
+            case "Key is not available":
+            case "Key is expired":
+                data.put("account", null);
+                data.put("message", keyMessage);
+                return data;
+            case "Key is available":
+                setLicenseKeyUnavailable(email, licenseKey);
         }
 
-        setLicenseKeyUnavailable(email, licenseKey);
         UserAccountModel userAccountModel = createAccount(username, email, password);
-        message = "A new account is created.";
+        message = "A new account is created";
 
         data.put("account", userAccountModel);
         data.put("message", message);
@@ -135,8 +200,14 @@ public class AccountService {
     }
 
     public Boolean generateLicenseKey(String email) {
-        saveLicenseKey(email);
-        return true;
+        try {
+            String licenseKey = generateLicenseKey();
+            saveLicenseKey(email, licenseKey);
+            sendEmail(email, licenseKey, "Activate Your FlowChat Account", "src/main/resources/licenseKeyEmail.html");
+            return true;
+        } catch (Exception e) {
+            System.err.println(e);
+            return false;
+        }
     }
-
 }

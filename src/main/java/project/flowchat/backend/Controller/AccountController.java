@@ -103,7 +103,7 @@ public class AccountController {
             Boolean isSuccess = accountService.generateLicenseKey(email);
             data.put("isSuccess", isSuccess);
             if (isSuccess) {
-                responseBody.setMessage("A new license key is generated and sent.");
+                responseBody.setMessage("A new license key is generated and sent");
             }
             else {
                 responseBody.setMessage("Cannot create a new license key");
