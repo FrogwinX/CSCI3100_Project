@@ -15,11 +15,11 @@ public class SystemService {
     @Autowired
     private final SystemRepository systemRepository;
 
-    public List<SystemModel> getAllInfo() {
+    public List<SystemModel> getAllInfo() throws Exception {
         return systemRepository.findAll();
     }
 
-    public List<SystemModel> getInfoByVersion(String version) {
+    public SystemModel getInfoByVersion(String version) throws Exception {
         return systemRepository.findInfoByVersion(version);
     }
 }
