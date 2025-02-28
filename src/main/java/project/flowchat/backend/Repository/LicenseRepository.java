@@ -16,5 +16,5 @@ public interface LicenseRepository extends JpaRepository<LicenseModel, Integer> 
     @Modifying
     @Transactional
     @NativeQuery(value = "UPDATE ACCOUNT.License SET is_available = 0 WHERE email = ?1 AND license_key = ?2")
-    void setLicenseKeyUnavailable(String email, String key);
+    void setKeyUnavailable(String email, String key);
 }

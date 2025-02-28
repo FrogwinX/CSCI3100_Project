@@ -1,7 +1,6 @@
 package project.flowchat.backend.Controller;
 
 import lombok.AllArgsConstructor;
-import org.apache.catalina.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import project.flowchat.backend.Model.ResponseBody;
@@ -95,12 +94,12 @@ public class AccountController {
         return responseBody;
     }
 
-    @PostMapping("generateLicenseKey")
-    private ResponseBody generateLicenseKey(@RequestParam String email) {
+    @PostMapping("requestLicenseKey")
+    private ResponseBody requestLicenseKey(@RequestParam String email) {
         ResponseBody responseBody = new ResponseBody();
         try {
             Map<String, Object> data = new HashMap<>();
-            Boolean isSuccess = accountService.generateLicenseKey(email);
+            Boolean isSuccess = accountService.requestLicenseKey(email);
             data.put("isSuccess", isSuccess);
             if (isSuccess) {
                 responseBody.setMessage("A new license key is generated and sent");
@@ -117,7 +116,29 @@ public class AccountController {
         return responseBody;
     }
 
-    @GetMapping("login")
+    @PostMapping("requestAuthenticationCode")
+    private ResponseBody requestAuthenticationCode(@RequestParam String email) {
+        ResponseBody responseBody = new ResponseBody();
+        try {
+            Map<String, Object> data = new HashMap<>();
+            Boolean isSuccess = accountService.requestAuthenticationCode(email);
+            data.put("isSuccess", isSuccess);
+            if (isSuccess) {
+                responseBody.setMessage("A new authentication code is generated and sent");
+            }
+            else {
+                responseBody.setMessage("Cannot create a new authentication code");
+            }
+            responseBody.setData(data);
+        }
+        catch (Exception e) {
+            responseBody.setMessage("Fail: " + e);
+            responseBody.setData(null);
+        }
+        return responseBody;
+    }
+
+    @PostMapping("login")
     private ResponseBody login() {
         return null;
     }

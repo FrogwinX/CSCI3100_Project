@@ -9,6 +9,9 @@
 - Database Local Access:
   - Username: flowchatadmin
   - Password: joccy8-qackyw-riVvaf
+- Email Address: flowchat.noreply@gmail.com
+- Email Password: zucpu5-rirmeR-hemvyc
+- Email App Password: ytwfwydmhaskarqg
 
 
 ## Account Management
