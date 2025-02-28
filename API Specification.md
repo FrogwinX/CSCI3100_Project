@@ -13,6 +13,106 @@ API Development Process:
 5. After API testings, the API specification will be listed here
 6. If frontend cannot successfully call the API, please leave comments in the corresponding API design issues in `done` section
 
+## Account
+
+- POST : `https://flowchatbackend.azurewebsites.net/api/Account/registerAccount`  
+
+Description: register a new account  
+Query Params: None  
+Path Params: None  
+
+Request Body :  
+>{  
+>&emsp;"username": "edwinlamtk",  
+>&emsp;"email": "edwinlamtk@gmail.com",  
+>&emsp;"password": "edwinlamtk",  
+>&emsp;"licenseKey": "N1SM9K4AZF90F1PU"  
+>}  
+
+Response Body:  
+
+>{  
+>&emsp;"message": "A new account is created",  
+>&emsp;"data": {  
+>&emsp;&emsp;"user": {  
+>&emsp;&emsp;&emsp;"role": "user",  
+>&emsp;&emsp;&emsp;"id": 14,  
+>&emsp;&emsp;&emsp;"username": "edwinlamtk"  
+>&emsp;&emsp;},  
+>&emsp;&emsp;"isSuccess": true  
+>&emsp;}  
+>}  
+
+
+---
+
+- POST : `https://flowchatbackend.azurewebsites.net/api/Account/requestAuthenticationCode`  
+
+Description: generate, save and send a new 6-digit authentication code to user  
+Query Params: None  
+Path Params: None  
+
+Request Body :  
+{  
+&emsp;"email": "edwinlamtk@gmail.com"  
+}  
+
+Response Body:  
+ 
+>{  
+>&emsp;"message": "Cannot create a new authentication code",  
+>&emsp;"data": {  
+>&emsp;&emsp;"isSuccess": false  
+>&emsp;}  
+>}
+
+---
+
+- GET : `https://flowchatbackend.azurewebsites.net/api/Account/isEmailUnique?email={email}`  
+
+Description: check if the input email is unique with all user accounts  
+Query Params: email={email}  
+Path Params: None  
+Response Body:  
+
+>{  
+>&emsp;"message":"The email is unique",  
+>&emsp;"data": {  
+>&emsp;&emsp;"isEmailUnique": true    
+>&emsp;}  
+>}  
+
+>{  
+>&emsp;"message":"The email is not unique",  
+>&emsp;"data": {  
+>&emsp;&emsp;"isEmailUnique": false  
+>&emsp;}  
+>}
+
+---
+
+- GET : `https://flowchatbackend.azurewebsites.net/api/Account/isUsernameUnique?username={username}`  
+
+Description: check if the input username is unique with all user accounts  
+Query Params: username={username}  
+Path Params: None  
+Response Body:  
+
+>{  
+>&emsp;"message":"The username is unique",  
+>&emsp;"data": {  
+>&emsp;&emsp;"isUsernameUnique": true    
+>&emsp;}  
+>}
+
+>{  
+>&emsp;"message":"The username is not unique",  
+>&emsp;"data": {  
+>&emsp;&emsp;"isUsernameUnique": false  
+>&emsp;}  
+>}
+
+---
 
 ## System
 
@@ -23,13 +123,16 @@ Query Params:  None
 Path Params: None  
 Response Body:  
 
->[  
->&nbsp;&nbsp;&nbsp;&nbsp;{  
->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"version": "0.1",  
->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"feature": "Project Initilization",  
->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"description": "Setup a database table for storing system info"  
->&nbsp;&nbsp;&nbsp;&nbsp;}  
->]
+>{  
+>&emsp;"message":"Success",  
+>&emsp;"data": [  
+>&emsp;&emsp;{  
+>&emsp;&emsp;&emsp;"feature": "Project Initilization",  
+>&emsp;&emsp;&emsp;"description": "Setup a database table for storing system info",  
+>&emsp;&emsp;&emsp;"version": "0.1"  
+>&emsp;&emsp;}  
+>&emsp;]  
+>}  
 
 ---
 
@@ -40,10 +143,11 @@ Query Params: version={version}
 Path Params: None  
 Response Body:  
 
->[  
->&nbsp;&nbsp;&nbsp;&nbsp;{  
->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"version": "0.1",  
->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"feature": "Project Initilization",  
->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"description": "Setup a database table for storing system info"  
->&nbsp;&nbsp;&nbsp;&nbsp;}  
->]  
+>{  
+>&emsp;"message":"Success",  
+>&emsp;"data": {  
+>&emsp;&emsp;"feature": "Project Initilization",  
+>&emsp;&emsp;"description": "Setup a database table for storing system info",  
+>&emsp;&emsp;"version": "0.1"  
+>&emsp;}  
+>}  
