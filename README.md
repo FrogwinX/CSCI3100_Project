@@ -9,12 +9,17 @@
 - Database Local Access:
   - Username: flowchatadmin
   - Password: joccy8-qackyw-riVvaf
+- Email Address: flowchat.noreply@gmail.com
+- Email Password: zucpu5-rirmeR-hemvyc
+- Email App Password: ytwfwydmhaskarqg
 
 
 ## Account Management
 For each API requirement, please refer to corresponding issue.
 
-![Account Management](https://github.com/FrogwinX/CSCI3100_Project/blob/backend/Work%20Flow/Account.png)
+![Account Management Flow](https://github.com/FrogwinX/CSCI3100_Project/blob/backend/Work%20Flow/Account.png)
+
+![Account Management DB](https://github.com/FrogwinX/CSCI3100_Project/blob/backend/Database/ACCOUNT.png)
 
 
 ## General Structure

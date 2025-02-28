@@ -2,6 +2,7 @@ package project.flowchat.backend.Controller;
 
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.web.bind.annotation.*;
 import project.flowchat.backend.Model.ResponseBody;
 import project.flowchat.backend.Model.SystemModel;
@@ -19,6 +20,7 @@ public class SystemController {
 
     @Autowired
     private final SystemService systemService;
+    private final ResourceLoader resourceLoader;
 
     @GetMapping("getAllInfo")
     private ResponseBody getAllInfo() {

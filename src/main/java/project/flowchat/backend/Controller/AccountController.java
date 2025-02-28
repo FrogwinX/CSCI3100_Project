@@ -1,7 +1,6 @@
 package project.flowchat.backend.Controller;
 
 import lombok.AllArgsConstructor;
-import org.hibernate.annotations.Cache;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import project.flowchat.backend.Model.ResponseBody;
@@ -24,16 +23,16 @@ public class AccountController {
     private ResponseBody isUsernameUnique(@RequestParam String username) {
         ResponseBody responseBody = new ResponseBody();
         try {
-            Map<String, Object> info = new HashMap<>();
+            Map<String, Object> data = new HashMap<>();
             Boolean isUsernameUnique = accountService.isUsernameUnique(username);
-            info.put("isUsernameUnique", isUsernameUnique);
+            data.put("isUsernameUnique", isUsernameUnique);
             if (isUsernameUnique) {
                 responseBody.setMessage("The username is unique");
             }
             else {
                 responseBody.setMessage("The username is not unique");
             }
-            responseBody.setData(info);
+            responseBody.setData(data);
         }
         catch (Exception e) {
             responseBody.setMessage("Fail: " + e);
@@ -46,16 +45,16 @@ public class AccountController {
     private ResponseBody isEmailUnique(@RequestParam String email) {
         ResponseBody responseBody = new ResponseBody();
         try {
-            Map<String, Object> info = new HashMap<>();
+            Map<String, Object> data = new HashMap<>();
             Boolean isEmailUnique = accountService.isEmailUnique(email);
-            info.put("isEmailUnique", isEmailUnique);
+            data.put("isEmailUnique", isEmailUnique);
             if (isEmailUnique) {
                 responseBody.setMessage("The email is unique");
             }
             else {
                 responseBody.setMessage("The email is not unique");
             }
-            responseBody.setData(info);
+            responseBody.setData(data);
         }
         catch (Exception e) {
             responseBody.setMessage("Fail: " + e);
@@ -64,7 +63,86 @@ public class AccountController {
         return responseBody;
     }
 
-    @GetMapping("login")
+    @PostMapping("registerAccount")
+    private ResponseBody registerAccount(@RequestBody Map<String, String> requestBody) {
+        ResponseBody responseBody = new ResponseBody();
+        try {
+            Map<String, Object> data = accountService.registerAccount(  requestBody.get("username"),
+                                                                        requestBody.get("email"),
+                                                                        requestBody.get("password"),
+                                                                        requestBody.get("licenseKey"));
+            UserAccountModel account = (UserAccountModel) data.get("account");
+            String message = (String) data.get("message");
+            data = new HashMap<>();
+            if (account != null) {
+                data.put("isSuccess", true);
+                Map<String, Object> user = new HashMap<>();
+                user.put("id", account.getUserId());
+                user.put("username", account.getUsername());
+                user.put("role", accountService.getRoleById(account.getRoleId()));
+                data.put("user", user);
+                responseBody.setMessage("A new account is created");
+            }
+            else {
+                data.put("isSuccess", false);
+                data.put("user", null);
+                responseBody.setMessage(message);
+            }
+            responseBody.setData(data);
+        }
+        catch (Exception e) {
+            responseBody.setMessage("Fail: " + e);
+            responseBody.setData(null);
+        }
+        return responseBody;
+    }
+
+    @PostMapping("requestLicenseKey")
+    private ResponseBody requestLicenseKey(@RequestBody Map<String, String> requestBody) {
+        ResponseBody responseBody = new ResponseBody();
+        try {
+            Map<String, Object> data = new HashMap<>();
+            Boolean isSuccess = accountService.requestLicenseKey(requestBody.get("email"));
+            data.put("isSuccess", isSuccess);
+            if (isSuccess) {
+                responseBody.setMessage("A new license key is generated and sent");
+            }
+            else {
+                responseBody.setMessage("Cannot create a new license key");
+            }
+            responseBody.setData(data);
+        }
+        catch (Exception e) {
+            responseBody.setMessage("Fail: " + e);
+            responseBody.setData(null);
+        }
+        return responseBody;
+    }
+
+    @PostMapping("requestAuthenticationCode")
+    private ResponseBody requestAuthenticationCode(@RequestBody Map<String, String> requestBody) {
+        ResponseBody responseBody = new ResponseBody();
+        try {
+            Map<String, Object> data = new HashMap<>();
+            System.out.println(requestBody.get("email"));
+            Boolean isSuccess = accountService.requestAuthenticationCode(requestBody.get("email"));
+            data.put("isSuccess", isSuccess);
+            if (isSuccess) {
+                responseBody.setMessage("A new authentication code is generated and sent");
+            }
+            else {
+                responseBody.setMessage("Cannot create a new authentication code");
+            }
+            responseBody.setData(data);
+        }
+        catch (Exception e) {
+            responseBody.setMessage("Fail: " + e);
+            responseBody.setData(null);
+        }
+        return responseBody;
+    }
+
+    @PostMapping("login")
     private ResponseBody login(@RequestParam String usernameOrEmail, @RequestParam String password) {
         ResponseBody responseBody = new ResponseBody();
         try {
@@ -88,10 +166,5 @@ public class AccountController {
             responseBody.setData(null);
         }
         return responseBody;
-    }
-
-    @GetMapping("registerAccount")
-    private ResponseBody registerAccount() {
-        return null;
     }
 }
