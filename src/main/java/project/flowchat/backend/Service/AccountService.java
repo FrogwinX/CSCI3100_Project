@@ -94,7 +94,6 @@ public class AccountService {
         }
     }
 
-    @Async
     private void sendEmail(String userEmail, String key, String keyType, String subject, String htmlPath) throws Exception {
         try {
             MimeMessage mimeMessage = mailSender.createMimeMessage();

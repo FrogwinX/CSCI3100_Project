@@ -10,16 +10,16 @@ import project.flowchat.backend.Model.UserAccountModel;
 public interface UserAccountRepository extends JpaRepository<UserAccountModel, Integer> {
     /**
      * @param username
-     * @return Integer: number of users with the given username
+     * @return Integer: number of active users with the given username
      */
-    @NativeQuery(value = "SELECT COUNT(*) FROM ACCOUNT.User_Account WHERE username = ?1")
+    @NativeQuery(value = "SELECT COUNT(*) FROM ACCOUNT.User_Account WHERE username = ?1 AND is_active = 1")
     Integer countAllUsersByUsername(String username);
 
     /**
      * @param email
-     * @return Integer: number of users with the given email
+     * @return Integer: number of active users with the given email
      */
-    @NativeQuery(value = "SELECT COUNT(*) FROM ACCOUNT.User_Account WHERE email = ?1")
+    @NativeQuery(value = "SELECT COUNT(*) FROM ACCOUNT.User_Account WHERE email = ?1 AND is_active = 1")
     Integer countAllUsersByEmail(String email);
 
     @NativeQuery(value = "SELECT role_name FROM ACCOUNT.Role WHERE role_id = ?1")
