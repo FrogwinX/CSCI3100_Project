@@ -25,5 +25,17 @@ public interface UserAccountRepository extends JpaRepository<UserAccountModel, I
     @NativeQuery(value = "SELECT role_name FROM ACCOUNT.Role WHERE role_id = ?1")
     String findRoleById(Integer id);
 
+        /**
+     * @param usernameOrEmail
+     * @return UserAccountModel: user information with the given username or email
+     */
+    @NativeQuery(value = "SELECT * FROM ACCOUNT.User_Account WHERE email = ?1 OR username = ?1")
+    UserAccountModel findUserInfoWithUsernameOrEmail(String usernameOrEmail);
 
+    /**
+     * @param usernameOrEmail
+     * @return String: hashed password of user with the given username or email
+     */
+    @NativeQuery(value = "SELECT password_hash FROM ACCOUNT.User_Account WHERE email = ?1 OR username = ?1")
+    String findHashPasswordWithUsernameOrEmail(String usernameOrEmail);
 }
