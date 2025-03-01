@@ -139,15 +139,26 @@ public class AccountController {
         String password = requestBody.get("password");
         try {
             Map<String, Object> info = new HashMap<>();
-            Boolean isAccountActive = accountService.isAccountActive(usernameOrEmail, password);
+            Boolean isAccountActive = accountService.isAccountActive(usernameOrEmail);
+            Boolean isPasswordCorrect;
             info.put("isAccountActive", isAccountActive);
             if (isAccountActive) {
                 Map<String, Object> userLoginInfo = accountService.getUserLoginInfo(usernameOrEmail);
-                responseBody.setMessage("Account is active");
-                info.put("user", userLoginInfo);
+                isPasswordCorrect = accountService.isPasswordCorrectForUser(usernameOrEmail, password);
+                info.put("isPasswordCorrect", isPasswordCorrect);
+                if (isPasswordCorrect) {
+                    responseBody.setMessage("Account is active and password is correct");
+                    info.put("user", userLoginInfo);
+                }
+                else {
+                    responseBody.setMessage("Account is active but password is not correct");
+                    info.put("user", null);
+                }
+                
             }
             else {
                 responseBody.setMessage("Account is not active");
+                info.put("isPasswordCorrect", null);
                 info.put("user", null);
             }
             

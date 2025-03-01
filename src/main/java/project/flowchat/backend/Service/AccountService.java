@@ -59,22 +59,30 @@ public class AccountService {
     }
 
     /**
-     * Check if the username or email and password match the username or email and encrypted password in the database
+     * Check if the username or email is active
+     * @param usernameOrEmail
+     * @param password
+     * @return Boolean: true if the username or email is active, else false
+     */
+    public Boolean isAccountActive(String usernameOrEmail) {
+        Boolean isActive = userAccountRepository.findIsActive(usernameOrEmail);
+        if (isActive == null) {
+            return false;
+        }
+        else {
+            return true;
+        }
+    }
+
+    /**
+     * Check if user provide correct password
      * @param usernameOrEmail
      * @param password
      * @return Boolean: true if username or email and password are correct, else false
      */
-    public Boolean isAccountActive(String usernameOrEmail, String password) {
-        String hashPassword = userAccountRepository.findHashPasswordWithUsernameOrEmail(usernameOrEmail);
-        if (hashPassword == null) {
-            return false;
-        }
-        else if (isPasswordCorrect(password, hashPassword)){
-            return userAccountRepository.findIsActive(usernameOrEmail);
-        }
-        else {
-            return false;
-        }
+    public Boolean isPasswordCorrectForUser(String usernameOrEmail, String password) {
+        String passwordHash = userAccountRepository.findHashPasswordWithUsernameOrEmail(usernameOrEmail);
+        return isPasswordCorrect(password, passwordHash);
     }
 
     /**
@@ -85,7 +93,7 @@ public class AccountService {
     public Map<String, Object> getUserLoginInfo(String usernameOrEmail)  {
         Map<String, Object> userLoginInfo = new HashMap<>();
         UserAccountModel userInfoFromDatabase = userAccountRepository.findUserInfoWithUsernameOrEmail(usernameOrEmail);
-        String role = (userInfoFromDatabase.getRoleId() == 1) ? "admin" : "user";
+        String role = userAccountRepository.findRoleById(userInfoFromDatabase.getRoleId());
 
         userLoginInfo.put("token", jwtService.generateToken(userInfoFromDatabase));
         userLoginInfo.put("id", userInfoFromDatabase.getUserId());

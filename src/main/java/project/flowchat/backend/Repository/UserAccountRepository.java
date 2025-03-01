@@ -29,20 +29,20 @@ public interface UserAccountRepository extends JpaRepository<UserAccountModel, I
      * @param usernameOrEmail
      * @return UserAccountModel: user information with the given username or email
      */
-    @NativeQuery(value = "SELECT * FROM ACCOUNT.User_Account WHERE email = ?1 OR username = ?1")
+    @NativeQuery(value = "SELECT * FROM ACCOUNT.User_Account WHERE (email = ?1 OR username = ?1) AND is_active = 1")
     UserAccountModel findUserInfoWithUsernameOrEmail(String usernameOrEmail);
 
     /**
      * @param usernameOrEmail
      * @return String: hashed password of user with the given username or email
      */
-    @NativeQuery(value = "SELECT password_hash FROM ACCOUNT.User_Account WHERE email = ?1 OR username = ?1")
+    @NativeQuery(value = "SELECT password_hash FROM ACCOUNT.User_Account WHERE (email = ?1 OR username = ?1) AND is_active = 1")
     String findHashPasswordWithUsernameOrEmail(String usernameOrEmail);
 
     /**
      * @param usernameOrEmail
      * @return Boolean: find if user is active with given username or email
      */
-    @NativeQuery(value = "SELECT is_active FROM ACCOUNT.User_Account WHERE email = ?1 OR username = ?1")
+    @NativeQuery(value = "SELECT is_active FROM ACCOUNT.User_Account WHERE (email = ?1 OR username = ?1) AND is_active = 1")
     Boolean findIsActive(String usernameOrEmail);
 }
