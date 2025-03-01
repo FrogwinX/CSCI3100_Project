@@ -102,18 +102,13 @@ public class AccountController {
         ResponseBody responseBody = new ResponseBody();
         try {
             Map<String, Object> data = new HashMap<>();
-            Boolean isSuccess = accountService.requestLicenseKey(requestBody.get("email"));
-            data.put("isSuccess", isSuccess);
-            if (isSuccess) {
-                responseBody.setMessage("A new license key is generated and sent");
-            }
-            else {
-                responseBody.setMessage("Cannot create a new license key");
-            }
+            accountService.requestLicenseKey(requestBody.get("email"));
+            data.put("isSuccess", true);
+            responseBody.setMessage("A new license key is generated and sent");
             responseBody.setData(data);
         }
         catch (Exception e) {
-            responseBody.setMessage("Fail: " + e);
+            responseBody.setMessage("Cannot create a new license key: " + e);
             responseBody.setData(null);
         }
         return responseBody;
@@ -125,18 +120,13 @@ public class AccountController {
         try {
             Map<String, Object> data = new HashMap<>();
             System.out.println(requestBody.get("email"));
-            Boolean isSuccess = accountService.requestAuthenticationCode(requestBody.get("email"));
-            data.put("isSuccess", isSuccess);
-            if (isSuccess) {
-                responseBody.setMessage("A new authentication code is generated and sent");
-            }
-            else {
-                responseBody.setMessage("Cannot create a new authentication code");
-            }
+            accountService.requestAuthenticationCode(requestBody.get("email"));
+            data.put("isSuccess", true);
+            responseBody.setMessage("A new authentication code is generated and sent");
             responseBody.setData(data);
         }
         catch (Exception e) {
-            responseBody.setMessage("Fail: " + e);
+            responseBody.setMessage("Cannot create a new authentication code: " + e);
             responseBody.setData(null);
         }
         return responseBody;

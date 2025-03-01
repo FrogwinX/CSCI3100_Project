@@ -5,6 +5,8 @@ import jakarta.mail.internet.MimeMessage;
 import lombok.AllArgsConstructor;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
@@ -16,6 +18,7 @@ import project.flowchat.backend.Repository.UserAccountRepository;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.InputStreamReader;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Comparator;
@@ -56,10 +59,11 @@ public class AccountService {
         return BCrypt.checkpw(rawPassword, hashPassword);
     }
 
-    private static String convertHtml2String(String htmlPath, String key, String keyType) throws Exception {
+    private static String convertHtml2String(String fileName, String key, String keyType) throws Exception {
         try {
+            Resource resource = new ClassPathResource(fileName);
+            BufferedReader br = new BufferedReader(new InputStreamReader(resource.getInputStream()));
             StringBuilder htmlBody = new StringBuilder();
-            BufferedReader br = new BufferedReader(new FileReader(htmlPath));
             String nextline;
             int rageNum = 0, rangeSize = 0;
             switch (keyType) {
@@ -94,13 +98,13 @@ public class AccountService {
         }
     }
 
-    private void sendEmail(String userEmail, String key, String keyType, String subject, String htmlPath) throws Exception {
+    private void sendEmail(String userEmail, String key, String keyType, String subject, String fileName) throws Exception {
         try {
             MimeMessage mimeMessage = mailSender.createMimeMessage();
             MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage, true);
             mimeMessageHelper.setTo(userEmail);
             mimeMessageHelper.setSubject(subject);
-            mimeMessageHelper.setText(convertHtml2String(htmlPath, key, keyType), true);
+            mimeMessageHelper.setText(convertHtml2String(fileName, key, keyType), true);
             mailSender.send(mimeMessage);
         }
         catch (Exception e) {
@@ -214,24 +218,22 @@ public class AccountService {
         return data;
     }
 
-    public Boolean requestLicenseKey(String email) {
+    public void requestLicenseKey(String email) throws Exception {
         try {
             String licenseKey = generateLicenseKey();
             saveKey(email, licenseKey, "license");
-            sendEmail(email, licenseKey, "license","Activate Your FlowChat Account", "src/main/resources/licenseKeyEmail.html");
-            return true;
+            sendEmail(email, licenseKey, "license","Activate Your FlowChat Account", "licenseKeyEmail.html");
         } catch (Exception e) {
             System.err.println(e);
-            return false;
+            throw e;
         }
     }
 
-    public Boolean requestAuthenticationCode(String email) throws Exception {
+    public void requestAuthenticationCode(String email) throws Exception {
         try {
             String authCode = generateAuthCode();
             saveKey(email, authCode, "authentication");
-            sendEmail(email, authCode, "authentication", "Reset FlowChat Password", "src/main/resources/authenticationCodeEmail.html");
-            return true;
+            sendEmail(email, authCode, "authentication", "Reset FlowChat Password", "authenticationCodeEmail.html");
         } catch (Exception e) {
             System.err.println(e);
             throw e;
