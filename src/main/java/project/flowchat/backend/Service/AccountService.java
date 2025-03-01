@@ -93,7 +93,7 @@ public class AccountService {
     public Map<String, Object> getUserLoginInfo(String usernameOrEmail)  {
         Map<String, Object> userLoginInfo = new HashMap<>();
         UserAccountModel userInfoFromDatabase = userAccountRepository.findUserInfoWithUsernameOrEmail(usernameOrEmail);
-        String role = (userInfoFromDatabase.getRoleId() == 1) ? "admin" : "user";
+        String role = userAccountRepository.findRoleById(userInfoFromDatabase.getRoleId());
 
         userLoginInfo.put("token", jwtService.generateToken(userInfoFromDatabase));
         userLoginInfo.put("id", userInfoFromDatabase.getUserId());
