@@ -176,12 +176,20 @@ public class AccountController {
         ResponseBody responseBody = new ResponseBody();
         String email = requestBody.get("email");
         String password = requestBody.get("password");
+        String authenticationCode = requestBody.get("authenticationCode");
         Map<String, Object> data = new HashMap<>();
         try {
-            accountService.resetPassword(email, password);
-            data.put("isSuccess", true);
-            data.put("username", accountService.getNameFromEmail(email));
-            responseBody.setMessage("Password is reset");
+            String message = accountService.useAuthenticationCode(email, authenticationCode);
+            if (message == "Key is available") {
+                accountService.resetPassword(email, password);
+                data.put("isSuccess", true);
+                data.put("username", accountService.getNameFromEmail(email));
+                responseBody.setMessage("Password is reset");
+            }
+            else {
+                data.put("isSuccess", false);
+                responseBody.setMessage(message);                
+            }
             responseBody.setData(data);
         }
         catch (Exception e) {

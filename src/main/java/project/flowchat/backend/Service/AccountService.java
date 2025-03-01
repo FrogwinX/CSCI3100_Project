@@ -298,6 +298,20 @@ public class AccountService {
     }
 
     /**
+     * Use the authentication code if it is available
+     * @param email
+     * @param authenticationCode
+     * @return String: condition of authentication code
+     */
+    public String useAuthenticationCode(String email, String authenticationCode) {
+        String message = isKeyAvailable(email, authenticationCode);
+        if (message == "Key is available") {
+            setKeyUnavailable(email, authenticationCode);
+        }
+        return message;
+    }
+
+    /**
      * Change the password to the new password for the user with the given email
      * @param email
      * @param password
