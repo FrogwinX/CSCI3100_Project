@@ -41,8 +41,79 @@ Response Body:
 >&emsp;&emsp;},  
 >&emsp;&emsp;"isSuccess": true  
 >&emsp;}  
+>}
+
+>{  
+>&emsp;"message": "Username is not unique",  
+>&emsp;"data": {  
+>&emsp;&emsp;"user": null,    
+>&emsp;&emsp;"isSuccess": false  
+>&emsp;}  
+>}
+
+>{  
+>&emsp;"message": "Email is not unique",  
+>&emsp;"data": {  
+>&emsp;&emsp;"user": null,    
+>&emsp;&emsp;"isSuccess": false  
+>&emsp;}  
 >}  
 
+For the case which input email and license key are not matched:
+>{  
+>&emsp;"message": "Key not match",  
+>&emsp;"data": {  
+>&emsp;&emsp;"user": null,    
+>&emsp;&emsp;"isSuccess": false  
+>&emsp;}  
+>}  
+
+For the case which license key is expired and detected at the first time -> set to unavailable:
+>{  
+>&emsp;"message": "Key is expired",  
+>&emsp;"data": {  
+>&emsp;&emsp;"user": null,    
+>&emsp;&emsp;"isSuccess": false  
+>&emsp;}  
+>}
+
+For the case which license key is already expired or used:
+>{  
+>&emsp;"message": "Key is not available",  
+>&emsp;"data": {  
+>&emsp;&emsp;"user": null,    
+>&emsp;&emsp;"isSuccess": false  
+>&emsp;}  
+>}  
+
+---
+
+- POST : `https://flowchatbackend.azurewebsites.net/api/Account/requestLicenseKey`  
+
+Description: generate, save and send a new 16-char license key to user  
+Query Params: None  
+Path Params: None  
+
+Request Body :  
+>{  
+>&emsp;"email": "edwinlamtk@gmail.com"  
+>}  
+
+Response Body:  
+
+>{  
+>&emsp;"message": "A new license key is generated and sent",  
+>&emsp;"data": {  
+>&emsp;&emsp;"isSuccess": true  
+>&emsp;}  
+>}  
+ 
+>{  
+>&emsp;"message": "Cannot create a new license key: {Exception Message}",  
+>&emsp;"data": {  
+>&emsp;&emsp;"isSuccess": false  
+>&emsp;}  
+>}  
 
 ---
 
@@ -53,18 +124,25 @@ Query Params: None
 Path Params: None  
 
 Request Body :  
-{  
-&emsp;"email": "edwinlamtk@gmail.com"  
-}  
+>{  
+>&emsp;"email": "edwinlamtk@gmail.com"  
+>}  
 
 Response Body:  
+
+>{  
+>&emsp;"message": "A new authentication code is generated and sent",  
+>&emsp;"data": {  
+>&emsp;&emsp;"isSuccess": true  
+>&emsp;}  
+>}  
  
 >{  
->&emsp;"message": "Cannot create a new authentication code",  
+>&emsp;"message": "Cannot create a new authentication code: {Exception Message}",  
 >&emsp;"data": {  
 >&emsp;&emsp;"isSuccess": false  
 >&emsp;}  
->}
+>}  
 
 ---
 
