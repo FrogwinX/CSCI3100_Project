@@ -66,8 +66,11 @@ public class AccountService {
         if (hashPassword == null) {
             return false;
         }
+        else if (isPasswordCorrect(password, hashPassword)){
+            return userAccountRepository.findIsActive(usernameOrEmail);
+        }
         else {
-            return isPasswordCorrect(password, hashPassword);
+            return false;
         }
     }
 

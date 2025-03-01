@@ -151,11 +151,11 @@ public class AccountController {
             info.put("isAccountActive", isAccountActive);
             if (isAccountActive) {
                 Map<String, Object> userLoginInfo = accountService.getUserLoginInfo(usernameOrEmail);
-                responseBody.setMessage("Username or email and password are correct");
+                responseBody.setMessage("Account is active");
                 info.put("user", userLoginInfo);
             }
             else {
-                responseBody.setMessage("Username or email and password are not correct");
+                responseBody.setMessage("Account is not active");
                 info.put("user", null);
             }
             
