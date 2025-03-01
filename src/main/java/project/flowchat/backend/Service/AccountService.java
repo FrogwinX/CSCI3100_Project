@@ -184,18 +184,6 @@ public class AccountService {
         Map<String, Object> data = new HashMap<>();
         String message = "";
 
-        String keyMessage = isKeyAvailable(email, licenseKey);
-        switch (keyMessage) {
-            case "Key not match":
-            case "Key is not available":
-            case "Key is expired":
-                data.put("account", null);
-                data.put("message", keyMessage);
-                return data;
-            case "Key is available":
-                setKeyUnavailable(email, licenseKey);
-        }
-
         if (!isUsernameUnique(username)) {
             message = "Username is not unique";
             data.put("account", null);
@@ -208,6 +196,18 @@ public class AccountService {
             data.put("account", null);
             data.put("message", message);
             return data;
+        }
+
+        String keyMessage = isKeyAvailable(email, licenseKey);
+        switch (keyMessage) {
+            case "Key not match":
+            case "Key is not available":
+            case "Key is expired":
+                data.put("account", null);
+                data.put("message", keyMessage);
+                return data;
+            case "Key is available":
+                setKeyUnavailable(email, licenseKey);
         }
 
         UserAccountModel userAccountModel = createAccount(username, email, password);
