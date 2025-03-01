@@ -1,5 +1,6 @@
 project/flowchat/backend/Controller/AccountController.class
 project/flowchat/backend/Model/ResponseBody.class
+project/flowchat/backend/Service/JWTService.class
 project/flowchat/backend/Model/UserAccountModel.class
 project/flowchat/backend/Service/AccountService.class
 project/flowchat/backend/Service/SystemService.class
