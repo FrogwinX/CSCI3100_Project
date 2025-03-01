@@ -15,6 +15,54 @@ API Development Process:
 
 ## Account
 
+- POST : `https://flowchatbackend.azurewebsites.net/api/Account/login`  
+
+Description: login to FlowChat  
+Query Params: None  
+Path Params: None  
+
+Request Body :  
+>{  
+>&emsp;"usernameOrEmail": "edwin7",  
+>&emsp;"password": "edwin7"  
+>}  
+
+Response Body:  
+
+>{  
+>&emsp;"message": "Account is active and password is correct",  
+>&emsp;"data": {  
+>&emsp;&emsp;"isPasswordCorrect": true,  
+>&emsp;&emsp;"isAccountActive": true,  
+>&emsp;&emsp;"user": {  
+>&emsp;&emsp;&emsp;"roles": "user",  
+>&emsp;&emsp;&emsp;"id": 8,  
+>&emsp;&emsp;&emsp;"token": "eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoidXNlciIsImlkIjo4LCJzdWIiOiJlZHdpbjcifQ.--j1jfbCu0CN4QfuuuVzNEZp8tSjKTcSrTS7etIyh50",  
+>&emsp;&emsp;&emsp;"username": "edwin7"  
+>&emsp;&emsp;}  
+>&emsp;}  
+>}  
+
+>{  
+>&emsp;"message": "Account is active but password is not correct",  
+>&emsp;"data": {  
+>&emsp;&emsp;"isPasswordCorrect": false,  
+>&emsp;&emsp;"isAccountActive": true,  
+>&emsp;&emsp;"user": null  
+>&emsp;}  
+>} 
+
+>{  
+>&emsp;"message": "Account is not active",  
+>&emsp;"data": {  
+>&emsp;&emsp;"isPasswordCorrect": null,  
+>&emsp;&emsp;"isAccountActive": false,  
+>&emsp;&emsp;"user": null  
+>&emsp;}  
+>} 
+
+---
+
 - POST : `https://flowchatbackend.azurewebsites.net/api/Account/registerAccount`  
 
 Description: register a new account  
