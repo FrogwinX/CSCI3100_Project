@@ -170,4 +170,25 @@ public class AccountController {
         }
         return responseBody;
     }
+
+    @PutMapping("resetPasswordByEmail")
+    private ResponseBody resetPasswordByEmail(@RequestBody Map<String, String> requestBody) {
+        ResponseBody responseBody = new ResponseBody();
+        String email = requestBody.get("email");
+        String password = requestBody.get("password");
+        Map<String, Object> data = new HashMap<>();
+        try {
+            accountService.resetPassword(email, password);
+            data.put("isSuccess", true);
+            data.put("username", accountService.getNameFromEmail(email));
+            responseBody.setMessage("Password is reset");
+            responseBody.setData(data);
+        }
+        catch (Exception e) {
+            data.put("isSuccess", false);
+            responseBody.setMessage("Password is not reset: " + e);
+            responseBody.setData(data);
+        }
+        return responseBody;
+    }
 }

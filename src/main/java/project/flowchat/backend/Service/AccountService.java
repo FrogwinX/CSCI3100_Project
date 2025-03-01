@@ -296,4 +296,24 @@ public class AccountService {
             throw e;
         }
     }
+
+    /**
+     * Change the password to the new password for the user with the given email
+     * @param email
+     * @param password
+     * @throws Exception Any errors from updating the database
+     */
+    public void resetPassword(String email, String password) throws Exception{
+        try {
+            String passwordHash = encodePassword(password);
+            userAccountRepository.updatePassword(email, passwordHash);
+        } catch (Exception e) {
+            System.err.println(e);
+            throw e;
+        }
+    }
+
+    public String getNameFromEmail(String email) {
+        return userAccountRepository.findUserInfoWithUsernameOrEmail(email).getUsername();
+    }
 }

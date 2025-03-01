@@ -1,8 +1,11 @@
 package project.flowchat.backend.Repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.NativeQuery;
 import org.springframework.stereotype.Repository;
+
+import jakarta.transaction.Transactional;
 import project.flowchat.backend.Model.UserAccountModel;
 
 
@@ -45,4 +48,9 @@ public interface UserAccountRepository extends JpaRepository<UserAccountModel, I
      */
     @NativeQuery(value = "SELECT is_active FROM ACCOUNT.User_Account WHERE (email = ?1 OR username = ?1) AND is_active = 1")
     Boolean findIsActive(String usernameOrEmail);
+
+    @Modifying
+    @Transactional
+    @NativeQuery(value = "UPDATE ACCOUNT.User_Account SET password_hash = ?2 WHERE email = ?1 AND is_active = 1")
+    void updatePassword(String email, String passwowrdHash);
 }
