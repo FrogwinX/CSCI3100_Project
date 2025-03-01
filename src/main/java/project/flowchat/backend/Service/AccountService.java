@@ -3,6 +3,10 @@ package project.flowchat.backend.Service;
 
 import jakarta.mail.internet.MimeMessage;
 import lombok.AllArgsConstructor;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
@@ -37,6 +41,13 @@ public class AccountService {
 
     private static final Integer USERROLEID = 2;
 
+    private final JWTService jwtService;
+
+    /**
+     * Check if the input username is unique by counting all the usernames in database
+     * @param username
+     * @return Boolean: true if username is unique, else false
+     */
     public Boolean isUsernameUnique(String username) {
         Integer countUser = userAccountRepository.countAllUsersByUsername(username);
         return countUser == 0;
@@ -45,6 +56,52 @@ public class AccountService {
     public Boolean isEmailUnique(String email) {
         Integer countUser = userAccountRepository.countAllUsersByEmail(email);
         return countUser == 0;
+    }
+
+    /**
+     * Check if the username or email is active
+     * @param usernameOrEmail
+     * @param password
+     * @return Boolean: true if the username or email is active, else false
+     */
+    public Boolean isAccountActive(String usernameOrEmail) {
+        Boolean isActive = userAccountRepository.findIsActive(usernameOrEmail);
+        if (isActive == null) {
+            return false;
+        }
+        else {
+            return true;
+        }
+    }
+
+    /**
+     * Check if user provide correct password
+     * @param usernameOrEmail
+     * @param password
+     * @return Boolean: true if username or email and password are correct, else false
+     */
+    public Boolean isPasswordCorrectForUser(String usernameOrEmail, String password) {
+        String passwordHash = userAccountRepository.findHashPasswordWithUsernameOrEmail(usernameOrEmail);
+        return isPasswordCorrect(password, passwordHash);
+    }
+
+    /**
+     * Get user login information from database and generate token
+     * @param usernameOrEmail
+     * @return Map<String, Object>: user login information with given username or email
+     */
+    public Map<String, Object> getUserLoginInfo(String usernameOrEmail)  {
+        Map<String, Object> userLoginInfo = new HashMap<>();
+        UserAccountModel userInfoFromDatabase = userAccountRepository.findUserInfoWithUsernameOrEmail(usernameOrEmail);
+        String role = (userInfoFromDatabase.getRoleId() == 1) ? "admin" : "user";
+
+        userLoginInfo.put("token", jwtService.generateToken(userInfoFromDatabase));
+        userLoginInfo.put("id", userInfoFromDatabase.getUserId());
+        userLoginInfo.put("username", userInfoFromDatabase.getUsername());
+        userLoginInfo.put("roles", role);
+
+        
+        return userLoginInfo;
     }
 
     public String getRoleById(Integer roleId) {

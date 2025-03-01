@@ -133,7 +133,41 @@ public class AccountController {
     }
 
     @PostMapping("login")
-    private ResponseBody login() {
-        return null;
+    private ResponseBody login(@RequestBody Map<String, String> requestBody) {
+        ResponseBody responseBody = new ResponseBody();
+        String usernameOrEmail = requestBody.get("usernameOrEmail");
+        String password = requestBody.get("password");
+        try {
+            Map<String, Object> info = new HashMap<>();
+            Boolean isAccountActive = accountService.isAccountActive(usernameOrEmail);
+            Boolean isPasswordCorrect;
+            info.put("isAccountActive", isAccountActive);
+            if (isAccountActive) {
+                Map<String, Object> userLoginInfo = accountService.getUserLoginInfo(usernameOrEmail);
+                isPasswordCorrect = accountService.isPasswordCorrectForUser(usernameOrEmail, password);
+                info.put("isPasswordCorrect", isPasswordCorrect);
+                if (isPasswordCorrect) {
+                    responseBody.setMessage("Account is active and password is correct");
+                    info.put("user", userLoginInfo);
+                }
+                else {
+                    responseBody.setMessage("Account is active but password is not correct");
+                    info.put("user", null);
+                }
+                
+            }
+            else {
+                responseBody.setMessage("Account is not active");
+                info.put("isPasswordCorrect", null);
+                info.put("user", null);
+            }
+            
+            responseBody.setData(info);
+        }
+        catch (Exception e) {
+            responseBody.setMessage("Fail: " + e);
+            responseBody.setData(null);
+        }
+        return responseBody;
     }
 }
