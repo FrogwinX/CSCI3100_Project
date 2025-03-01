@@ -296,4 +296,38 @@ public class AccountService {
             throw e;
         }
     }
+
+    /**
+     * Use the authentication code if it is available
+     * @param email
+     * @param authenticationCode
+     * @return String: condition of authentication code
+     */
+    public String useAuthenticationCode(String email, String authenticationCode) {
+        String message = isKeyAvailable(email, authenticationCode);
+        if (message == "Key is available") {
+            setKeyUnavailable(email, authenticationCode);
+        }
+        return message;
+    }
+
+    /**
+     * Change the password to the new password for the user with the given email
+     * @param email
+     * @param password
+     * @throws Exception Any errors from updating the database
+     */
+    public void resetPassword(String email, String password) throws Exception{
+        try {
+            String passwordHash = encodePassword(password);
+            userAccountRepository.updatePassword(email, passwordHash);
+        } catch (Exception e) {
+            System.err.println(e);
+            throw e;
+        }
+    }
+
+    public String getNameFromEmail(String email) {
+        return userAccountRepository.findUserInfoWithUsernameOrEmail(email).getUsername();
+    }
 }
