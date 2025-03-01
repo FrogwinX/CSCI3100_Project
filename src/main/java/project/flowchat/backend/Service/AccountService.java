@@ -226,7 +226,7 @@ public class AccountService {
         }
     }
 
-    public Boolean requestAuthenticationCode(String email) {
+    public Boolean requestAuthenticationCode(String email) throws Exception {
         try {
             String authCode = generateAuthCode();
             saveKey(email, authCode, "authentication");
@@ -234,7 +234,7 @@ public class AccountService {
             return true;
         } catch (Exception e) {
             System.err.println(e);
-            return false;
+            throw e;
         }
     }
 }
