@@ -15,6 +15,11 @@
 
 
 ## Account Management
+- Update Note
+  - The Register Page in request license key email is not yet set.
+  - The Reset Password Page in request authentication code email is not yet set.
+  - A Missing of scheduled job to check expired key in database. Currently, the is_available is only updated when the key is used.
+
 For each API requirement, please refer to corresponding issue.
 
 ![Account Management Flow](https://github.com/FrogwinX/CSCI3100_Project/blob/backend/Work%20Flow/Account.png)

@@ -159,10 +159,10 @@ public class AccountService {
         else if (!licenseModel.getIsAvailable()) {
             return "Key is not available";
         }
+        setKeyUnavailable(email, key);
         ZonedDateTime keyExpiredTime = licenseModel.getExpiresAt();
         Comparator<ZonedDateTime> timeComparator = Comparator.naturalOrder();
         if (timeComparator.compare(ZonedDateTime.now(ZoneId.of("Asia/Hong_Kong")), keyExpiredTime) > 0) {
-            setKeyUnavailable(email, key);
             return "Key is expired";
         }
         return "Key is available";
@@ -207,7 +207,6 @@ public class AccountService {
                 data.put("message", keyMessage);
                 return data;
             case "Key is available":
-                setKeyUnavailable(email, licenseKey);
         }
 
         UserAccountModel userAccountModel = createAccount(username, email, password);
