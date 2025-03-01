@@ -133,8 +133,10 @@ public class AccountController {
     }
 
     @PostMapping("login")
-    private ResponseBody login(@RequestParam String usernameOrEmail, @RequestParam String password) {
+    private ResponseBody login(@RequestBody Map<String, String> requestBody) {
         ResponseBody responseBody = new ResponseBody();
+        String usernameOrEmail = requestBody.get("usernameOrEmail");
+        String password = requestBody.get("password");
         try {
             Map<String, Object> info = new HashMap<>();
             Boolean isAccountActive = accountService.isAccountActive(usernameOrEmail, password);
