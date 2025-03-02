@@ -15,6 +15,35 @@ API Development Process:
 
 ## Account
 
+- PUT : `https://flowchatbackend.azurewebsites.net/api/Account/deleteAccount`  
+
+Description: check if the account with given usernname or email address exists, then delete the account  
+Query Params: None  
+Path Params: None  
+
+Request Body :  
+>{  
+>&emsp;"usernameOrEmail": "edwinlamtk"  
+>}  
+
+
+Response Body:  
+>{  
+>&emsp;"message": "Account is deleted",  
+>&emsp;"data": {    
+>&emsp;&emsp;"isSuccess": true  
+>&emsp;}  
+>}
+
+>{  
+>&emsp;"message": "Account is not active",  
+>&emsp;"data": {  
+>&emsp;&emsp;"isSuccess": false  
+>&emsp;}  
+>}  
+
+---
+
 - PUT : `https://flowchatbackend.azurewebsites.net/api/Account/resetPasswordByEmail`  
 
 Description: reset a new password using email  
@@ -36,7 +65,16 @@ Response Body:
 >&emsp;&emsp;"username": edwinlamtk,    
 >&emsp;&emsp;"isSuccess": true  
 >&emsp;}  
->} 
+>}
+
+For the case which provided key is not a valid authentication code:
+>{  
+>&emsp;"message": "Key Type not match",  
+>&emsp;"data": {  
+>&emsp;&emsp;"user": null,    
+>&emsp;&emsp;"isSuccess": false  
+>&emsp;}  
+>}  
 
 For the case which input email and authentication code are not matched:
 >{  
@@ -159,6 +197,15 @@ Response Body:
 >&emsp;}  
 >}  
 
+For the case which provided key is not a valid license key:
+>{  
+>&emsp;"message": "Key Type not match",  
+>&emsp;"data": {  
+>&emsp;&emsp;"user": null,    
+>&emsp;&emsp;"isSuccess": false  
+>&emsp;}  
+>}  
+
 For the case which input email and license key are not matched:
 >{  
 >&emsp;"message": "Key not match",  
@@ -207,19 +254,12 @@ Response Body:
 >&emsp;&emsp;"isSuccess": true  
 >&emsp;}  
 >}  
- 
->{  
->&emsp;"message": "Cannot create a new license key: {Exception Message}",  
->&emsp;"data": {  
->&emsp;&emsp;"isSuccess": false  
->&emsp;}  
->}  
 
 ---
 
 - POST : `https://flowchatbackend.azurewebsites.net/api/Account/requestAuthenticationCode`  
 
-Description: generate, save and send a new 6-digit authentication code to user  
+Description: check if the account with given email address exists, then generate, save and send a new 6-digit authentication code to user  
 Query Params: None  
 Path Params: None  
 
@@ -238,7 +278,7 @@ Response Body:
 >}  
  
 >{  
->&emsp;"message": "Cannot create a new authentication code: {Exception Message}",  
+>&emsp;"message": "Account is not active",  
 >&emsp;"data": {  
 >&emsp;&emsp;"isSuccess": false  
 >&emsp;}  
