@@ -12,6 +12,7 @@
 
 # testing
 /coverage
+/src/app/api-test/
 
 # next.js
 /.next/
