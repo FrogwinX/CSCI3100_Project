@@ -17,7 +17,8 @@
 
 ## Documentation and Useful Links
 
-1. [Next.js](https://nextjs.org/docs/app/building-your-application) : Web Dev Framework
-2. [React](https://react.dev/learn/your-first-component) : UI Framework
-3. [DaisyUI](https://v5.daisyui.com/components/) : Components and theme
-4. [Tailwind CSS](https://tailwindcss.com/docs/styling-with-utility-classes) : Styling
+1. [Next.js](https://nextjs.org/docs/app/building-your-application)
+2. [React](https://react.dev/learn/your-first-component)
+3. [DaisyUI](https://v5.daisyui.com/components/)
+4. [Tailwind CSS](https://tailwindcss.com/docs/styling-with-utility-classes)
+5. [API Specification](https://github.com/FrogwinX/CSCI3100_Project/blob/main/API%20Specification.md)
