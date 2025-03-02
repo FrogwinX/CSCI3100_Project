@@ -188,6 +188,7 @@ public class AccountController {
             }
             else {
                 data.put("isSuccess", false);
+                data.put("username", null);
                 responseBody.setMessage(message);                
             }
             responseBody.setData(data);
