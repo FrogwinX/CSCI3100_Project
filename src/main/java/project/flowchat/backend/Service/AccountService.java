@@ -229,7 +229,7 @@ public class AccountService {
             return data;
         }
 
-        String keyMessage = securityService.isKeyAvailable(email, licenseKey);
+        String keyMessage = securityService.isKeyAvailable(email, licenseKey, SecurityService.KeyType.LICENSE);
         switch (keyMessage) {
             case "Key not match":
             case "Key is not available":
@@ -254,30 +254,25 @@ public class AccountService {
      * @throws Exception any exception
      */
     public void requestLicenseKey(String email) throws Exception {
-        try {
-            String licenseKey = securityService.generateLicenseKey();
-            securityService.saveKey(email, licenseKey, SecurityService.KeyType.LICENSE);
-            sendEmail(email, licenseKey, SecurityService.KeyType.LICENSE,"Activate Your FlowChat Account", "licenseKeyEmail.html");
-        } catch (Exception e) {
-            System.err.println(e);
-            throw e;
-        }
+        String licenseKey = securityService.generateLicenseKey();
+        securityService.saveKey(email, licenseKey, SecurityService.KeyType.LICENSE);
+        sendEmail(email, licenseKey, SecurityService.KeyType.LICENSE,"Activate Your FlowChat Account", "licenseKeyEmail.html");
     }
 
     /**
      * Generate a new authentication code, save it in the database, and send it to user through user email address
      * @param email email string
      * @throws Exception any exception from requesting the authentication code
+     * @return true if the request authentication code is successful, else false if the account with email address is not active
      */
-    public void requestAuthenticationCode(String email) throws Exception {
-        try {
-            String authCode = securityService.generateAuthenticationCode();
-            securityService.saveKey(email, authCode, SecurityService.KeyType.AUTHENTICATION);
-            sendEmail(email, authCode, SecurityService.KeyType.AUTHENTICATION, "Reset FlowChat Password", "authenticationCodeEmail.html");
-        } catch (Exception e) {
-            System.err.println(e);
-            throw e;
+    public Boolean requestAuthenticationCode(String email) throws Exception {
+        if (isEmailUnique(email)) {
+            return false;
         }
+        String authCode = securityService.generateAuthenticationCode();
+        securityService.saveKey(email, authCode, SecurityService.KeyType.AUTHENTICATION);
+        sendEmail(email, authCode, SecurityService.KeyType.AUTHENTICATION, "Reset FlowChat Password", "authenticationCodeEmail.html");
+        return true;
     }
 
     /**
@@ -287,7 +282,7 @@ public class AccountService {
      * @return condition of authentication code
      */
     public String useAuthenticationCode(String email, String authenticationCode) {
-        return securityService.isKeyAvailable(email, authenticationCode);
+        return securityService.isKeyAvailable(email, authenticationCode, SecurityService.KeyType.AUTHENTICATION);
     }
 
     /**
@@ -299,11 +294,28 @@ public class AccountService {
     public void resetPassword(String email, String password) throws Exception {
         try {
             String passwordHash = encodePassword(password);
+            UserAccountModel userAccountModel = userAccountRepository.findUserInfoWithUsernameOrEmail(email);
+            userAccountRepository.updateUserAccountById(userAccountModel.getUserId());
             userAccountRepository.updatePassword(email, passwordHash);
         } catch (Exception e) {
             System.err.println(e);
             throw e;
         }
+    }
+
+    /**
+     * Soft delete the user account
+     * @param usernameOrEmail username string or email string
+     * @return true if the account deletion is successful, else false if the account is not active
+     */
+    public Boolean deleteAccount(String usernameOrEmail) {
+        UserAccountModel userAccountModel = userAccountRepository.findUserInfoWithUsernameOrEmail(usernameOrEmail);
+        if (userAccountModel == null) {
+            return false;
+        }
+        userAccountRepository.updateUserAccountById(userAccountModel.getUserId());
+        userAccountRepository.deleteAccount(usernameOrEmail);
+        return true;
     }
 
 }

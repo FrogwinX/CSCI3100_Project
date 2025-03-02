@@ -108,7 +108,7 @@ public class AccountController {
             responseBody.setData(data);
         }
         catch (Exception e) {
-            responseBody.setMessage("Cannot create a new license key: " + e);
+            responseBody.setMessage("Fail: " + e);
             responseBody.setData(null);
         }
         return responseBody;
@@ -120,13 +120,19 @@ public class AccountController {
         try {
             Map<String, Object> data = new HashMap<>();
             System.out.println(requestBody.get("email"));
-            accountService.requestAuthenticationCode(requestBody.get("email"));
-            data.put("isSuccess", true);
-            responseBody.setMessage("A new authentication code is generated and sent");
+            Boolean isAccountExisted = accountService.requestAuthenticationCode(requestBody.get("email"));
+            if (isAccountExisted) {
+                data.put("isSuccess", true);
+                responseBody.setMessage("A new authentication code is generated and sent");
+            }
+            else {
+                data.put("isSuccess", false);
+                responseBody.setMessage("Account is not active");
+            }
             responseBody.setData(data);
         }
         catch (Exception e) {
-            responseBody.setMessage("Cannot create a new authentication code: " + e);
+            responseBody.setMessage("Fail: " + e);
             responseBody.setData(null);
         }
         return responseBody;
@@ -194,9 +200,31 @@ public class AccountController {
             responseBody.setData(data);
         }
         catch (Exception e) {
-            data.put("isSuccess", false);
-            responseBody.setMessage("Password is not reset: " + e);
+            responseBody.setMessage("Fail: " + e);
+            responseBody.setData(null);
+        }
+        return responseBody;
+    }
+
+    @PutMapping("deleteAccount")
+    private ResponseBody deleteAccount(@RequestBody Map<String, String> requestBody) {
+        ResponseBody responseBody = new ResponseBody();
+        try {
+            Map<String, Object> data = new HashMap<>();
+            Boolean isAccountExisted = accountService.deleteAccount(requestBody.get("usernameOrEmail"));
+            if (isAccountExisted) {
+                data.put("isSuccess", true);
+                responseBody.setMessage("Account is deleted");
+            }
+            else {
+                data.put("isSuccess", false);
+                responseBody.setMessage("Account is not active");
+            }
             responseBody.setData(data);
+        }
+        catch (Exception e) {
+            responseBody.setMessage("Fail: " + e);
+            responseBody.setData(null);
         }
         return responseBody;
     }

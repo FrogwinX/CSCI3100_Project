@@ -68,4 +68,22 @@ public interface UserAccountRepository extends JpaRepository<UserAccountModel, I
     @Transactional
     @NativeQuery(value = "UPDATE ACCOUNT.User_Account SET password_hash = ?2 WHERE email = ?1 AND is_active = 1")
     void updatePassword(String email, String passwordHash);
+
+    /**
+     * Mark is_active to false for the given username or email
+     * @param usernameOrEmail username string or email string
+     */
+    @Modifying
+    @Transactional
+    @NativeQuery(value = "UPDATE ACCOUNT.User_Account SET is_active = 0 WHERE (email = ?1 OR username = ?1) AND is_active = 1")
+    void deleteAccount(String usernameOrEmail);
+
+    /**
+     * Update updated_at to current time for the given userId
+     * @param userId userId string
+     */
+    @Modifying
+    @Transactional
+    @NativeQuery(value = "UPDATE ACCOUNT.User_Account SET updated_at = DATEADD(HOUR, 8, GETDATE()) WHERE user_id = ?1")
+    void updateUserAccountById(Integer userId);
 }

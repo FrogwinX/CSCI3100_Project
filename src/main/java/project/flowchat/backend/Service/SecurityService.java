@@ -114,7 +114,10 @@ public class SecurityService {
      * @param key license key or authentication code
      * @return different condition string of availability
      */
-    protected String isKeyAvailable(String email, String key) {
+    protected String isKeyAvailable(String email, String key, KeyType keyType) {
+        if ((keyType == KeyType.LICENSE && key.length() != 16) || (keyType == KeyType.AUTHENTICATION && key.length() != 6)) {
+            return "Key Type not match";
+        }
         LicenseModel licenseModel = licenseRepository.getKeyInfo(email, key);
         if (licenseModel == null) {
             return "Key not match";

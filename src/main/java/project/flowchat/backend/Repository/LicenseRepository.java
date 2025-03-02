@@ -16,7 +16,7 @@ public interface LicenseRepository extends JpaRepository<LicenseModel, Integer> 
      * @param key license key or authentication code
      * @return LicenseModel Object
      */
-    @NativeQuery(value = "SELECT * FROM ACCOUNT.License WHERE email = ?1 AND license_key = ?2")
+    @NativeQuery(value = "SELECT TOP 1 * FROM ACCOUNT.License WHERE email = ?1 AND license_key = ?2")
     LicenseModel getKeyInfo(String email, String key);
 
     /**
