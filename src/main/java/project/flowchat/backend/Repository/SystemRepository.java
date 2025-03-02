@@ -5,8 +5,6 @@ import org.springframework.data.jpa.repository.NativeQuery;
 import org.springframework.stereotype.Repository;
 import project.flowchat.backend.Model.SystemModel;
 
-import java.util.List;
-
 @Repository
 public interface SystemRepository extends JpaRepository<SystemModel, String> {
     @NativeQuery(value = "SELECT * FROM SYSTEM.Info WHERE version = ?1")

@@ -1,6 +1,5 @@
 package project.flowchat.backend.Service;
 
-
 import jakarta.mail.internet.MimeMessage;
 import lombok.AllArgsConstructor;
 
@@ -13,22 +12,14 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import project.flowchat.backend.Model.LicenseModel;
 import project.flowchat.backend.Model.UserAccountModel;
-import project.flowchat.backend.Repository.LicenseRepository;
 import project.flowchat.backend.Repository.UserAccountRepository;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.InputStreamReader;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
 
 @AllArgsConstructor
 @Service
@@ -36,23 +27,26 @@ public class AccountService {
 
     @Autowired
     private final UserAccountRepository userAccountRepository;
-    private final LicenseRepository licenseRepository;
+    private final SecurityService securityService;
     private JavaMailSender mailSender;
 
     private static final Integer USERROLEID = 2;
 
-    private final JWTService jwtService;
-
     /**
      * Check if the input username is unique by counting all the usernames in database
-     * @param username
-     * @return Boolean: true if username is unique, else false
+     * @param username username string
+     * @return true if username is unique, else false
      */
     public Boolean isUsernameUnique(String username) {
         Integer countUser = userAccountRepository.countAllUsersByUsername(username);
         return countUser == 0;
     }
 
+    /**
+     * Check if the input email is unique by counting all the emails in database
+     * @param email email string
+     * @return true if username is unique, else false
+     */
     public Boolean isEmailUnique(String email) {
         Integer countUser = userAccountRepository.countAllUsersByEmail(email);
         return countUser == 0;
@@ -60,8 +54,7 @@ public class AccountService {
 
     /**
      * Check if the username or email is active
-     * @param usernameOrEmail
-     * @param password
+     * @param usernameOrEmail username string or email string
      * @return Boolean: true if the username or email is active, else false
      */
     public Boolean isAccountActive(String usernameOrEmail) {
@@ -75,10 +68,29 @@ public class AccountService {
     }
 
     /**
+     * Encode a raw password by BCrypt
+     * @param rawPassword raw password string
+     * @return the corresponding encoded password
+     */
+    private static String encodePassword(String rawPassword) {
+        return BCrypt.hashpw(rawPassword, BCrypt.gensalt());
+    }
+
+    /**
+     * Check if a raw password matches the corresponding encoded password
+     * @param rawPassword raw password string
+     * @param hashPassword encoded password string
+     * @return true if a raw password matches the corresponding encoded password, else false
+     */
+    private static Boolean isPasswordCorrect(String rawPassword, String hashPassword) {
+        return BCrypt.checkpw(rawPassword, hashPassword);
+    }
+
+    /**
      * Check if user provide correct password
-     * @param usernameOrEmail
-     * @param password
-     * @return Boolean: true if username or email and password are correct, else false
+     * @param usernameOrEmail username string or email string provided from user
+     * @param password raw password string provided from user
+     * @return true if username or email and password are correct, else false
      */
     public Boolean isPasswordCorrectForUser(String usernameOrEmail, String password) {
         String passwordHash = userAccountRepository.findHashPasswordWithUsernameOrEmail(usernameOrEmail);
@@ -87,20 +99,19 @@ public class AccountService {
 
     /**
      * Get user login information from database and generate token
-     * @param usernameOrEmail
-     * @return Map<String, Object>: user login information with given username or email
+     * @param usernameOrEmail username string or email string
+     * @return user login information with given username or email
      */
     public Map<String, Object> getUserLoginInfo(String usernameOrEmail)  {
         Map<String, Object> userLoginInfo = new HashMap<>();
         UserAccountModel userInfoFromDatabase = userAccountRepository.findUserInfoWithUsernameOrEmail(usernameOrEmail);
         String role = userAccountRepository.findRoleById(userInfoFromDatabase.getRoleId());
 
-        userLoginInfo.put("token", jwtService.generateToken(userInfoFromDatabase));
+        userLoginInfo.put("token", securityService.generateToken(userInfoFromDatabase));
         userLoginInfo.put("id", userInfoFromDatabase.getUserId());
         userLoginInfo.put("username", userInfoFromDatabase.getUsername());
         userLoginInfo.put("roles", role);
 
-        
         return userLoginInfo;
     }
 
@@ -108,123 +119,77 @@ public class AccountService {
         return userAccountRepository.findRoleById(roleId);
     }
 
-    private static String encodePassword(String rawPassword) {
-        return BCrypt.hashpw(rawPassword, BCrypt.gensalt());
+    public String getNameFromEmail(String email) {
+        return userAccountRepository.findUserInfoWithUsernameOrEmail(email).getUsername();
     }
 
-    private static Boolean isPasswordCorrect(String rawPassword, String hashPassword) {
-        return BCrypt.checkpw(rawPassword, hashPassword);
-    }
-
-    private static String convertHtml2String(String fileName, String key, String keyType) throws Exception {
-        try {
-            Resource resource = new ClassPathResource(fileName);
-            BufferedReader br = new BufferedReader(new InputStreamReader(resource.getInputStream()));
-            StringBuilder htmlBody = new StringBuilder();
-            String nextline;
-            int rageNum = 0, rangeSize = 0;
-            switch (keyType) {
-                case "license":
-                    rageNum = 4;
-                    rangeSize = 4;
-                    break;
-                case "authentication":
-                    rageNum = 2;
-                    rangeSize = 3;
-                    break;
-            }
-            while ((nextline = br.readLine()) != null) {
-                if (nextline.contains("<div class=\"key\">")) {
-                    nextline = "<div class=\"key\">";
-                    for (int i=0; i<rageNum; i++) {
-                        for (int j=0; j<rangeSize; j++) {
-                            nextline += "" + key.charAt(rangeSize * i + j);
-                        }
-                        if (i < rageNum-1) {
-                            nextline += " - ";
-                        }
-                    }
-                    nextline += "</div>";
-                }
-                htmlBody.append(nextline);
-            }
-            return htmlBody.toString();
-        }
-        catch (Exception e) {
-            throw e;
-        }
-    }
-
-    private void sendEmail(String userEmail, String key, String keyType, String subject, String fileName) throws Exception {
-        try {
-            MimeMessage mimeMessage = mailSender.createMimeMessage();
-            MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage, true);
-            mimeMessageHelper.setTo(userEmail);
-            mimeMessageHelper.setSubject(subject);
-            mimeMessageHelper.setText(convertHtml2String(fileName, key, keyType), true);
-            mailSender.send(mimeMessage);
-        }
-        catch (Exception e) {
-            throw e;
-        }
-    }
-
-    private static String generateLicenseKey() {
-        Random rand = new Random();
-        int num;
-        String key = "";
-        for (int i=0; i<16; i++) {
-            do {
-                num = rand.nextInt(43);
-            } while (num >= 10 && num <= 16);
-            key += (char) (num + '0');
-        }
-        return key;
-    }
-
-    private static String generateAuthCode() {
-        Random rand = new Random();
-        String code = "";
-        for (int i=0; i<6; i++) {
-            code += (char) (rand.nextInt(10) + '0');
-        }
-        return code;
-    }
-
-    private void saveKey(String email, String key, String keyType) {
-        LicenseModel licenseModel = new LicenseModel();
-        licenseModel.setLicenseKey(key);
-        licenseModel.setEmail(email);
-        licenseModel.setCreatedAt(ZonedDateTime.now(ZoneId.of("Asia/Hong_Kong")));
+    /**
+     * Convert HTML file to string and insert a key in the string
+     * @param fileName the HTML file to be converted
+     * @param key actual sting of either License Key or Authentication Code
+     * @param keyType either LICENSE Type or AUTHENTICATION Type
+     * @return the string of HTML file with an input key
+     * @throws Exception any exception
+     */
+    private static String convertHtml2String(String fileName, String key, SecurityService.KeyType keyType) throws Exception {
+        Resource resource = new ClassPathResource(fileName);
+        BufferedReader br = new BufferedReader(new InputStreamReader(resource.getInputStream()));
+        StringBuilder htmlBody = new StringBuilder();
+        String nextline;
+        int rageNum = 0, rangeSize = 0;
         switch (keyType) {
-            case "license" -> licenseModel.setExpiresAt(ZonedDateTime.now(ZoneId.of("Asia/Hong_Kong")).plusWeeks(1));
-            case "authentication" -> licenseModel.setExpiresAt(ZonedDateTime.now(ZoneId.of("Asia/Hong_Kong")).plusMinutes(5));
+            case LICENSE:
+                rageNum = 4;
+                rangeSize = 4;
+                break;
+            case AUTHENTICATION:
+                rageNum = 2;
+                rangeSize = 3;
+                break;
         }
-        licenseModel.setIsAvailable(true);
-        licenseRepository.save(licenseModel);
+        while ((nextline = br.readLine()) != null) {
+            if (nextline.contains("<div class=\"key\">")) {
+                nextline = "<div class=\"key\">";
+                for (int i=0; i<rageNum; i++) {
+                    for (int j=0; j<rangeSize; j++) {
+                        nextline += "" + key.charAt(rangeSize * i + j);
+                    }
+                    if (i < rageNum-1) {
+                        nextline += " - ";
+                    }
+                }
+                nextline += "</div>";
+            }
+            htmlBody.append(nextline);
+        }
+        return htmlBody.toString();
     }
 
-    private void setKeyUnavailable(String email, String key) {
-        licenseRepository.setKeyUnavailable(email, key);
+    /**
+     * Send a activate account email or reset password email to a user email address
+     * @param userEmail user email address
+     * @param key license key or authentication code
+     * @param keyType LICENSE or AUTHENTICATION KeyType
+     * @param subject subject of the email
+     * @param fileName file name of HTML email content
+     * @throws Exception any exception during sending emails
+     */
+    private void sendEmail(String userEmail, String key, SecurityService.KeyType keyType, String subject, String fileName) throws Exception {
+        MimeMessage mimeMessage = mailSender.createMimeMessage();
+        MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage, true);
+        mimeMessageHelper.setTo(userEmail);
+        mimeMessageHelper.setSubject(subject);
+        mimeMessageHelper.setText(convertHtml2String(fileName, key, keyType), true);
+        mailSender.send(mimeMessage);
     }
 
-    private String isKeyAvailable(String email, String key) {
-        LicenseModel licenseModel = licenseRepository.getKeyInfo(email, key);
-        if (licenseModel == null) {
-            return "Key not match";
-        }
-        else if (!licenseModel.getIsAvailable()) {
-            return "Key is not available";
-        }
-        setKeyUnavailable(email, key);
-        ZonedDateTime keyExpiredTime = licenseModel.getExpiresAt();
-        Comparator<ZonedDateTime> timeComparator = Comparator.naturalOrder();
-        if (timeComparator.compare(ZonedDateTime.now(ZoneId.of("Asia/Hong_Kong")), keyExpiredTime) > 0) {
-            return "Key is expired";
-        }
-        return "Key is available";
-    }
-
+    /**
+     * Create a new account record in database table User_Account
+     * @param username username string
+     * @param email email string
+     * @param password password string
+     * @return UserAccountModel Object
+     */
     private UserAccountModel createAccount(String username, String email, String password) {
         UserAccountModel userAccountModel = new UserAccountModel();
         userAccountModel.setUsername(username);
@@ -237,6 +202,15 @@ public class AccountService {
         return userAccountRepository.save(userAccountModel);
     }
 
+    /**
+     * Register a account by checking the username unique, email unique, license key available, then creating an account in database
+     * @param username username string
+     * @param email email string
+     * @param password raw password string
+     * @param licenseKey license key string
+     * @return user account data or error message
+     * @throws Exception any exception
+     */
     public Map<String, Object> registerAccount(String username, String email, String password, String licenseKey) throws Exception {
         Map<String, Object> data = new HashMap<>();
         String message = "";
@@ -255,7 +229,7 @@ public class AccountService {
             return data;
         }
 
-        String keyMessage = isKeyAvailable(email, licenseKey);
+        String keyMessage = securityService.isKeyAvailable(email, licenseKey);
         switch (keyMessage) {
             case "Key not match":
             case "Key is not available":
@@ -274,25 +248,62 @@ public class AccountService {
         return data;
     }
 
+    /**
+     * Generate a new license key, save it in the database, and send it to user through user email address
+     * @param email email string
+     * @throws Exception any exception
+     */
     public void requestLicenseKey(String email) throws Exception {
         try {
-            String licenseKey = generateLicenseKey();
-            saveKey(email, licenseKey, "license");
-            sendEmail(email, licenseKey, "license","Activate Your FlowChat Account", "licenseKeyEmail.html");
+            String licenseKey = securityService.generateLicenseKey();
+            securityService.saveKey(email, licenseKey, SecurityService.KeyType.LICENSE);
+            sendEmail(email, licenseKey, SecurityService.KeyType.LICENSE,"Activate Your FlowChat Account", "licenseKeyEmail.html");
         } catch (Exception e) {
             System.err.println(e);
             throw e;
         }
     }
 
+    /**
+     * Generate a new authentication code, save it in the database, and send it to user through user email address
+     * @param email email string
+     * @throws Exception any exception from requesting the authentication code
+     */
     public void requestAuthenticationCode(String email) throws Exception {
         try {
-            String authCode = generateAuthCode();
-            saveKey(email, authCode, "authentication");
-            sendEmail(email, authCode, "authentication", "Reset FlowChat Password", "authenticationCodeEmail.html");
+            String authCode = securityService.generateAuthenticationCode();
+            securityService.saveKey(email, authCode, SecurityService.KeyType.AUTHENTICATION);
+            sendEmail(email, authCode, SecurityService.KeyType.AUTHENTICATION, "Reset FlowChat Password", "authenticationCodeEmail.html");
         } catch (Exception e) {
             System.err.println(e);
             throw e;
         }
     }
+
+    /**
+     * Use the authentication code if it is available
+     * @param email email string
+     * @param authenticationCode authentication code string
+     * @return condition of authentication code
+     */
+    public String useAuthenticationCode(String email, String authenticationCode) {
+        return securityService.isKeyAvailable(email, authenticationCode);
+    }
+
+    /**
+     * Change the password to the new password for the user with the given email
+     * @param email email string
+     * @param password password string
+     * @throws Exception Any errors from updating the database
+     */
+    public void resetPassword(String email, String password) throws Exception {
+        try {
+            String passwordHash = encodePassword(password);
+            userAccountRepository.updatePassword(email, passwordHash);
+        } catch (Exception e) {
+            System.err.println(e);
+            throw e;
+        }
+    }
+
 }
