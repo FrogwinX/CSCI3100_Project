@@ -15,6 +15,58 @@ API Development Process:
 
 ## Account
 
+- PUT : `https://flowchatbackend.azurewebsites.net/api/Account/resetPasswordByEmail`  
+
+Description: reset a new password using email  
+Query Params: None  
+Path Params: None  
+
+Request Body :  
+>{  
+>&emsp;"email": "edwinlamtk@gmail.com",  
+>&emsp;"password": "edwinlamtk",  
+>&emsp;"authenticationCode": "250085"  
+>}  
+
+Response Body:  
+
+>{  
+>&emsp;"message": "Password is reset",  
+>&emsp;"data": {  
+>&emsp;&emsp;"username": edwinlamtk,    
+>&emsp;&emsp;"isSuccess": true  
+>&emsp;}  
+>} 
+
+For the case which input email and authentication code are not matched:
+>{  
+>&emsp;"message": "Key not match",  
+>&emsp;"data": {  
+>&emsp;&emsp;"username": null,    
+>&emsp;&emsp;"isSuccess": false  
+>&emsp;}  
+>}  
+
+For the case which authentication code is expired and detected at the first time -> set to unavailable:
+>{  
+>&emsp;"message": "Key is expired",  
+>&emsp;"data": {  
+>&emsp;&emsp;"username": null,    
+>&emsp;&emsp;"isSuccess": false  
+>&emsp;}  
+>}
+
+For the case which authentication code is already expired or used:
+>{  
+>&emsp;"message": "Key is not available",  
+>&emsp;"data": {  
+>&emsp;&emsp;"username": null,    
+>&emsp;&emsp;"isSuccess": false  
+>&emsp;}  
+>}
+
+---
+
 - POST : `https://flowchatbackend.azurewebsites.net/api/Account/login`  
 
 Description: login to FlowChat  
