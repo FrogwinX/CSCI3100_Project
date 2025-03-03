@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import Drawer from './Drawer'; // 引入 Drawer 組件
+import Drawer from './Drawer';
 
 const Navbar = () => {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
@@ -11,11 +11,9 @@ const Navbar = () => {
   };
 
   return (
-    <div className="flex items-center" style={{ backgroundColor: '#F8F8F8', height: '70px', width: '100%' }}>
-      {/* Drawer 組件 */}
+    <div className="flex items-center" style={{ backgroundColor: '#FFFFFF', height: '70px', width: '100%' }}>
       <Drawer isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
 
-      {/* 主目錄按鈕 */}
       <button
         onClick={toggleSidebar}
         className="flex items-center justify-center"
@@ -28,25 +26,60 @@ const Navbar = () => {
         />
       </button>
 
-      {/* 專案圖標 */}
       <img
         src="/flowchat_logo2.png"
         alt="FlowChat Logo"
-        style={{ height: '100%', width: 'auto', maxHeight: '70px' }} // 確保最大高度與 navbar 一致
+        style={{ height: '100%', width: 'auto', maxHeight: '70px' }}
         className="ml-2"
       />
 
-      {/* 搜索欄 */}
-      <input
-        type="text"
-        placeholder="Search FlowChat"
-        className="flex-1 mx-4 p-2 border rounded"
-        style={{ height: '50%', maxHeight: '56px' }} // 限制搜索欄的高度
-      />
+<div className="flex justify-center" style={{ flex: 1, justifyContent: 'center' }}>
+        <div
+          style={{
+            width: '634px',
+            height: '48px',
+            backgroundColor: '#EEEEEE',
+            borderRadius: '16px',
+            display: 'flex',
+            alignItems: 'center',
+            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+            padding: '0 10px',
+          }}
+        >
+          <button
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              marginRight: '10px',
+            }}
+            onClick={() => {
+              console.log('Search button clicked');
+            }}
+          >
+            <img
+              src="/searchBar.png"
+              alt="Search Icon"
+              style={{ height: '24px', width: '24px' }} 
+            />
+          </button>
+          <input
+            type="text"
+            placeholder="Search FlowChat"
+            style={{
+              flex: 1,
+              border: 'none',
+              outline: 'none',
+              height: '100%',
+              borderRadius: '16px',
+              padding: '0 10px',
+            }}
+          />
+        </div>
+      </div>
 
-      {/* 用戶圖標 */}
       <img
-        src="/user_icon.png"
+        src="/userIcon.png"
         alt="User Icon"
         style={{ height: '100%', width: 'auto', borderRadius: '50%', marginRight: '20px' }} 
       />
