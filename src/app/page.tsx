@@ -1,30 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Home() {
-  const [count, setCount] = useState(0);
+  const { user } = useAuth();
+  const router = useRouter();
 
-  const addCount = async () => {
-    setCount(count + 1);
-  };
+  useEffect(() => {
+    // Redirect to register page if not logged in
+    if (!user) {
+      router.push("/register");
+    }
+  }, [user, router]);
 
-  return (
-    <div className="flex bg-base-200 place-content-center place-items-center h-screen">
-      <div className="card bg-base-100 size-fit card-xl">
-        <div className="card-body">
-          <h2 className="card-title text-base-content">Click Counter</h2>
-          <p className="text-base-content">{count}</p>
-          <div className="justify-end card-actions">
-            <button
-              onClick={addCount}
-              className="btn bg-primary text-primary-content"
-            >
-              Add
-            </button>
-          </div>
-        </div>
+  // Show loading state or nothing while checking auth
+  if (!user) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <span className="loading loading-spinner loading-lg text-primary"></span>
       </div>
-    </div>
-  );
+    );
+  }
+
+  return <div className="skeleton size-full"></div>;
 }
