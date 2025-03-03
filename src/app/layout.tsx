@@ -16,9 +16,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className="font-sans antialiased"
-      >
+      <body className="font-inter font-semibold antialiased">
         {children}
       </body>
     </html>

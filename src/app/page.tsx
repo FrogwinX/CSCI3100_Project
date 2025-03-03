@@ -1,203 +1,93 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Home() {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const { login } = useAuth();
+
+  const handleLogin = async () => {
+    if (!username || !password) {
+      setError("Both fields are required.");
+      return;
+    }
+
+    try {
+      const result = await login(username, password);
+
+      if (!result.data.isPasswordCorrect || !result.data.isAccountActive) {
+        setError("Invalid username or password.");
+        return;
+      }
+
+      console.log("Login successful", result.data.user);
+      // Handle successful login (e.g., redirect to another page, store token, etc.)
+    } catch (error) {
+      setError("Login failed. Please try again.");
+      console.error("Error logging in:", error);
+    }
+  };
+
   return (
-    <div className="card-body" style={{ backgroundColor: "#EEEEEE" }}>
-      
-      <div
-        className="Sign-in form"
-        style={{
-          position: "absolute",
-          right: "50%",
-          transform: "translate(50%, -50%)", // Fixed transform property
-          top: "50%",
-          width: "627px",
-          height: "551px",
-          backgroundColor: "#E8E8E8",
-          borderRadius: "15px",
-          boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)"
-        }}
-      >
-        <div
-          className="Sign-in Title back frame"
-          style={{
-            position: "absolute",
-            left: "32px",
-            top: "32px",
-            paddingTop: "40px",
-            paddingBottom: "20px",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center"
-          }} 
-        >
-          <h1
-            className="text-3xl font-bold"
-            style={{
-              margin: "auto 0"
-            }}
-          >
-            Sign In
-          </h1>
+    <div className="flex justify-center items-center h-screen bg-gray-200">
+      <form className="card w-full max-w-md bg-base-100 shadow-xl">
+        <div className="card-body">
+          <div className="border-t-20 border-transparent w-full mb-4"></div>
+          <h1 className="card-title text-center text-4xl">Sign In</h1>
+          <div className="form-control mt-4">
+            <label className="label">
+              <span className="label-text text-lg text-base-content">Username / Email</span>
+            </label>
+            <input
+              type="text"
+              placeholder="Username or email"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="input input-bordered w-full"
+            />
+          </div>
+          <div className="form-control mt-4">
+            <label className="label">
+              <span className="label-text text-lg text-base-content">Password</span>
+            </label>
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="input input-bordered w-full"
+            />
+            <label className="label">
+              <a href="/forgot-password" className="label-text-alt link link-hover text-info">
+                Forgot password?
+              </a>
+            </label>
+          </div>
+          <div className="form-control mt-6">
+            <button
+              type="button"
+              onClick={handleLogin}
+              className="btn btn-primary w-full"
+            >
+              Login
+            </button>
+            {error && (
+              <p className="text-red-500 mt-2">{error}</p>
+            )}
+          </div>
+          <div className="form-control mt-2">
+            <button
+              type="button"
+              className="btn btn-secondary w-full bg-base-200 text-base-content border-none"
+            >
+              Sign Up
+            </button>
+          </div>
         </div>
-
-        <div
-          className="Username/Email back frame"
-          style={{
-            position: "absolute",
-            left: "32px",
-            top: "140px",
-            paddingTop: "0px",
-            paddingBottom: "0px",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "left"
-          }} 
-        >
-          <h4
-            className="text-3xl font-bold"
-            style={{
-              margin: "auto 0",
-              fontSize: "1.125rem", // 18px
-              lineHeight: "1.75rem" // 28px
-            }}
-          >
-            Username / Email
-          </h4>
-          
-          <input
-            type="text"
-            placeholder="Username or email"
-            style={{
-              width: "563px",
-              height: "52px",
-              backgroundColor: "#F8F8F8",
-              borderRadius: "5px",
-              border: "1px solid #C4C4C4",
-              marginTop: "10px",
-              marginBottom: "10px",
-              paddingLeft: "10px"
-              
-            }}
-          />
-        </div>
-
-        <div
-          className="Password back frame"
-          style={{
-            position: "absolute",
-            left: "32px",
-            top: "240px",
-            paddingTop: "0px",
-            paddingBottom: "0px",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "left"
-          }} 
-        >
-          <h1
-            className="text-3xl font-bold"
-            style={{
-              margin: "auto 0",
-              fontSize: "1.125rem", // 18px
-              lineHeight: "1.75rem" // 28px
-            }}
-          >
-            Password
-          </h1>
-          
-          <input
-            type="text"
-            placeholder="Password"
-            style={{
-              width: "563px",
-              height: "52px",
-              backgroundColor: "#F8F8F8",
-              borderRadius: "5px",
-              border: "1px solid #C4C4C4",
-              marginTop: "10px",
-              marginBottom: "10px",
-              paddingLeft: "10px"
-              
-            }}
-          />
-
-          <a
-            href="/forgot-password"
-            style={{
-              color: "#2F80ED",
-              textDecoration: "none",
-              marginTop: "10px",
-              marginBottom: "10px"
-            }}
-          >
-            Forgot password?
-          </a>
-        </div>
-        
-        <div
-          className="Login button back frame"
-          style={{
-            position: "absolute",
-            left: "32px",
-            top: "376px",
-            paddingTop: "24px",
-            paddingBottom: "0px",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "left"
-          }} 
-        >
-          <button
-            style={{
-              width: "563px",
-              height: "48px",
-              backgroundColor: "#7ECDD2",
-              borderRadius: "5px",
-              border: "0px",
-              color: "#084D49",
-              marginTop: "10px",
-              marginBottom: "10px",
-              fontWeight: "bold"
-            }}
-          >
-            Login
-          </button>
-        </div>
-        
-        <div
-          className="Sign-up button back frame"
-          style={{
-            position: "absolute",
-            left: "32px",
-            top: "456px",
-            paddingTop: "15px",
-            paddingBottom: "0px",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "left"
-          }} 
-        >
-          <button
-            style={{
-              width: "563px",
-              height: "48px",
-              backgroundColor: "#EEEEEE",
-              borderRadius: "5px",
-              border: "0px",
-              color: "#333C4D",
-              marginTop: "10px",
-              marginBottom: "10px",
-              fontWeight: "bold"
-            }}
-          >
-            Sign Up
-          </button>
-        </div>
-
-      </div>
+      </form>
     </div>
   );
 }
