@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import ClientLayout from "../components/ClientLayout"; // 導入客戶端佈局組件
+import ClientLayout from "../components/ClientLayout";
 
 export const metadata: Metadata = {
   title: "FlowChat",
