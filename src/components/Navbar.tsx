@@ -3,85 +3,68 @@
 import { useState } from 'react';
 import Drawer from './Drawer';
 
-const Navbar = () => {
-  const [isSidebarOpen, setSidebarOpen] = useState(false);
+const Navbar: React.FC = () => {
+  const [isSidebarOpen, setSidebarOpen] = useState<boolean>(false);
 
-  const toggleSidebar = () => {
-    setSidebarOpen(!isSidebarOpen);
+  const toggleSidebar = (): void => {
+    setSidebarOpen((prev) => !prev);
   };
 
   return (
-    <div className="flex items-center" style={{ backgroundColor: '#FFFFFF', height: '70px', width: '100%' }}>
+    <div className="navbar bg-white shadow-md h-16 flex items-center">
       <Drawer isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
 
       <button
         onClick={toggleSidebar}
-        className="flex items-center justify-center"
-        style={{ width: '50px', height: '50px', marginLeft: '20px' }}
+        className="btn btn-square btn-ghost"
+        style={{ marginLeft: '20px' }}
       >
-        <img
-          src="/mainMenu.png"
-          alt="Main Menu"
-          style={{ height: '100%', width: 'auto' }}
-        />
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          className="inline-block h-6 w-6 stroke-current"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M4 6h16M4 12h16M4 18h16"
+          />
+        </svg>
       </button>
 
       <img
         src="/flowchat_logo2.png"
         alt="FlowChat Logo"
-        style={{ height: '100%', width: 'auto', maxHeight: '70px' }}
-        className="ml-2"
+        className="h-full w-auto max-h-16 ml-2"
       />
 
-<div className="flex justify-center" style={{ flex: 1, justifyContent: 'center' }}>
-        <div
-          style={{
-            width: '634px',
-            height: '48px',
-            backgroundColor: '#EEEEEE',
-            borderRadius: '16px',
-            display: 'flex',
-            alignItems: 'center',
-            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-            padding: '0 10px',
-          }}
-        >
+      <div className="flex-1 flex justify-center items-center">
+        <div className="form-control relative" style={{ width: '634px', height: '48px' }}>
+          <input
+            type="text"
+            placeholder="Search FlowChat"
+            className="w-full h-full rounded-full pl-12 pr-4 border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-300"
+            style={{ backgroundColor: '#E5E7EB' }}
+          />
           <button
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              marginRight: '10px',
-            }}
-            onClick={() => {
-              console.log('Search button clicked');
-            }}
+            className="absolute left-3 top-1/2 transform -translate-y-1/2 z-30 p-2 bg-transparent border-none outline-none cursor-pointer"
+            onClick={() => console.log('Search button clicked')}
           >
             <img
               src="/searchBar.png"
               alt="Search Icon"
-              style={{ height: '24px', width: '24px' }} 
+              className="h-5 w-5 pointer-events-none"
             />
           </button>
-          <input
-            type="text"
-            placeholder="Search FlowChat"
-            style={{
-              flex: 1,
-              border: 'none',
-              outline: 'none',
-              height: '100%',
-              borderRadius: '16px',
-              padding: '0 10px',
-            }}
-          />
         </div>
       </div>
 
       <img
         src="/userIcon.png"
         alt="User Icon"
-        style={{ height: '100%', width: 'auto', borderRadius: '50%', marginRight: '20px' }} 
+        className="h-full w-auto rounded-full mr-4"
       />
     </div>
   );
