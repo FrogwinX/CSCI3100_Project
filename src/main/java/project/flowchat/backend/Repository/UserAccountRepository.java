@@ -36,28 +36,36 @@ public interface UserAccountRepository extends JpaRepository<UserAccountModel, I
     String findRoleById(Integer id);
 
     /**
-     * Find the user information by the username or email
-     * @param usernameOrEmail username string or email string
-     * @return user information with the given username or email
+     * Find the user information by the username
+     * @param username username string
+     * @return user information with the given username
      */
-    @NativeQuery(value = "SELECT * FROM ACCOUNT.User_Account WHERE (email = ?1 OR username = ?1) AND is_active = 1")
-    UserAccountModel findUserInfoWithUsernameOrEmail(String usernameOrEmail);
+    @NativeQuery(value = "SELECT * FROM ACCOUNT.User_Account WHERE username = ?1 AND is_active = 1")
+    UserAccountModel findUserInfoByUsername(String username);
 
     /**
-     * Find the hashed password by the username or email
-     * @param usernameOrEmail username string or email string
-     * @return hashed password of user with the given username or email
+     * Find the user information by the email
+     * @param email email string
+     * @return user information with the given email
      */
-    @NativeQuery(value = "SELECT password_hash FROM ACCOUNT.User_Account WHERE (email = ?1 OR username = ?1) AND is_active = 1")
-    String findHashPasswordWithUsernameOrEmail(String usernameOrEmail);
+    @NativeQuery(value = "SELECT * FROM ACCOUNT.User_Account WHERE email = ?1 AND is_active = 1")
+    UserAccountModel findUserInfoByEmail(String email);
 
     /**
-     * Find if user is active by the username or email
-     * @param usernameOrEmail username string or email string
-     * @return ture if user is active, else false
+     * Find the hashed password by the username
+     * @param username username string
+     * @return hashed password of user with the given username
      */
-    @NativeQuery(value = "SELECT is_active FROM ACCOUNT.User_Account WHERE (email = ?1 OR username = ?1) AND is_active = 1")
-    Boolean findIsActive(String usernameOrEmail);
+    @NativeQuery(value = "SELECT password_hash FROM ACCOUNT.User_Account WHERE username = ?1 AND is_active = 1")
+    String findHashPasswordByUsername(String username);
+
+    /**
+     * Find the hashed password by the email
+     * @param email email string
+     * @return hashed password of user with the given email
+     */
+    @NativeQuery(value = "SELECT password_hash FROM ACCOUNT.User_Account WHERE email = ?1 AND is_active = 1")
+    String findHashPasswordByEmail(String email);
 
     /**
      * Update the hashed password by the email
@@ -70,13 +78,22 @@ public interface UserAccountRepository extends JpaRepository<UserAccountModel, I
     void updatePassword(String email, String passwordHash);
 
     /**
-     * Mark is_active to false for the given username or email
-     * @param usernameOrEmail username string or email string
+     * Mark is_active to false for the given username
+     * @param username username string
      */
     @Modifying
     @Transactional
-    @NativeQuery(value = "UPDATE ACCOUNT.User_Account SET is_active = 0 WHERE (email = ?1 OR username = ?1) AND is_active = 1")
-    void deleteAccount(String usernameOrEmail);
+    @NativeQuery(value = "UPDATE ACCOUNT.User_Account SET is_active = 0 WHERE username = ?1 AND is_active = 1")
+    void deleteAccountByUsername(String username);
+
+    /**
+     * Mark is_active to false for the given email
+     * @param email email string
+     */
+    @Modifying
+    @Transactional
+    @NativeQuery(value = "UPDATE ACCOUNT.User_Account SET is_active = 0 WHERE email = ?1 AND is_active = 1")
+    void deleteAccountByEmail(String email);
 
     /**
      * Update updated_at to current time for the given userId
