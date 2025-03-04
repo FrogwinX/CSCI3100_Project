@@ -33,11 +33,54 @@ public class AccountService {
     private static final Integer USERROLEID = 2;
 
     /**
+     * Check if the username contains invalid characters
+     * @param username username string
+     * @return false if there are invalid characters, else true
+     */
+    private Boolean isUsernameFormatCorrect(String username) {
+        if (username == null || username.isEmpty() || username.contains(";")) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Check if the email contains invalid characters
+     * @param email
+     * @return false if there are invalid characters, else true
+     */
+    private Boolean isEmailFormatCorrect(String email) {
+        if (email == null || email.contains(";") || email.contains(" ") || !email.contains("@")) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Check both username and email format
+     * @param username username string
+     * @param email email string
+     * @throws ExceptionService Invalid username format, Invalid email format
+     */
+    private void formatUsernameAndEmailCheck(String username, String email) throws Exception {
+        if (!isUsernameFormatCorrect(username)) {
+            throw new ExceptionService("Invalid username format");
+        }
+        if (!isEmailFormatCorrect(email)) {
+            throw new ExceptionService("Invalid email format");
+        }
+    }
+
+    /**
      * Check if the input username is unique by counting all the usernames in database
      * @param username username string
      * @return true if username is unique, else false
+     * @throws ExceptionService Invalid username format
      */
-    public Boolean isUsernameUnique(String username) {
+    public Boolean isUsernameUnique(String username) throws Exception {
+        if (!isUsernameFormatCorrect(username)) {
+            throw new ExceptionService("Invalid username format");
+        }
         Integer countUser = userAccountRepository.countAllUsersByUsername(username);
         return countUser == 0;
     }
@@ -46,24 +89,30 @@ public class AccountService {
      * Check if the input email is unique by counting all the emails in database
      * @param email email string
      * @return true if username is unique, else false
+     * @throws ExceptionService Invalid email format
      */
-    public Boolean isEmailUnique(String email) {
+    public Boolean isEmailUnique(String email) throws Exception {
+        if (!isEmailFormatCorrect(email)) {
+            throw new ExceptionService("Invalid email format");
+        }
         Integer countUser = userAccountRepository.countAllUsersByEmail(email);
         return countUser == 0;
     }
 
     /**
      * Check if the username or email is active
-     * @param usernameOrEmail username string or email string
+     * @param username username string
+     * @param email email string
      * @return Boolean: true if the username or email is active, else false
      */
-    public Boolean isAccountActive(String usernameOrEmail) {
-        Boolean isActive = userAccountRepository.findIsActive(usernameOrEmail);
-        if (isActive == null) {
-            return false;
+    public Boolean isAccountActive(String username, String email) {
+        if (username != null && email == null && userAccountRepository.countAllUsersByUsername(username) == 1) {
+            return true;
+        } else if (username == null && email != null && userAccountRepository.countAllUsersByEmail(email) == 1) {
+            return true;
         }
         else {
-            return true;
+            return false;
         }
     }
 
@@ -88,23 +137,53 @@ public class AccountService {
 
     /**
      * Check if user provide correct password
-     * @param usernameOrEmail username string or email string provided from user
+     * @param username username string provided from user
+     * @param email email string provided from user
      * @param password raw password string provided from user
      * @return true if username or email and password are correct, else false
      */
-    public Boolean isPasswordCorrectForUser(String usernameOrEmail, String password) {
-        String passwordHash = userAccountRepository.findHashPasswordWithUsernameOrEmail(usernameOrEmail);
+    public Boolean isPasswordCorrectForUser(String username, String email, String password) {
+        String passwordHash = null;
+        if (username != null && email == null) {
+            passwordHash = userAccountRepository.findHashPasswordByUsername(username);
+        } else if (username == null && email != null) {
+            passwordHash = userAccountRepository.findHashPasswordByEmail(email);
+        }
         return isPasswordCorrect(password, passwordHash);
     }
 
     /**
      * Get user login information from database and generate token
-     * @param usernameOrEmail username string or email string
+     * @param username username string
+     * @param email email string
+     * @param password password string
      * @return user login information with given username or email
+     * @throws ExceptionService Too many parameters, Account is not active, Account is active but password is not correct
      */
-    public Map<String, Object> getUserLoginInfo(String usernameOrEmail)  {
+    public Map<String, Object> getUserLoginInfo(String username, String email, String password) throws Exception  {
+        if (username != null && email != null) {
+            throw new ExceptionService("Too many parameters");
+        } else if (username != null && email == null && !isUsernameFormatCorrect(username)) {
+            throw new ExceptionService("Invalid username format");
+        } else if (username == null && email != null && !isEmailFormatCorrect(email)) {
+            throw new ExceptionService("Invalid email format");
+        }
+
+        if (!isAccountActive(username, email)) {
+            throw new ExceptionService("Account is not active");
+        }
+        if (!isPasswordCorrectForUser(username, email, password)) {
+            throw new ExceptionService("Account is active but password is not correct");
+        }
+
         Map<String, Object> userLoginInfo = new HashMap<>();
-        UserAccountModel userInfoFromDatabase = userAccountRepository.findUserInfoWithUsernameOrEmail(usernameOrEmail);
+        UserAccountModel userInfoFromDatabase = null;
+        if (username != null && email == null) {
+            userInfoFromDatabase = userAccountRepository.findUserInfoByUsername(username);
+        } else if (username == null && email != null) {
+            userInfoFromDatabase = userAccountRepository.findUserInfoByEmail(email);
+        }
+
         String role = userAccountRepository.findRoleById(userInfoFromDatabase.getRoleId());
 
         userLoginInfo.put("token", securityService.generateToken(userInfoFromDatabase));
@@ -120,7 +199,7 @@ public class AccountService {
     }
 
     public String getNameFromEmail(String email) {
-        return userAccountRepository.findUserInfoWithUsernameOrEmail(email).getUsername();
+        return userAccountRepository.findUserInfoByEmail(email).getUsername();
     }
 
     /**
@@ -129,7 +208,6 @@ public class AccountService {
      * @param key actual sting of either License Key or Authentication Code
      * @param keyType either LICENSE Type or AUTHENTICATION Type
      * @return the string of HTML file with an input key
-     * @throws Exception any exception
      */
     private static String convertHtml2String(String fileName, String key, SecurityService.KeyType keyType) throws Exception {
         Resource resource = new ClassPathResource(fileName);
@@ -172,7 +250,6 @@ public class AccountService {
      * @param keyType LICENSE or AUTHENTICATION KeyType
      * @param subject subject of the email
      * @param fileName file name of HTML email content
-     * @throws Exception any exception during sending emails
      */
     private void sendEmail(String userEmail, String key, SecurityService.KeyType keyType, String subject, String fileName) throws Exception {
         MimeMessage mimeMessage = mailSender.createMimeMessage();
@@ -209,51 +286,33 @@ public class AccountService {
      * @param password raw password string
      * @param licenseKey license key string
      * @return user account data or error message
-     * @throws Exception any exception
+     * @throws ExceptionService Invalid username format, Username is not unique, Invalid email format, Email is not unique
      */
-    public Map<String, Object> registerAccount(String username, String email, String password, String licenseKey) throws Exception {
+    public UserAccountModel registerAccount(String username, String email, String password, String licenseKey) throws Exception {
+        formatUsernameAndEmailCheck(username, email);
         Map<String, Object> data = new HashMap<>();
-        String message = "";
-
         if (!isUsernameUnique(username)) {
-            message = "Username is not unique";
-            data.put("account", null);
-            data.put("message", message);
-            return data;
+            throw new ExceptionService("Username is not unique");
         }
-
         if (!isEmailUnique(email)) {
-            message = "Email is not unique";
-            data.put("account", null);
-            data.put("message", message);
-            return data;
+            throw new ExceptionService("Email is not unique");
         }
-
-        String keyMessage = securityService.isKeyAvailable(email, licenseKey, SecurityService.KeyType.LICENSE);
-        switch (keyMessage) {
-            case "Key not match":
-            case "Key is not available":
-            case "Key is expired":
-                data.put("account", null);
-                data.put("message", keyMessage);
-                return data;
-            case "Key is available":
-        }
-
-        UserAccountModel userAccountModel = createAccount(username, email, password);
-        message = "A new account is created";
-
-        data.put("account", userAccountModel);
-        data.put("message", message);
-        return data;
+        securityService.setKeyUnavailable(email, licenseKey, SecurityService.KeyType.LICENSE);
+        return createAccount(username, email, password);
     }
 
     /**
      * Generate a new license key, save it in the database, and send it to user through user email address
      * @param email email string
-     * @throws Exception any exception
+     * @throws ExceptionService Account is active
      */
     public void requestLicenseKey(String email) throws Exception {
+        if (!isEmailFormatCorrect(email)) {
+            throw new ExceptionService("Invalid email format");
+        }
+        if (!isEmailUnique(email)) {
+            throw new ExceptionService("Account is active");
+        }
         String licenseKey = securityService.generateLicenseKey();
         securityService.saveKey(email, licenseKey, SecurityService.KeyType.LICENSE);
         sendEmail(email, licenseKey, SecurityService.KeyType.LICENSE,"Activate Your FlowChat Account", "licenseKeyEmail.html");
@@ -262,60 +321,67 @@ public class AccountService {
     /**
      * Generate a new authentication code, save it in the database, and send it to user through user email address
      * @param email email string
-     * @throws Exception any exception from requesting the authentication code
-     * @return true if the request authentication code is successful, else false if the account with email address is not active
+     * @throws ExceptionService Account is not active
      */
-    public Boolean requestAuthenticationCode(String email) throws Exception {
+    public void requestAuthenticationCode(String email) throws Exception {
+        if (!isEmailFormatCorrect(email)) {
+            throw new ExceptionService("Invalid email format");
+        }
         if (isEmailUnique(email)) {
-            return false;
+            throw new ExceptionService("Account is not active");
         }
         String authCode = securityService.generateAuthenticationCode();
         securityService.saveKey(email, authCode, SecurityService.KeyType.AUTHENTICATION);
         sendEmail(email, authCode, SecurityService.KeyType.AUTHENTICATION, "Reset FlowChat Password", "authenticationCodeEmail.html");
-        return true;
-    }
-
-    /**
-     * Use the authentication code if it is available
-     * @param email email string
-     * @param authenticationCode authentication code string
-     * @return condition of authentication code
-     */
-    public String useAuthenticationCode(String email, String authenticationCode) {
-        return securityService.isKeyAvailable(email, authenticationCode, SecurityService.KeyType.AUTHENTICATION);
     }
 
     /**
      * Change the password to the new password for the user with the given email
      * @param email email string
      * @param password password string
-     * @throws Exception Any errors from updating the database
      */
-    public void resetPassword(String email, String password) throws Exception {
-        try {
-            String passwordHash = encodePassword(password);
-            UserAccountModel userAccountModel = userAccountRepository.findUserInfoWithUsernameOrEmail(email);
-            userAccountRepository.updateUserAccountById(userAccountModel.getUserId());
-            userAccountRepository.updatePassword(email, passwordHash);
-        } catch (Exception e) {
-            System.err.println(e);
-            throw e;
+    public void resetPassword(String email, String password, String authenticationCode) throws Exception {
+        if (!isEmailFormatCorrect(email)) {
+            throw new ExceptionService("Invalid email format");
         }
+        securityService.setKeyUnavailable(email, authenticationCode, SecurityService.KeyType.AUTHENTICATION);
+        String passwordHash = encodePassword(password);
+        UserAccountModel userAccountModel = userAccountRepository.findUserInfoByEmail(email);
+        userAccountRepository.updateUserAccountById(userAccountModel.getUserId());
+        userAccountRepository.updatePassword(email, passwordHash);
     }
 
     /**
      * Soft delete the user account
-     * @param usernameOrEmail username string or email string
-     * @return true if the account deletion is successful, else false if the account is not active
+     * @param username username string
+     * @param email email string
+     * @throws ExceptionService Too many parameters, Account is not active
      */
-    public Boolean deleteAccount(String usernameOrEmail) {
-        UserAccountModel userAccountModel = userAccountRepository.findUserInfoWithUsernameOrEmail(usernameOrEmail);
+
+    public void deleteAccount(String username, String email) throws Exception {
+        UserAccountModel userAccountModel = null;
+        if (username != null && email != null) {
+            throw new ExceptionService("Too many parameters");
+        } else if (username != null && email == null && !isUsernameFormatCorrect(username)) {
+            throw new ExceptionService("Invalid username format");
+        } else if (username == null && email != null && !isEmailFormatCorrect(email)) {
+            throw new ExceptionService("Invalid email format");
+        }
+
+        if (username != null && email == null) {
+            userAccountModel = userAccountRepository.findUserInfoByUsername(username);
+        } else if (username == null && email != null) {
+            userAccountModel = userAccountRepository.findUserInfoByEmail(email);
+        }
         if (userAccountModel == null) {
-            return false;
+            throw new ExceptionService("Account is not active");
         }
         userAccountRepository.updateUserAccountById(userAccountModel.getUserId());
-        userAccountRepository.deleteAccount(usernameOrEmail);
-        return true;
+        if (username != null && email == null) {
+            userAccountRepository.deleteAccountByUsername(username);
+        } else if (username == null && email != null) {
+            userAccountRepository.deleteAccountByEmail(email);
+        }
     }
 
 }

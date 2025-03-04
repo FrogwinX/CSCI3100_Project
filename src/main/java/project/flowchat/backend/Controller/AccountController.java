@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.*;
 import project.flowchat.backend.Model.ResponseBody;
 import project.flowchat.backend.Model.UserAccountModel;
 import project.flowchat.backend.Service.AccountService;
+import project.flowchat.backend.Service.ExceptionService;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -33,8 +34,12 @@ public class AccountController {
                 responseBody.setMessage("The username is not unique");
             }
             responseBody.setData(data);
-        }
-        catch (Exception e) {
+        } catch (ExceptionService e) {
+            responseBody.setMessage(e.getMessage());
+            Map<String, Object> data = new HashMap<>();
+            data.put("isUsernameUnique", false);
+            responseBody.setData(data);
+        } catch (Exception e) {
             responseBody.setMessage("Fail: " + e);
             responseBody.setData(null);
         }
@@ -55,8 +60,12 @@ public class AccountController {
                 responseBody.setMessage("The email is not unique");
             }
             responseBody.setData(data);
-        }
-        catch (Exception e) {
+        } catch (ExceptionService e) {
+            responseBody.setMessage(e.getMessage());
+            Map<String, Object> data = new HashMap<>();
+            data.put("isEmailUnique", false);
+            responseBody.setData(data);
+        } catch (Exception e) {
             responseBody.setMessage("Fail: " + e);
             responseBody.setData(null);
         }
@@ -67,30 +76,26 @@ public class AccountController {
     private ResponseBody registerAccount(@RequestBody Map<String, String> requestBody) {
         ResponseBody responseBody = new ResponseBody();
         try {
-            Map<String, Object> data = accountService.registerAccount(  requestBody.get("username"),
+            Map<String, Object> data = new HashMap<>();
+            UserAccountModel account = accountService.registerAccount(  requestBody.get("username"),
                                                                         requestBody.get("email"),
                                                                         requestBody.get("password"),
                                                                         requestBody.get("licenseKey"));
-            UserAccountModel account = (UserAccountModel) data.get("account");
-            String message = (String) data.get("message");
-            data = new HashMap<>();
-            if (account != null) {
-                data.put("isSuccess", true);
-                Map<String, Object> user = new HashMap<>();
-                user.put("id", account.getUserId());
-                user.put("username", account.getUsername());
-                user.put("role", accountService.getRoleById(account.getRoleId()));
-                data.put("user", user);
-                responseBody.setMessage("A new account is created");
-            }
-            else {
-                data.put("isSuccess", false);
-                data.put("user", null);
-                responseBody.setMessage(message);
-            }
+            data.put("isSuccess", true);
+            Map<String, Object> user = new HashMap<>();
+            user.put("id", account.getUserId());
+            user.put("username", account.getUsername());
+            user.put("role", accountService.getRoleById(account.getRoleId()));
+            data.put("user", user);
+            responseBody.setMessage("A new account is created");
             responseBody.setData(data);
-        }
-        catch (Exception e) {
+        } catch (ExceptionService e) {
+            responseBody.setMessage(e.getMessage());
+            Map<String, Object> data = new HashMap<>();
+            data.put("isSuccess", false);
+            data.put("user", null);
+            responseBody.setData(data);
+        } catch (Exception e) {
             responseBody.setMessage("Fail: " + e);
             responseBody.setData(null);
         }
@@ -106,8 +111,12 @@ public class AccountController {
             data.put("isSuccess", true);
             responseBody.setMessage("A new license key is generated and sent");
             responseBody.setData(data);
-        }
-        catch (Exception e) {
+        } catch (ExceptionService e) {
+            responseBody.setMessage(e.getMessage());
+            Map<String, Object> data = new HashMap<>();
+            data.put("isSuccess", false);
+            responseBody.setData(data);
+        } catch (Exception e) {
             responseBody.setMessage("Fail: " + e);
             responseBody.setData(null);
         }
@@ -119,19 +128,16 @@ public class AccountController {
         ResponseBody responseBody = new ResponseBody();
         try {
             Map<String, Object> data = new HashMap<>();
-            System.out.println(requestBody.get("email"));
-            Boolean isAccountExisted = accountService.requestAuthenticationCode(requestBody.get("email"));
-            if (isAccountExisted) {
-                data.put("isSuccess", true);
-                responseBody.setMessage("A new authentication code is generated and sent");
-            }
-            else {
-                data.put("isSuccess", false);
-                responseBody.setMessage("Account is not active");
-            }
+            accountService.requestAuthenticationCode(requestBody.get("email"));
+            data.put("isSuccess", true);
+            responseBody.setMessage("A new authentication code is generated and sent");
             responseBody.setData(data);
-        }
-        catch (Exception e) {
+        } catch (ExceptionService e) {
+            responseBody.setMessage(e.getMessage());
+            Map<String, Object> data = new HashMap<>();
+            data.put("isSuccess", false);
+            responseBody.setData(data);
+        } catch (Exception e) {
             responseBody.setMessage("Fail: " + e);
             responseBody.setData(null);
         }
@@ -141,34 +147,28 @@ public class AccountController {
     @PostMapping("login")
     private ResponseBody login(@RequestBody Map<String, String> requestBody) {
         ResponseBody responseBody = new ResponseBody();
-        String usernameOrEmail = requestBody.get("usernameOrEmail");
+        String username = requestBody.get("username");
+        String email = requestBody.get("email");
         String password = requestBody.get("password");
         try {
             Map<String, Object> info = new HashMap<>();
-            Boolean isAccountActive = accountService.isAccountActive(usernameOrEmail);
-            Boolean isPasswordCorrect;
-            info.put("isAccountActive", isAccountActive);
-            if (isAccountActive) {
-                Map<String, Object> userLoginInfo = accountService.getUserLoginInfo(usernameOrEmail);
-                isPasswordCorrect = accountService.isPasswordCorrectForUser(usernameOrEmail, password);
-                info.put("isPasswordCorrect", isPasswordCorrect);
-                if (isPasswordCorrect) {
-                    responseBody.setMessage("Account is active and password is correct");
-                    info.put("user", userLoginInfo);
-                }
-                else {
-                    responseBody.setMessage("Account is active but password is not correct");
-                    info.put("user", null);
-                }
-                
+            Map<String, Object> userLoginInfo = accountService.getUserLoginInfo(username, email, password);
+            info.put("user", userLoginInfo);
+            responseBody.setMessage("Account is active and password is correct");
+            responseBody.setData(info);
+        } catch (ExceptionService e) {
+            responseBody.setMessage(e.getMessage());
+            Map<String, Object> data = new HashMap<>();
+            if (e.getMessage().equals("Account is not active")) {
+                data.put("isAccountActive", false);
+                data.put("isPasswordCorrect", false);
             }
             else {
-                responseBody.setMessage("Account is not active");
-                info.put("isPasswordCorrect", null);
-                info.put("user", null);
+                data.put("isAccountActive", true);
+                data.put("isPasswordCorrect", false);
             }
-            
-            responseBody.setData(info);
+            data.put("user", null);
+            responseBody.setData(data);
         }
         catch (Exception e) {
             responseBody.setMessage("Fail: " + e);
@@ -183,23 +183,21 @@ public class AccountController {
         String email = requestBody.get("email");
         String password = requestBody.get("password");
         String authenticationCode = requestBody.get("authenticationCode");
-        Map<String, Object> data = new HashMap<>();
+
         try {
-            String message = accountService.useAuthenticationCode(email, authenticationCode);
-            if (message == "Key is available") {
-                accountService.resetPassword(email, password);
-                data.put("isSuccess", true);
-                data.put("username", accountService.getNameFromEmail(email));
-                responseBody.setMessage("Password is reset");
-            }
-            else {
-                data.put("isSuccess", false);
-                data.put("username", null);
-                responseBody.setMessage(message);                
-            }
+            Map<String, Object> data = new HashMap<>();
+            accountService.resetPassword(email, password, authenticationCode);
+            data.put("isSuccess", true);
+            data.put("username", accountService.getNameFromEmail(email));
+            responseBody.setMessage("Password is reset");
             responseBody.setData(data);
-        }
-        catch (Exception e) {
+        } catch (ExceptionService e) {
+            responseBody.setMessage(e.getMessage());
+            Map<String, Object> data = new HashMap<>();
+            data.put("isSuccess", false);
+            data.put("username", null);
+            responseBody.setData(data);
+        } catch (Exception e) {
             responseBody.setMessage("Fail: " + e);
             responseBody.setData(null);
         }
@@ -211,15 +209,16 @@ public class AccountController {
         ResponseBody responseBody = new ResponseBody();
         try {
             Map<String, Object> data = new HashMap<>();
-            Boolean isAccountExisted = accountService.deleteAccount(requestBody.get("usernameOrEmail"));
-            if (isAccountExisted) {
-                data.put("isSuccess", true);
-                responseBody.setMessage("Account is deleted");
-            }
-            else {
-                data.put("isSuccess", false);
-                responseBody.setMessage("Account is not active");
-            }
+            String username = requestBody.get("username");
+            String email = requestBody.get("email");
+            accountService.deleteAccount(username, email);
+            data.put("isSuccess", true);
+            responseBody.setMessage("Account is deleted");
+            responseBody.setData(data);
+        } catch (ExceptionService e) {
+            Map<String, Object> data = new HashMap<>();
+            data.put("isSuccess", false);
+            responseBody.setMessage(e.getMessage());
             responseBody.setData(data);
         }
         catch (Exception e) {

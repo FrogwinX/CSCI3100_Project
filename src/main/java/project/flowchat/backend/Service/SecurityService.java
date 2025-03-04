@@ -108,39 +108,27 @@ public class SecurityService {
     }
 
     /**
-     * Check if a license key or authentication code is available by matching the email address and key, and checking the expiration time.
-     * Set to unavailable if the key is available
-     * @param email email string
-     * @param key license key or authentication code
-     * @return different condition string of availability
-     */
-    protected String isKeyAvailable(String email, String key, KeyType keyType) {
-        if ((keyType == KeyType.LICENSE && key.length() != 16) || (keyType == KeyType.AUTHENTICATION && key.length() != 6)) {
-            return "Key Type not match";
-        }
-        LicenseModel licenseModel = licenseRepository.getKeyInfo(email, key);
-        if (licenseModel == null) {
-            return "Key not match";
-        }
-        else if (!licenseModel.getIsAvailable()) {
-            return "Key is not available";
-        }
-        setKeyUnavailable(email, key);
-        ZonedDateTime keyExpiredTime = licenseModel.getExpiresAt();
-        Comparator<ZonedDateTime> timeComparator = Comparator.naturalOrder();
-        if (timeComparator.compare(ZonedDateTime.now(ZoneId.of("Asia/Hong_Kong")), keyExpiredTime) > 0) {
-            return "Key is expired";
-        }
-        return "Key is available";
-    }
-
-    /**
      * Set a license key or authentication code to unavailable by matching the email address and key
      * @param email email string
      * @param key license key or authentication code
      */
-    protected void setKeyUnavailable(String email, String key) {
+    protected void setKeyUnavailable(String email, String key, KeyType keyType) throws Exception {
+        if (key == null || (keyType == KeyType.LICENSE && key.length() != 16) || (keyType == KeyType.AUTHENTICATION && key.length() != 6)) {
+            throw new ExceptionService("Key Type not match");
+        }
+        LicenseModel licenseModel = licenseRepository.getKeyInfo(email, key);
+        if (licenseModel == null) {
+            throw new ExceptionService("Key not match");
+        }
+        else if (!licenseModel.getIsAvailable()) {
+            throw new ExceptionService("Key is not available");
+        }
         licenseRepository.setKeyUnavailable(email, key);
+        ZonedDateTime keyExpiredTime = licenseModel.getExpiresAt();
+        Comparator<ZonedDateTime> timeComparator = Comparator.naturalOrder();
+        if (timeComparator.compare(ZonedDateTime.now(ZoneId.of("Asia/Hong_Kong")), keyExpiredTime) > 0) {
+            throw new ExceptionService("Key is expired");
+        }
     }
 
     /**
