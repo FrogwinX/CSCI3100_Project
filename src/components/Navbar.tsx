@@ -46,7 +46,7 @@ const Navbar: React.FC = () => {
             type="text"
             placeholder="Search FlowChat"
             className="w-full h-full rounded-full pl-12 pr-4 border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-300"
-            style={{ backgroundColor: '#E5E7EB' }}
+            style={{ backgroundColor: '#EEEEEE' }}
           />
           <button
             className="absolute left-3 top-1/2 transform -translate-y-1/2 z-30 p-2 bg-transparent border-none outline-none cursor-pointer"
