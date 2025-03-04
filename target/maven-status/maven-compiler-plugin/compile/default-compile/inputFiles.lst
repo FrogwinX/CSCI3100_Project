@@ -9,5 +9,6 @@
 /Users/edwin/Desktop/CSCI3100_Project/src/main/java/project/flowchat/backend/Repository/SystemRepository.java
 /Users/edwin/Desktop/CSCI3100_Project/src/main/java/project/flowchat/backend/Repository/UserAccountRepository.java
 /Users/edwin/Desktop/CSCI3100_Project/src/main/java/project/flowchat/backend/Service/AccountService.java
+/Users/edwin/Desktop/CSCI3100_Project/src/main/java/project/flowchat/backend/Service/ExceptionService.java
 /Users/edwin/Desktop/CSCI3100_Project/src/main/java/project/flowchat/backend/Service/SecurityService.java
 /Users/edwin/Desktop/CSCI3100_Project/src/main/java/project/flowchat/backend/Service/SystemService.java

@@ -10,6 +10,7 @@ project/flowchat/backend/Repository/SystemRepository.class
 project/flowchat/backend/Controller/SystemController.class
 project/flowchat/backend/Service/AccountService$1.class
 project/flowchat/backend/Repository/UserAccountRepository.class
+project/flowchat/backend/Service/ExceptionService.class
 project/flowchat/backend/Service/SecurityService.class
 project/flowchat/backend/BackendApplication.class
 project/flowchat/backend/Service/SecurityService$KeyType.class
