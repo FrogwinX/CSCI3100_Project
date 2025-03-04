@@ -53,10 +53,12 @@ export default function RegisterPage() {
   const [error, setError] = useState("");
   const [emailSent, setEmailSent] = useState(false);
   const [usernameAvailable, setUsernameAvailable] = useState(false);
+  const [emailAvailable, setEmailAvailable] = useState(false);
   const [usernameError, setUsernameError] = useState("");
+  const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const router = useRouter();
-  const { requestLicenseKey, register, checkUsernameUnique} = useAuth();
+  const { requestLicenseKey, register, checkUsernameUnique, checkEmailUnique} = useAuth();
 
   const handleRegister = async (e: FormEvent) => {
     e.preventDefault();
@@ -96,6 +98,32 @@ export default function RegisterPage() {
     } else {
       setUsernameAvailable(false);
       setUsernameError("");
+    }
+  };
+
+  const handleEmailChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newEmail = e.target.value;
+    setEmail(newEmail);
+
+    const emailFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailFormat.test(newEmail)) {
+      setEmailAvailable(false);
+      setEmailError("Invalid email format");
+      return;
+    }
+
+    if (newEmail) {
+      const result = await checkEmailUnique(newEmail);
+      if (result.data.isEmailUnique) {
+        setEmailAvailable(true);
+        setEmailError("");
+      } else {
+        setEmailAvailable(false);
+        setEmailError("This Email has been used");
+      }
+    } else {
+      setEmailAvailable(false);
+      setEmailError("");
     }
   };
 
@@ -150,9 +178,19 @@ export default function RegisterPage() {
             type="email"
             placeholder="Email Address"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={handleEmailChange}
             className="input input-bordered w-full border focus:outline-none focus:border-base-300"
           />
+          {emailAvailable && (
+            <p className="text-info mt-2">
+              √ This Email is available
+            </p>
+          )}
+          {!emailAvailable && emailError && (
+            <p className="text-error mt-2">
+              {emailError}
+            </p>
+          )}
         </div>
 
         <div className="form-control">
