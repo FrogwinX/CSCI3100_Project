@@ -1,33 +1,74 @@
 "use client";
-
-import { FormEvent, useState } from "react";
+import React, { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "../../hooks/useAuth";
+import { OTPInput, SlotProps } from "input-otp";
+
 import Link from "next/link";
 
+function Slot(props: SlotProps) {
+  return (
+    <div
+      className={`relative w-7 h-10 text-[2rem]
+        flex items-center justify-center
+        transition-all duration-300
+        border border-base-300 rounded-md
+        focus:outline-none
+        focus:border-base-300
+        group-hover:border-primary group-focus-within:border-primary
+      `}
+    >
+      <div className="absolute bottom+0 left-0 right-0 text-center text-base-300">
+        _
+      </div>
+      <div className="opacity-100">
+        {props.char ?? ""}
+      </div>
+      {props.hasFakeCaret && <FakeCaret />}
+    </div>
+  );
+}
+
+function FakeCaret() {
+  return (
+    <div className="absolute pointer-events-none inset-0 flex items-center justify-center animate-pulse">
+      <div className="w-px h-8 bg-primary"></div>
+    </div>
+  );
+}
+
+function FakeDash() {
+  return (
+    <div className="flex w-10 justify-center items-center">
+      <div className="w-3 h-1 rounded-full bg-base-300"></div>
+    </div>
+  );
+}
+
 export default function RegisterPage() {
-  const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [licenseKey, setLicenseKey] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [emailSent, setEmailSent] = useState(false);
+  const [usernameAvailable, setUsernameAvailable] = useState(false);
+  const [usernameError, setUsernameError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
   const router = useRouter();
-  const { register } = useAuth();
+  const { requestLicenseKey, register, checkUsernameUnique} = useAuth();
 
-  const handleSubmit = async (e: FormEvent) => {
+  const handleRegister = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
 
-    if (password !== confirmPassword) {
-      setError("Passwords do not match");
-      return;
-    }
 
     setLoading(true);
 
     try {
-      const success = await register(name, email, password);
+      const success = await register(username, email, password, licenseKey);
 
       if (success) {
         router.push("/");
@@ -42,99 +83,203 @@ export default function RegisterPage() {
     }
   };
 
+  const handleUsernameChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newUsername = e.target.value;
+    setUsername(newUsername);
+    if (newUsername) {
+      const result = await checkUsernameUnique(newUsername);
+      if (result.data.isUsernameUnique) {
+        setUsernameAvailable(true);
+        setUsernameError("");
+      } else {
+        setUsernameAvailable(false);
+        setUsernameError("This username has been used");
+      }
+    } else {
+      setUsernameAvailable(false);
+      setUsernameError("");
+    }
+  };
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newPassword = e.target.value;
+    setPassword(newPassword);
+
+    const passwordCriteria = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
+    if (!passwordCriteria.test(newPassword)) {
+      setPasswordError(
+        "Must be at least 8 characters long, including\nAt least one alphabet (a~z, A~Z)\nAt least one numerical character (0~9)"
+      );
+    } else {
+      setPasswordError("");
+    }
+  };
+
   return (
-    <div className="card bg-base-100 w-full max-w-md shadow-xl">
+    <form className="card w-full max-w-xl bg-base-100 shadow-xl" onSubmit={handleRegister}>
       <div className="card-body">
-        <h2 className="card-title text-2xl font-bold text-center w-full text-base-content">
-          Create Account
-        </h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <div className="alert alert-error text-error-content">
-              <span>{error}</span>
-            </div>
+        <h1 className="card-title text-center text-4xl">Register Account</h1>
+
+        <div className="form-control">
+          <label className="label">
+            <span className="label-text text-lg text-base-content ">Username</span>
+          </label>
+          <input
+            type="text"
+            placeholder="Username"
+            value={username}
+            onChange={handleUsernameChange}
+            className="input input-bordered w-full border focus:outline-none focus:border-base-300"
+          />
+          
+          {usernameAvailable && (
+            <p className="text-info mt-2">
+              √ This Username is available
+            </p>
           )}
-
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text text-base-content">Name</span>
-            </label>
-            <input
-              type="text"
-              placeholder="John Doe"
-              className="input input-bordered w-full"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text text-base-content">Email</span>
-            </label>
-            <input
-              type="email"
-              placeholder="email@example.com"
-              className="input input-bordered w-full"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text text-base-content">Password</span>
-            </label>
-            <input
-              type="password"
-              placeholder="••••••••"
-              className="input input-bordered w-full"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={8}
-            />
-          </div>
-
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text text-base-content">
-                Confirm Password
-              </span>
-            </label>
-            <input
-              type="password"
-              placeholder="••••••••"
-              className="input input-bordered w-full"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className="form-control mt-6">
-            <button
-              type="submit"
-              className={`btn btn-primary text-primary-content w-full ${
-                loading ? "loading" : ""
-              }`}
-              disabled={loading}
-            >
-              {loading ? "Creating Account..." : "Create Account"}
-            </button>
-          </div>
-        </form>
-        <div className="text-center mt-4">
-          <p className="text-base-content">
-            Already have an account?{" "}
-            <Link href="/login" className="text-primary hover:underline">
-              Login
-            </Link>
-          </p>
+          {!usernameAvailable && usernameError && (
+            <p className="text-error mt-2">
+              {usernameError}
+            </p>
+          )}
         </div>
-      </div>
-    </div>
-  );
-}
+
+        <div className="form-control">
+          <label className="label">
+            <span className="label-text text-lg text-base-content">Email Address</span>
+          </label>
+          <input
+            type="email"
+            placeholder="Email Address"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="input input-bordered w-full border focus:outline-none focus:border-base-300"
+          />
+        </div>
+
+        <div className="form-control">
+          <button
+            type="button"
+            onClick={() => {
+              requestLicenseKey(email);
+              setEmailSent(true);
+            }}
+            className="btn btn-secondary w-1/2 bg-base-200 text-base-content border-none"
+          >
+            Send Activation Key
+          </button>
+          {emailSent && (
+            <p className="text-info mt-2">
+              √ An email containing activation key has been sent to your registered email
+            </p>
+          )}
+        </div>
+
+        <div className="form-control">
+          <label className="label">
+            <span className="label-text text-lg text-base-content">Activation Key</span>
+          </label>
+          <OTPInput
+            value={licenseKey}
+            onChange={setLicenseKey}
+            maxLength={16}
+            disabled={false}
+            containerClassName="group flex items-center has-[:disabled]:opacity-30"
+            render={({ slots }) => (
+              <>
+                <div className="flex">
+                  {slots.slice(0, 4).map((slot, idx) => (
+                    <Slot key={idx} {...slot} />
+                  ))}
+                </div>
+
+                <FakeDash />
+
+                <div className="flex">
+                  {slots.slice(4, 8).map((slot, idx) => (
+                    <Slot key={idx} {...slot} />
+                  ))}
+                </div>
+
+                <FakeDash />
+
+                <div className="flex">
+                  {slots.slice(8, 12).map((slot, idx) => (
+                    <Slot key={idx} {...slot} />
+                  ))}
+                </div>
+
+                <FakeDash />
+
+                <div className="flex">
+                  {slots.slice(12, 16).map((slot, idx) => (
+                    <Slot key={idx} {...slot} />
+                  ))}
+                </div>
+              </>
+            )}
+          />
+        </div>
+        <div className="form-control">
+          <label className="label">
+            <span className="label-text text-lg text-base-content">Password</span>
+          </label>
+          <input
+            type="password"
+            placeholder="Password"
+            className="input input-bordered w-full border focus:outline-none focus:border-base-300"
+            value={password}
+            onChange={handlePasswordChange}
+            required
+            minLength={8}
+          />
+          {passwordError && (
+            <p className="text-error mt-2 whitespace-pre-line">
+              {passwordError}
+            </p>
+          )}
+        </div>
+
+        <div className="form-control">
+          <label className="label">
+            <span className="label-text text-lg text-base-content">Confirm Password</span>
+          </label>
+          <input
+            type="password"
+            placeholder="Confirm Password"
+            className="input input-bordered w-full border focus:outline-none focus:border-base-300"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            required
+          />
+        </div>
+
+        {password !== confirmPassword && (
+          <p className="text-error">
+            Passwords do not match
+          </p>
+        )}
+
+        <div className="form-control mt-4">
+          <button
+            type="submit"
+            className={`btn btn-primary text-primary-content w-full ${loading ? "loading" : ""}`}
+            disabled={loading}
+          >
+            {loading ? "Creating Account..." : "Create Account"}
+          </button>
+        </div>
+
+        <div className="form-control mt-2">
+          <button
+            type="button"
+            onClick = {() => window.location.href = "/login"}
+            className="btn btn-secondary w-full bg-base-200 text-base-content border-none"
+          >
+            Back
+          </button>
+        </div>
+            </div>
+          </form>
+        );
+      }
