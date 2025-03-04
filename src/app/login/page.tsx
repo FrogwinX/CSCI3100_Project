@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useAuth} from "../../hooks/useAuth";
+import { useAuth} from "@/hooks/useAuth";
 
 export default function Home() {
   const [username, setUsername] = useState("");

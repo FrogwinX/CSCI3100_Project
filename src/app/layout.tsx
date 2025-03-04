@@ -1,3 +1,4 @@
+import React from "react";
 import type { Metadata } from "next";
 import { AuthProvider } from "@/hooks/useAuth";
 import NavBar from "@/components/navigation/NavBar";
@@ -19,20 +20,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-<<<<<<< HEAD
-      <body className="font-inter font-semibold antialiased">
-        {children}
-=======
-      <body className="font-sans antialiased">
+      <body className="font-['Inter'] font-normal">
         <AuthProvider>
-          <div className="flex flex-col min-h-screen">
-            <NavBar />
-            <main className="flex-1 bg-base-200 place-items-center place-content-center ">
-              {children}
-            </main>
-          </div>
+          <NavBar />
+            <div className="flex flex-col min-h-screen">
+              <main className="flex-1 bg-base-200 place-items-center place-content-center ">
+                {children}
+              </main>
+            </div>
         </AuthProvider>
->>>>>>> frontend-pages-and-routes
       </body>
     </html>
   );

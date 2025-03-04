@@ -1,10 +1,8 @@
 "use client";
 import React, { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "../../hooks/useAuth";
+import { useAuth } from "@/hooks/useAuth";
 import { OTPInput, SlotProps } from "input-otp";
-
-import Link from "next/link";
 
 function Slot(props: SlotProps) {
   return (
@@ -279,7 +277,7 @@ export default function RegisterPage() {
             Back
           </button>
         </div>
-            </div>
-          </form>
-        );
-      }
+      </div>
+    </form>
+  );
+}
