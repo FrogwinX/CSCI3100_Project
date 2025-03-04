@@ -163,7 +163,12 @@ public class AccountService {
     public Map<String, Object> getUserLoginInfo(String username, String email, String password) throws Exception  {
         if (username != null && email != null) {
             throw new ExceptionService("Too many parameters");
+        } else if (username != null && email == null && !isUsernameFormatCorrect(username)) {
+            throw new ExceptionService("Invalid username format");
+        } else if (username == null && email != null && !isEmailFormatCorrect(email)) {
+            throw new ExceptionService("Invalid email format");
         }
+
         if (!isAccountActive(username, email)) {
             throw new ExceptionService("Account is not active");
         }
@@ -352,12 +357,18 @@ public class AccountService {
      * @param email email string
      * @throws ExceptionService Too many parameters, Account is not active
      */
+
     public void deleteAccount(String username, String email) throws Exception {
         UserAccountModel userAccountModel = null;
         if (username != null && email != null) {
             throw new ExceptionService("Too many parameters");
+        } else if (username != null && email == null && !isUsernameFormatCorrect(username)) {
+            throw new ExceptionService("Invalid username format");
+        } else if (username == null && email != null && !isEmailFormatCorrect(email)) {
+            throw new ExceptionService("Invalid email format");
         }
-        else if (username != null && email == null) {
+
+        if (username != null && email == null) {
             userAccountModel = userAccountRepository.findUserInfoByUsername(username);
         } else if (username == null && email != null) {
             userAccountModel = userAccountRepository.findUserInfoByEmail(email);
