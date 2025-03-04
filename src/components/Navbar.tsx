@@ -1,22 +1,21 @@
 'use client';
 
-import { useState } from 'react';
+import { FC } from 'react';
 import Drawer from './Drawer';
 
-const Navbar: React.FC = () => {
-  const [isSidebarOpen, setSidebarOpen] = useState<boolean>(false);
+interface NavbarProps {
+  isSidebarOpen: boolean;
+  toggleSidebar: () => void;
+}
 
-  const toggleSidebar = (): void => {
-    setSidebarOpen((prev) => !prev);
-  };
-
+const Navbar: FC<NavbarProps> = ({ isSidebarOpen, toggleSidebar }) => {
   return (
-    <div className="navbar bg-white shadow-md h-16 flex items-center">
+    <div className="navbar bg-base-100 shadow-md h-16 flex items-center relative z-50">
       <Drawer isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
 
       <button
         onClick={toggleSidebar}
-        className="btn btn-square btn-ghost"
+        className="btn btn-square btn-ghost z-50"
         style={{ marginLeft: '20px' }}
       >
         <svg
@@ -45,7 +44,7 @@ const Navbar: React.FC = () => {
           <input
             type="text"
             placeholder="Search FlowChat"
-            className="w-full h-full rounded-full pl-12 pr-4 border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-300"
+            className="w-full h-full rounded-full pl-12 pr-4 border-base-300 focus:outline-none focus:ring-2 focus:ring-primary"
             style={{ backgroundColor: '#EEEEEE' }}
           />
           <button
