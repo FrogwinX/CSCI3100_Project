@@ -1,7 +1,8 @@
 @import "tailwindcss";
+
 @plugin "daisyui" {
     themes: emerald --default;
-  }
+}
 @plugin "daisyui/theme" {
   name: "emerald";
   default: true;
@@ -35,4 +36,4 @@
   --border: 1px;
   --depth: 0;
   --noise: 0;
-  }
+}
