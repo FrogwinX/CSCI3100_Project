@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import ClientLayout from "../components/ClientLayout";
+import NavbarWithDrawer from "../components/NavbarWithDrawer";
 
 export const metadata: Metadata = {
   title: "FlowChat",
@@ -26,7 +26,10 @@ export default function RootLayout({
         />
       </head>
       <body className="font-sans antialiased">
-        <ClientLayout>{children}</ClientLayout>
+        <div className="fixed top-0 left-0 right-0 z-50">
+          <NavbarWithDrawer />
+        </div>
+        <main className="pt-16">{children}</main>
       </body>
     </html>
   );
