@@ -35,10 +35,10 @@ export default function Home() {
     <form className="card w-full max-w-md bg-base-100 shadow-xl">
       <div className="card-body">
         <div className="border-t-20 border-transparent w-full mb-4"></div>
-        <h1 className="card-title text-center text-4xl">Sign In</h1>
+        <h1 className="card-title text-center text-2xl">Sign In</h1>
         <div className="form-control mt-4">
           <label className="label">
-            <span className="label-text text-lg text-base-content">Username / Email</span>
+            <span className="label-text text-sm text-base-content mb-1 font-bold">Username / Email</span>
           </label>
           <input
             type="text"
@@ -49,9 +49,9 @@ export default function Home() {
           />
         </div>
         
-        <div className="form-control mt-4">
+        <div className="form-control mt-2">
           <label className="label">
-            <span className="label-text text-lg text-base-content">Password</span>
+            <span className="label-text text-sm text-base-content mb-1 font-bold">Password</span>
           </label>
           <input
             type="password"
@@ -66,7 +66,7 @@ export default function Home() {
             </a>
           </label>
         </div>
-        <div className="form-control mt-6">
+        <div className="form-control mt-2">
           <button
             type="button"
             onClick={handleLogin}
@@ -82,7 +82,7 @@ export default function Home() {
           <button
             type="button"
             onClick = {() => window.location.href = "/register"}
-            className="btn btn-secondary w-full bg-base-200 text-base-content border-none"
+            className="btn btn-secondary w-full bg-base-300 text-base-content border-none"
           >
             Sign Up
           </button>
