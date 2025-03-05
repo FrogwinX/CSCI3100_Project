@@ -358,8 +358,7 @@ public class AccountService {
      * @throws ExceptionService Too many parameters, Account is not active
      */
 
-    public void deleteAccount(String username, String email) throws Exception {
-        UserAccountModel userAccountModel = null;
+    public void deleteAccount(String username, String email, String password) throws Exception {
         if (username != null && email != null) {
             throw new ExceptionService("Too many parameters");
         } else if (username != null && email == null && !isUsernameFormatCorrect(username)) {
@@ -368,14 +367,20 @@ public class AccountService {
             throw new ExceptionService("Invalid email format");
         }
 
+        if (!isAccountActive(username, email)) {
+            throw new ExceptionService("Account is not active");
+        }
+        if (!isPasswordCorrectForUser(username, email, password)) {
+            throw new ExceptionService("Account is active but password is not correct");
+        }
+
+        UserAccountModel userAccountModel = null;
         if (username != null && email == null) {
             userAccountModel = userAccountRepository.findUserInfoByUsername(username);
         } else if (username == null && email != null) {
             userAccountModel = userAccountRepository.findUserInfoByEmail(email);
         }
-        if (userAccountModel == null) {
-            throw new ExceptionService("Account is not active");
-        }
+
         userAccountRepository.updateUserAccountById(userAccountModel.getUserId());
         if (username != null && email == null) {
             userAccountRepository.deleteAccountByUsername(username);
