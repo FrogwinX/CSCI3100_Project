@@ -10,7 +10,6 @@ function Slot(props: SlotProps) {
       className={`relative w-7 h-10 text-[2rem]
         flex items-center justify-center
         transition-all duration-300
-        border border-base-300 rounded-md
         focus:outline-none
         focus:border-base-300
         group-hover:border-primary group-focus-within:border-primary
@@ -173,7 +172,7 @@ export default function RegisterPage() {
   return (
     <form className="card w-full max-w-xl bg-base-100 shadow-xl" onSubmit={handleRegister}>
       <div className="card-body">
-        <h1 className="card-title text-center text-4xl">Register Account</h1>
+        <h1 className="card-title text-center text-2xl">Register</h1>
         {error && (
           <div className="alert alert-error">
             <span>{error}</span>
@@ -258,49 +257,52 @@ export default function RegisterPage() {
           <label className="label">
             <span className="label-text text-lg text-base-content">Activation Key</span>
           </label>
-          <OTPInput
-            required
-            value={licenseKey}
-            onChange={handleLicenseKeyChange}
-            maxLength={25}
-            minLength={16}
-            disabled={false}
-            containerClassName="group flex items-center has-[:disabled]:opacity-30"
-            render={({ slots }) => (
-              <>
-                <div className="flex">
-                  {slots.slice(0, 4).map((slot, idx) => (
-                    <Slot key={idx} {...slot} />
-                  ))}
-                </div>
+          <div className="border border-base-300 rounded-lg p-4">
+            <OTPInput
+              required
+              value={licenseKey}
+              onChange={handleLicenseKeyChange}
+              maxLength={25}
+              minLength={16}
+              disabled={false}
+              containerClassName="group flex items-center has-[:disabled]:opacity-30"
+              render={({ slots }) => (
+          <>
+            <div className="flex">
+              {slots.slice(0, 4).map((slot, idx) => (
+                <Slot key={idx} {...slot} />
+              ))}
+            </div>
 
-                <FakeDash />
+            <FakeDash />
 
-                <div className="flex">
-                  {slots.slice(4, 8).map((slot, idx) => (
-                    <Slot key={idx} {...slot} />
-                  ))}
-                </div>
+            <div className="flex">
+              {slots.slice(4, 8).map((slot, idx) => (
+                <Slot key={idx} {...slot} />
+              ))}
+            </div>
 
-                <FakeDash />
+            <FakeDash />
 
-                <div className="flex">
-                  {slots.slice(8, 12).map((slot, idx) => (
-                    <Slot key={idx} {...slot} />
-                  ))}
-                </div>
+            <div className="flex">
+              {slots.slice(8, 12).map((slot, idx) => (
+                <Slot key={idx} {...slot} />
+              ))}
+            </div>
 
-                <FakeDash />
+            <FakeDash />
 
-                <div className="flex">
-                  {slots.slice(12, 16).map((slot, idx) => (
-                    <Slot key={idx} {...slot} />
-                  ))}
-                </div>
-              </>
-            )}
-          />
+            <div className="flex">
+              {slots.slice(12, 16).map((slot, idx) => (
+                <Slot key={idx} {...slot} />
+              ))}
+            </div>
+          </>
+              )}
+            />
+          </div>
         </div>
+        
         <div className="form-control">
           <label className="label">
             <span className="label-text text-lg text-base-content">Password</span>
