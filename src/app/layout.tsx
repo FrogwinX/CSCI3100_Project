@@ -22,12 +22,12 @@ export default function RootLayout({
     <html lang="en">
       <body className="font-['Inter'] font-normal">
         <AuthProvider>
-          <NavBar />
-            <div className="flex flex-col min-h-screen">
-              <main className="flex-1 bg-base-200 place-items-center place-content-center ">
-                {children}
-              </main>
-            </div>
+          <div className="flex flex-col min-h-screen">
+            <NavBar />
+            <main className="flex-1 bg-base-200 place-items-center place-content-center ">
+              {children}
+            </main>
+          </div>
         </AuthProvider>
       </body>
     </html>
