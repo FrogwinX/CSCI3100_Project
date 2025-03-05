@@ -153,6 +153,8 @@ public class AccountController {
         try {
             Map<String, Object> info = new HashMap<>();
             Map<String, Object> userLoginInfo = accountService.getUserLoginInfo(username, email, password);
+            info.put("isAccountActive", true);
+            info.put("isPasswordCorrect", true);
             info.put("user", userLoginInfo);
             responseBody.setMessage("Account is active and password is correct");
             responseBody.setData(info);
@@ -211,7 +213,8 @@ public class AccountController {
             Map<String, Object> data = new HashMap<>();
             String username = requestBody.get("username");
             String email = requestBody.get("email");
-            accountService.deleteAccount(username, email);
+            String password = requestBody.get("password");
+            accountService.deleteAccount(username, email, password);
             data.put("isSuccess", true);
             responseBody.setMessage("Account is deleted");
             responseBody.setData(data);
