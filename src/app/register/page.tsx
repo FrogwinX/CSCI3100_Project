@@ -63,8 +63,6 @@ export default function RegisterPage() {
   const handleRegister = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
-
-
     setLoading(true);
 
     try {
@@ -77,7 +75,7 @@ export default function RegisterPage() {
       }
     } catch (error) {
       console.error("Registration error:", error);
-      setError("An error occurred during registration");
+      setError("An error occurred during registration. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -85,6 +83,11 @@ export default function RegisterPage() {
 
   const handleUsernameChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const newUsername = e.target.value;
+    if (newUsername.length > 50) {
+      setUsernameError("Username cannot exceed 50 characters");
+      setUsernameAvailable(false);
+      return;
+    }
     setUsername(newUsername);
     if (newUsername) {
       const result = await checkUsernameUnique(newUsername);
@@ -97,12 +100,17 @@ export default function RegisterPage() {
       }
     } else {
       setUsernameAvailable(false);
-      setUsernameError("");
+      setUsernameError("This field is required");
     }
   };
 
   const handleEmailChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const newEmail = e.target.value;
+    if (newEmail.length > 100) {
+      setEmailError("Email cannot exceed 100 characters");
+      setEmailAvailable(false);
+      return;
+    }
     setEmail(newEmail);
 
     const emailFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -129,6 +137,10 @@ export default function RegisterPage() {
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newPassword = e.target.value;
+    if (newPassword.length > 50) {
+      setPasswordError("Password cannot exceed 50 characters");
+      return;
+    }
     setPassword(newPassword);
 
     const passwordCriteria = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
@@ -141,11 +153,32 @@ export default function RegisterPage() {
     }
   };
 
+  const handleSendActivationKey = async () => {
+    try {
+      await requestLicenseKey(email);
+      setEmailSent(true);
+      setError("");
+    } catch (error) {
+      console.error("Error sending activation key:", error);
+      setError("Failed to send activation key. Please try again.");
+    }
+  };
+
+  const handleLicenseKeyChange = (value: string) => {
+    const cleanedValue = value.replace(/[\s-]/g, "");
+    setLicenseKey(cleanedValue);
+    
+  };
+
   return (
     <form className="card w-full max-w-xl bg-base-100 shadow-xl" onSubmit={handleRegister}>
       <div className="card-body">
         <h1 className="card-title text-center text-4xl">Register Account</h1>
-
+        {error && (
+          <div className="alert alert-error">
+            <span>{error}</span>
+          </div>
+        )}
         <div className="form-control">
           <label className="label">
             <span className="label-text text-lg text-base-content ">Username</span>
@@ -156,6 +189,7 @@ export default function RegisterPage() {
             value={username}
             onChange={handleUsernameChange}
             className="input input-bordered w-full border focus:outline-none focus:border-base-300"
+            required
           />
           
           {usernameAvailable && (
@@ -180,6 +214,7 @@ export default function RegisterPage() {
             value={email}
             onChange={handleEmailChange}
             className="input input-bordered w-full border focus:outline-none focus:border-base-300"
+            required
           />
           {emailAvailable && (
             <p className="text-info mt-2">
@@ -197,14 +232,22 @@ export default function RegisterPage() {
           <button
             type="button"
             onClick={() => {
-              requestLicenseKey(email);
-              setEmailSent(true);
+              if (!email) {
+                setEmailError("Email is required to send activation key");
+                return;
+              }
+              const emailFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+              if (!emailFormat.test(email)) {
+                setEmailError("Invalid email format");
+                return;
+              }
+              handleSendActivationKey();
             }}
             className="btn btn-secondary w-1/2 bg-base-200 text-base-content border-none"
           >
             Send Activation Key
           </button>
-          {emailSent && (
+          {email && emailSent && !error && (
             <p className="text-info mt-2">
               √ An email containing activation key has been sent to your registered email
             </p>
@@ -216,9 +259,11 @@ export default function RegisterPage() {
             <span className="label-text text-lg text-base-content">Activation Key</span>
           </label>
           <OTPInput
+            required
             value={licenseKey}
-            onChange={setLicenseKey}
-            maxLength={16}
+            onChange={handleLicenseKeyChange}
+            maxLength={25}
+            minLength={16}
             disabled={false}
             containerClassName="group flex items-center has-[:disabled]:opacity-30"
             render={({ slots }) => (
@@ -285,7 +330,14 @@ export default function RegisterPage() {
             placeholder="Confirm Password"
             className="input input-bordered w-full border focus:outline-none focus:border-base-300"
             value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
+            onChange={(e) => {
+              setConfirmPassword(e.target.value);
+              if (e.target.value !== password) {
+                e.target.setCustomValidity("Passwords do not match");
+              } else {
+                e.target.setCustomValidity("");
+              }
+            }}
             required
           />
         </div>
