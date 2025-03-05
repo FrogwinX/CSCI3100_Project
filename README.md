@@ -1,9 +1,11 @@
 ## Development Guideline
 
-- Create a new branch with `git checkout -b frontend-NEW-COMPONENT-NAME` before building a new component (replace "NEW-COMPONENT-NAME" with the actual component name)
+- Create a new branch with `git checkout -b frontend-new-feature` before building new components (replace "new-feature" with the actual name)
 - Organize the files with reference to [Project Directories](#project-directories)
 - Colour components by following the [colour guideline](https://v5.daisyui.com/docs/colors/)
+- Use icons from [Font Awesome Icon](https://fontawesome.com/icons)
 - Use `npm run dev` to start a development server to see real-time file changes
+- Use `npm run build` to verifiy your code can be compiled under ESLint rules.
 - Have others to review your code before merging the component branch to the frontend branch
 
 ## Project Directories

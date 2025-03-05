@@ -49,18 +49,27 @@ interface UsernameCheckData {
   isUsernameUnique: boolean;
 }
 
+interface DeleteAccountData {
+  isSuccess: boolean;
+}
+
+interface ResetPasswordData {
+  username: string | null;
+  isSuccess: boolean;
+}
+
 // User Type
 interface User {
   id: number;
   name: string;
-  email: string;
   roles: string;
 }
 
 interface AuthContextType {
   user: User | null;
   login: (
-    usernameOrEmail: string,
+    username: string | null,
+    email: string | null,
     password: string
   ) => Promise<ApiResponse<LoginData>>;
   register: (
@@ -76,6 +85,16 @@ interface AuthContextType {
   checkUsernameUnique: (
     username: string
   ) => Promise<ApiResponse<UsernameCheckData>>;
+  deleteAccount: (
+    username: string | null,
+    email: string | null,
+    password: string
+  ) => Promise<ApiResponse<DeleteAccountData>>;
+  resetPasswordByEmail: (
+    email: string,
+    password: string,
+    authenticationCode: string
+  ) => Promise<ApiResponse<ResetPasswordData>>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -110,14 +129,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (
-    usernameOrEmail: string,
+    username: string | null,
+    email: string | null,
     password: string
   ): Promise<ApiResponse<LoginData>> => {
     try {
       const result = await apiFetch<LoginData>("Account/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ usernameOrEmail, password }),
+        body: JSON.stringify({ username, email, password }),
       });
 
       // Successful login
@@ -129,7 +149,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const userData: User = {
           id: result.data.user.id,
           name: result.data.user.username,
-          email: usernameOrEmail.includes("@") ? usernameOrEmail : "",
           roles: result.data.user.roles,
         };
         setUser(userData);
@@ -137,7 +156,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       return result;
-    } catch (error) {
+    } catch {
       return {
         message: "Login failed",
         data: {
@@ -163,7 +182,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       return result;
-    } catch (error) {
+    } catch {
       return {
         message: "An error occurred during registration",
         data: {
@@ -185,7 +204,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       return result;
-    } catch (error) {
+    } catch {
       return {
         message: "Failed to request license key",
         data: { isSuccess: false },
@@ -207,7 +226,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       );
 
       return result;
-    } catch (error) {
+    } catch {
       return {
         message: "Failed to request authentication code",
         data: { isSuccess: false },
@@ -222,7 +241,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return await apiFetch<EmailCheckData>(
         `Account/isEmailUnique?email=${encodeURIComponent(email)}`
       );
-    } catch (error) {
+    } catch {
       return {
         message: "Failed to check email uniqueness",
         data: { isEmailUnique: false },
@@ -237,7 +256,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return await apiFetch<UsernameCheckData>(
         `Account/isUsernameUnique?username=${encodeURIComponent(username)}`
       );
-    } catch (error) {
+    } catch {
       return {
         message: "Failed to check username uniqueness",
         data: { isUsernameUnique: false },
@@ -248,6 +267,59 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     setUser(null);
     localStorage.removeItem("user");
+  };
+
+  const deleteAccount = async (
+    username: string | null,
+    email: string | null,
+    password: string
+  ): Promise<ApiResponse<DeleteAccountData>> => {
+    try {
+      const result = await apiFetch<DeleteAccountData>(
+        "Account/deleteAccount",
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, username, password }),
+        }
+      );
+
+      // If the current user was deleted, also log them out
+      if (result.data.isSuccess) {
+        logout();
+      }
+
+      return result;
+    } catch {
+      return {
+        message: "Failed to delete account",
+        data: { isSuccess: false },
+      };
+    }
+  };
+
+  const resetPasswordByEmail = async (
+    email: string,
+    password: string,
+    authenticationCode: string
+  ): Promise<ApiResponse<ResetPasswordData>> => {
+    try {
+      const result = await apiFetch<ResetPasswordData>(
+        "Account/resetPasswordByEmail",
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password, authenticationCode }),
+        }
+      );
+
+      return result;
+    } catch {
+      return {
+        message: "Failed to reset password",
+        data: { username: null, isSuccess: false },
+      };
+    }
   };
 
   return (
@@ -261,6 +333,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         requestAuthCode,
         checkEmailUnique,
         checkUsernameUnique,
+        deleteAccount,
+        resetPasswordByEmail,
       }}
     >
       {children}
