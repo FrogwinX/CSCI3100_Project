@@ -24,3 +24,4 @@
 3. [DaisyUI](https://v5.daisyui.com/components/)
 4. [Tailwind CSS](https://tailwindcss.com/docs/styling-with-utility-classes)
 5. [API Specification](https://github.com/FrogwinX/CSCI3100_Project/blob/main/API%20Specification.md)
+6. [Font Awesome Icon](https://docs.fontawesome.com/web/setup/get-started)
