@@ -347,12 +347,12 @@ export default function RegisterForm() {
             }}
           />
         </div>
-
         {password !== confirmPassword && (
           <p className="text-error">
             Passwords do not match
           </p>
         )}
+
         <div className="form-control mt-4">
           <button
             type="submit"
@@ -361,6 +361,9 @@ export default function RegisterForm() {
             onClick={(e) => {
                 if (!username || !email || !password || !confirmPassword || !licenseKey) {
                     e.preventDefault();
+                    setUsernameError("Username is required.");
+                    setEmailError("Email is required.");
+                    setPasswordError("Password is required.");
                     return;
                 }
                 if (usernameError || emailError || passwordError || password !== confirmPassword) {

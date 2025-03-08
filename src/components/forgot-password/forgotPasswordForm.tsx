@@ -217,7 +217,7 @@ export default function ForgotPasswordPage() {
           </label>
         </div>
 
-        <div className="inline-block border border-base-300 rounded-xl w-full max-w-xs">
+        <div className="pl-2 inline-block border border-base-300 rounded-xl w-full max-w-xs">
           <OTPInput
             value={AuthCode}
             onChange={handleAuthCodeChange}
@@ -292,6 +292,8 @@ export default function ForgotPasswordPage() {
             onClick={(e) => {
               if (!email || !password || !confirmPassword || !AuthCode) {
                   e.preventDefault();
+                  setEmailError("Email is required.");
+                  setPasswordError("Password is required.");
                   return;
               }
               if (emailError || passwordError || password !== confirmPassword) {
