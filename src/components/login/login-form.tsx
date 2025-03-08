@@ -44,7 +44,7 @@ export default function Login() {
     <form className="card w-full max-w-md bg-base-100 shadow-xl">
       <div className="card-body">
         <div className="border-t-20 border-transparent w-full mb-4"></div>
-        <h1 className="card-title text-center text-2xl">Sign In</h1>
+        <h1 className="card-title text-center text-3xl">Sign In</h1>
         <div className="form-control mt-4">
           <label className="label">
             <span className="label-text text-sm text-base-content mb-1 font-bold">Username / Email</span>
