@@ -240,6 +240,10 @@ export default function RegisterPage() {
                 setEmailError("Invalid email format");
                 return;
               }
+              if(!emailAvailable) {
+                setEmailError("This Email has been used");
+              }
+              
               handleSendActivationKey();
             }}
             className="btn btn-secondary w-1/2 bg-base-200 text-base-content border-none"

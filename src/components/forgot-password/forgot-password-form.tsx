@@ -165,14 +165,15 @@ export default function ForgotPasswordPage() {
             className="input input-bordered w-full border focus:outline-none focus:border-base-300"
             required
           />
-          {emailAvailable && (
-            <p className="text-info mt-2">
-              √ This Email is available
-            </p>
-          )}
-          {!emailAvailable && emailError && (
+          
+          {emailError && ( //this is unregisterd email
             <p className="text-error mt-2">
               {emailError}
+            </p>
+          )}
+          {emailAvailable && !emailError &&( //this is unregisterd email
+            <p className="text-error mt-2">
+              This Email is unregisterd
             </p>
           )}
         </div>
@@ -190,6 +191,10 @@ export default function ForgotPasswordPage() {
                 setEmailError("Invalid email format");
                 return;
               }
+              if (emailAvailable) {
+                setEmailError("This Email is unregisterd");
+                return;
+              }
               handleSendActivationKey();
             }}
             className="btn btn-secondary w-1/2 bg-base-200 text-base-content border-none"
@@ -198,7 +203,7 @@ export default function ForgotPasswordPage() {
           </button>
           {email && emailSent && !error && (
             <p className="text-info mt-2">
-              √ An email containing activation key has been sent to your registered email
+              √ An email containing authentication code has been sent to your registered email
             </p>
           )}
         </div>
