@@ -79,12 +79,17 @@ export default function RegisterPage() {
       setLoading(false);
     }
   };
-
   const handleUsernameChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const newUsername = e.target.value;
     if (newUsername.length > 50) {
       setUsernameError("Username cannot exceed 50 characters");
       setUsernameAvailable(false);
+      return;
+    }
+    if (newUsername.includes("@")) {
+      setUsernameError("Username cannot contain the symbol '@'");
+      setUsernameAvailable(false);
+      setUsername(newUsername);
       return;
     }
     setUsername(newUsername);
@@ -353,12 +358,17 @@ export default function RegisterPage() {
             Passwords do not match
           </p>
         )}
-
         <div className="form-control mt-4">
           <button
             type="submit"
             className={`btn btn-primary text-primary-content w-full ${loading ? "loading" : ""}`}
             disabled={loading}
+            onClick={(e) => {
+              if (usernameError || emailError || passwordError || password !== confirmPassword) {
+          e.preventDefault();
+          return;
+              }
+            }}
           >
             {loading ? "Creating Account..." : "Create Account"}
           </button>
