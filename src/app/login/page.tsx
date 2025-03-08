@@ -1,22 +1,31 @@
 "use client";
 
 import React, { useState } from "react";
-import { useAuth} from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Home() {
-  const [username, setUsername] = useState("");
+  const [UsernameOrEmail, setUserInput] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const { login } = useAuth();
 
   const handleLogin = async () => {
-    if (!username || !password) {
+    let username = null;
+    let email = null;
+
+    if (UsernameOrEmail.includes("@")) {
+      email = UsernameOrEmail;
+    } else {
+      username = UsernameOrEmail;
+    }
+
+    if (!UsernameOrEmail || !password) {
       setError("Both fields are required.");
       return;
     }
 
     try {
-      const result = await login(username, password);
+      const result = await login(username, email, password);
 
       if (!result.data.isPasswordCorrect || !result.data.isAccountActive) {
         setError("Invalid username or password.");
@@ -43,8 +52,8 @@ export default function Home() {
           <input
             type="text"
             placeholder="Username or email"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            value={UsernameOrEmail}
+            onChange={(e) => setUserInput(e.target.value)}
             className="input input-bordered w-full border focus:outline-none focus:border-base-300"
           />
         </div>
