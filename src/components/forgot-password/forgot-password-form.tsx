@@ -79,37 +79,45 @@ export default function ForgotPasswordPage() {
 
   const handleEmailChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const newEmail = e.target.value;
-    if (newEmail.length > 100) {
-      setEmailError("Email cannot exceed 100 characters");
-      setEmailAvailable(false);
-      return;
-    }
-    setEmail(newEmail);
-
-    const emailFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailFormat.test(newEmail)) {
-      setEmailAvailable(false);
-      setEmailError("Invalid email format");
-      return;
-    }
-
     if (newEmail) {
-      const result = await checkEmailUnique(newEmail);
-      if (result.data.isEmailUnique) {
-        setEmailAvailable(true);
-        setEmailError("This Email is unregisterd");
-      } else {
-        setEmailAvailable(false);
-        setEmailError("");
-      }
+        if (newEmail.length > 100) {
+          setEmailError("Email cannot exceed 100 characters");
+          setEmailAvailable(false);
+          return;
+        }
+        setEmail(newEmail);
+
+        const emailFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (newEmail && !emailFormat.test(newEmail)) {
+          setEmailAvailable(false);
+          setEmailError("Invalid email format");
+          return;
+        }
+        else {
+          setEmailError("This Email is unregistered");
+        }
+        const result = await checkEmailUnique(newEmail);
+        if (result.data.isEmailUnique) {
+            setEmailAvailable(false);
+            setEmailError("This Email is unregistered");
+        } else {
+            setEmailAvailable(true);
+            setEmailError("");
+        }
     } else {
-      setEmailAvailable(false);
-      setEmailError("");
+        setEmailAvailable(false);
+        setEmailError("This field is required");
+        setEmail(newEmail);
     }
   };
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newPassword = e.target.value;
+    if (!newPassword) {
+      setPasswordError("This field is required");
+      setPassword(newPassword);
+        return;
+    }
     if (newPassword.length > 50) {
       setPasswordError("Password cannot exceed 50 characters");
       return;
@@ -171,11 +179,7 @@ export default function ForgotPasswordPage() {
               {emailError}
             </p>
           )}
-          {emailAvailable && !emailError &&( //this is unregisterd email
-            <p className="text-error mt-2">
-              This Email is unregisterd
-            </p>
-          )}
+
         </div>
 
         <div className="form-control">
@@ -192,7 +196,7 @@ export default function ForgotPasswordPage() {
                 return;
               }
               if (emailAvailable) {
-                setEmailError("This Email is unregisterd");
+                setEmailError("This Email is unregistered");
                 return;
               }
               handleSendActivationKey();
@@ -273,10 +277,10 @@ export default function ForgotPasswordPage() {
             value={confirmPassword}
             onChange={(e) => {
               setConfirmPassword(e.target.value);
-              if (e.target.value !== password) {
-                e.target.setCustomValidity("Passwords do not match");
-              } else {
-                e.target.setCustomValidity("");
+              if (password && (e.target.value !== password)) {
+                <p className="text-error">
+                    Passwords do not match
+                </p>
               }
             }}
             required
@@ -294,6 +298,16 @@ export default function ForgotPasswordPage() {
             type="submit"
             className={`btn btn-primary text-primary-content w-full ${loading ? "loading" : ""}`}
             disabled={loading}
+            onClick={(e) => {
+              if (!email || !password || !confirmPassword || !AuthCode) {
+                  e.preventDefault();
+                  return;
+              }
+              if (emailError || passwordError || password !== confirmPassword) {
+                  e.preventDefault();
+                  return;
+              }
+            }}
           >
             {loading ? "Reseting Password..." : "Reset Password"}
           </button>

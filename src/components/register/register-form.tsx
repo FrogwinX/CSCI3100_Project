@@ -110,37 +110,42 @@ export default function RegisterForm() {
 
   const handleEmailChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const newEmail = e.target.value;
-    if (newEmail.length > 100) {
-      setEmailError("Email cannot exceed 100 characters");
-      setEmailAvailable(false);
-      return;
-    }
-    setEmail(newEmail);
-
-    const emailFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailFormat.test(newEmail)) {
-      setEmailAvailable(false);
-      setEmailError("Invalid email format");
-      return;
-    }
-
     if (newEmail) {
-      const result = await checkEmailUnique(newEmail);
-      if (result.data.isEmailUnique) {
-        setEmailAvailable(true);
-        setEmailError("");
-      } else {
+        if (newEmail.length > 100) {
+        setEmailError("Email cannot exceed 100 characters");
         setEmailAvailable(false);
-        setEmailError("This Email has been used");
-      }
+        return;
+        }
+        setEmail(newEmail);
+
+        const emailFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (newEmail && !emailFormat.test(newEmail)) {
+        setEmailAvailable(false);
+        setEmailError("Invalid email format");
+        return;
+        }
+        const result = await checkEmailUnique(newEmail);
+        if (result.data.isEmailUnique) {
+            setEmailAvailable(true);
+            setEmailError("");
+        } else {
+            setEmailAvailable(false);
+            setEmailError("This Email has been used");
+        }
     } else {
       setEmailAvailable(false);
-      setEmailError("");
+      setEmailError("This field is required");
+      setEmail(newEmail);
     }
   };
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newPassword = e.target.value;
+    if (!newPassword) {
+      setPasswordError("This field is required");
+      setPassword(newPassword);
+        return;
+    }
     if (newPassword.length > 50) {
       setPasswordError("Password cannot exceed 50 characters");
       return;
@@ -193,10 +198,9 @@ export default function RegisterForm() {
             value={username}
             onChange={handleUsernameChange}
             className="input input-bordered w-full border focus:outline-none focus:border-base-300"
-            required
           />
           
-          {usernameAvailable && (
+          {username && usernameAvailable && (
             <p className="text-info mt-2">
               √ This Username is available
             </p>
@@ -218,7 +222,6 @@ export default function RegisterForm() {
             value={email}
             onChange={handleEmailChange}
             className="input input-bordered w-full border focus:outline-none focus:border-base-300"
-            required
           />
           {emailAvailable && (
             <p className="text-info mt-2">
@@ -245,10 +248,6 @@ export default function RegisterForm() {
                 setEmailError("Invalid email format");
                 return;
               }
-              if(!emailAvailable) {
-                setEmailError("This Email has been used");
-              }
-              
               handleSendActivationKey();
             }}
             className="btn btn-secondary w-1/2 bg-base-200 text-base-content border-none"
@@ -268,7 +267,6 @@ export default function RegisterForm() {
           </label>
           <div className="border border-base-300 rounded-lg p-4">
             <OTPInput
-              required
               value={licenseKey}
               onChange={handleLicenseKeyChange}
               maxLength={25}
@@ -322,8 +320,6 @@ export default function RegisterForm() {
             className="input input-bordered w-full border focus:outline-none focus:border-base-300"
             value={password}
             onChange={handlePasswordChange}
-            required
-            minLength={8}
           />
           {passwordError && (
             <p className="text-error mt-2 whitespace-pre-line">
@@ -343,13 +339,12 @@ export default function RegisterForm() {
             value={confirmPassword}
             onChange={(e) => {
               setConfirmPassword(e.target.value);
-              if (e.target.value !== password) {
-                e.target.setCustomValidity("Passwords do not match");
-              } else {
-                e.target.setCustomValidity("");
+              if (password && (e.target.value !== password)) {
+                <p className="text-error">
+                    Passwords do not match
+                </p>
               }
             }}
-            required
           />
         </div>
 
@@ -364,10 +359,14 @@ export default function RegisterForm() {
             className={`btn btn-primary text-primary-content w-full ${loading ? "loading" : ""}`}
             disabled={loading}
             onClick={(e) => {
-              if (usernameError || emailError || passwordError || password !== confirmPassword) {
-          e.preventDefault();
-          return;
-              }
+                if (!username || !email || !password || !confirmPassword || !licenseKey) {
+                    e.preventDefault();
+                    return;
+                }
+                if (usernameError || emailError || passwordError || password !== confirmPassword) {
+                    e.preventDefault();
+                    return;
+                }
             }}
           >
             {loading ? "Creating Account..." : "Create Account"}
