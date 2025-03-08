@@ -164,7 +164,7 @@ export default function RegisterPage() {
   };
 
   const handleLicenseKeyChange = (value: string) => {
-    const cleanedValue = value.replace(/[\s-]/g, "");
+    const cleanedValue = value.replace(/[\s-]/g, "").slice(0, 16);
     setLicenseKey(cleanedValue);
     
   };

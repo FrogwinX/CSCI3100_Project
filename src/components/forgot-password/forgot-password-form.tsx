@@ -7,7 +7,7 @@ import { OTPInput, SlotProps } from "input-otp";
 function Slot(props: SlotProps) {
   return (
     <div
-      className={`relative w-7 h-10 text-[2rem]
+      className={`relative w-10 h-10 text-[2rem]  // Increased width from w-7 to w-10
         flex items-center justify-center
         transition-all duration-300
         focus:outline-none
@@ -16,7 +16,7 @@ function Slot(props: SlotProps) {
       `}
     >
       <div className="absolute bottom+0 left-0 right-0 text-center text-base-300">
-        ___
+        _
       </div>
       <div className="opacity-100">
         {props.char ?? ""}
@@ -37,7 +37,7 @@ function FakeCaret() {
 function FakeDash() {
   return (
     <div className="flex w-16 justify-center items-center"> {/* Increased width from w-10 to w-16 */}
-      <div className="w-3 h-1 rounded-full bg-base-300"></div>
+      <div className="w-10 h-1 rounded-full bg-base-300"></div>
     </div>
   );
 }
@@ -138,7 +138,7 @@ export default function ForgotPasswordPage() {
   };
 
   const handleAuthCodeChange = (value: string) => {
-    const cleanedValue = value.replace(/[\s-]/g, "");
+    const cleanedValue = value.replace(/[\s-]/g, "").slice(0, 6);
     setAuthCode(cleanedValue);
     
   };
@@ -212,20 +212,22 @@ export default function ForgotPasswordPage() {
           <label className="label">
             <span className="label-text text-lg text-base-content">Authentication Code</span>
           </label>
-          <div className="border border-base-300 rounded-lg p-4">
-            <OTPInput
-              required
-              value={AuthCode}
-              onChange={handleAuthCodeChange}
-              maxLength={9}
-              minLength={6}
-              disabled={false}
-              containerClassName="group flex items-center has-[:disabled]:opacity-30"
-              render={({ slots }) => (
-          <>
+        </div>
+
+        <div className="inline-block border border-base-300 rounded-lg p-4 w-full max-w-xs">
+          <OTPInput
+            required
+            value={AuthCode}
+            onChange={handleAuthCodeChange}
+            maxLength={9}
+            minLength={6}
+            disabled={false}
+            containerClassName="group flex items-center has-[:disabled]:opacity-30"
+            render={({ slots }) => (
+            <>
             <div className="flex">
               {slots.slice(0, 3).map((slot, idx) => (
-                <Slot key={idx} {...slot} />
+          <Slot key={idx} {...slot} />
               ))}
             </div>
 
@@ -233,15 +235,13 @@ export default function ForgotPasswordPage() {
 
             <div className="flex">
               {slots.slice(3, 6).map((slot, idx) => (
-                <Slot key={idx} {...slot} />
+          <Slot key={idx} {...slot} />
               ))}
             </div>
-          </>
-              )}
-            />
-          </div>
+            </>
+            )}
+          />
         </div>
-        
         <div className="form-control">
           <label className="label">
             <span className="label-text text-lg text-base-content">Password</span>
