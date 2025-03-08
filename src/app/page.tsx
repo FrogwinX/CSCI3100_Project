@@ -27,6 +27,3 @@ export default function Home() {
 
   return <div className="skeleton size-full"></div>;
 }
-
-  return <div className="skeleton size-full"></div>;
-}
