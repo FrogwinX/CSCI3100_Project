@@ -97,10 +97,10 @@ export default function ForgotPasswordPage() {
       const result = await checkEmailUnique(newEmail);
       if (result.data.isEmailUnique) {
         setEmailAvailable(true);
-        setEmailError("");
+        setEmailError("This Email is unregisterd");
       } else {
         setEmailAvailable(false);
-        setEmailError("This Email has been used");
+        setEmailError("");
       }
     } else {
       setEmailAvailable(false);
@@ -201,7 +201,7 @@ export default function ForgotPasswordPage() {
           >
             Send Authentication Code
           </button>
-          {email && emailSent && !error && (
+          {email && !emailAvailable && emailSent && !emailError && (
             <p className="text-info mt-2">
               √ An email containing authentication code has been sent to your registered email
             </p>

@@ -250,7 +250,7 @@ export default function RegisterPage() {
           >
             Send Activation Key
           </button>
-          {email && emailSent && !error && (
+          {email && emailSent && !emailError && (
             <p className="text-info mt-2">
               √ An email containing activation key has been sent to your registered email
             </p>
