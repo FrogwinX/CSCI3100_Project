@@ -20,7 +20,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="font-['Inter'] font-normal">
+      <body className="font-['Inter'] font-semibold">
         <AuthProvider>
           <div className="flex flex-col min-h-screen">
             <NavBar />
