@@ -217,7 +217,7 @@ export default function ForgotPasswordPage() {
           </label>
         </div>
 
-        <div className="inline-block border border-base-300 rounded-lg p-4 w-full max-w-xs">
+        <div className="inline-block border border-base-300 rounded-xl w-full max-w-xs">
           <OTPInput
             value={AuthCode}
             onChange={handleAuthCodeChange}
@@ -274,16 +274,11 @@ export default function ForgotPasswordPage() {
             value={confirmPassword}
             onChange={(e) => {
               setConfirmPassword(e.target.value);
-              if (password && (e.target.value !== password)) {
-                <p className="text-error">
-                    Passwords do not match
-                </p>
-              }
             }}
           />
         </div>
 
-        {password !== confirmPassword && (
+        {confirmPassword && password !== confirmPassword && (
           <p className="text-error">
             Passwords do not match
           </p>

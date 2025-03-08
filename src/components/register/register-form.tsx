@@ -265,7 +265,7 @@ export default function RegisterForm() {
           <label className="label">
             <span className="label-text text-lg text-base-content">Activation Key</span>
           </label>
-          <div className="border border-base-300 rounded-lg p-4">
+          <div className="border border-base-300 rounded-xl w-full">
             <OTPInput
               value={licenseKey}
               onChange={handleLicenseKeyChange}
