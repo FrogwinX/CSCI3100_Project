@@ -2,6 +2,7 @@
 
 - Create a new branch with `git checkout -b frontend-new-feature` before building new components (replace "new-feature" with the actual name)
 - Organize the files with reference to [Project Directories](#project-directories)
+- Name components in *Camel Case* (e.g. passwordResetForm) and routes in *Kebab Case* (e.g. password-reset), nouns always come first
 - Colour components by following the [colour guideline](https://v5.daisyui.com/docs/colors/)
 - Use icons from [Font Awesome Icon](https://fontawesome.com/icons)
 - Use `npm run dev` to start a development server to see real-time file changes
