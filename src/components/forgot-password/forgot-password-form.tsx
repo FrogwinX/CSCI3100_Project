@@ -171,7 +171,6 @@ export default function ForgotPasswordPage() {
             value={email}
             onChange={handleEmailChange}
             className="input input-bordered w-full border focus:outline-none focus:border-base-300"
-            required
           />
           
           {emailError && ( //this is unregisterd email
@@ -220,7 +219,6 @@ export default function ForgotPasswordPage() {
 
         <div className="inline-block border border-base-300 rounded-lg p-4 w-full max-w-xs">
           <OTPInput
-            required
             value={AuthCode}
             onChange={handleAuthCodeChange}
             maxLength={9}
@@ -256,7 +254,6 @@ export default function ForgotPasswordPage() {
             className="input input-bordered w-full border focus:outline-none focus:border-base-300"
             value={password}
             onChange={handlePasswordChange}
-            required
             minLength={8}
           />
           {passwordError && (
@@ -283,7 +280,6 @@ export default function ForgotPasswordPage() {
                 </p>
               }
             }}
-            required
           />
         </div>
 
