@@ -7,16 +7,15 @@ import { OTPInput, SlotProps } from "input-otp";
 function Slot(props: SlotProps) {
   return (
     <div
-      className={`relative w-4 h-10
+      className={`relative w-10 h-10
         flex items-center justify-center flex-auto
         transition-all duration-300
         focus:outline-none
         focus:border-base-300
-        group-hover:border-primary group-focus-within:border-primary
       `}
     >
       <div className="absolute bottom+0 left-0 right-0 text-center text-base-300 text-2xl">
-        _
+        __
       </div>
       <div className="opacity-100">{props.char ?? ""}</div>
       {props.hasFakeCaret && <FakeCaret />}
@@ -27,15 +26,15 @@ function Slot(props: SlotProps) {
 function FakeCaret() {
   return (
     <div className="absolute pointer-events-none inset-0 flex items-center justify-center animate-pulse">
-      <div className="w-px h-8 bg-primary"></div>
+      <div className="w-px h-4 bg-primary"></div>
     </div>
   );
 }
 
 function FakeDash() {
   return (
-    <div className="flex justify-center items-center">
-      <div className="w-3 h-1 rounded-full bg-base-300"></div>
+    <div className="flex justify-center items-center mx-1">
+      <div className="w-6 h-1 rounded-full bg-base-300"></div>
     </div>
   );
 }
@@ -224,7 +223,7 @@ export default function ForgotPasswordPage() {
           </label>
         </div>
 
-        <div className="pl-2 inline-block border border-base-300 rounded-xl w-full max-w-xs">
+        <div className="pl-4 inline-block border border-base-300 rounded-xl w-full max-w-xs ">
           <OTPInput
             value={AuthCode}
             onChange={handleAuthCodeChange}
@@ -234,7 +233,7 @@ export default function ForgotPasswordPage() {
             containerClassName="group flex gap-2"
             render={({ slots }) => (
             <>
-            <div className="flex-auto ">
+            <div className="flex flex-row ">
               {slots.slice(0, 3).map((slot, idx) => (
                 <Slot key={idx} {...slot} />
               ))}
@@ -242,7 +241,7 @@ export default function ForgotPasswordPage() {
 
             <FakeDash />
 
-            <div className="flex-auto">
+            <div className="flex flex-row">
               {slots.slice(3, 6).map((slot, idx) => (
                 <Slot key={idx} {...slot} />
               ))}
