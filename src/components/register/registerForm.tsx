@@ -7,20 +7,18 @@ import { OTPInput, SlotProps } from "input-otp";
 function Slot(props: SlotProps) {
   return (
     <div
-      className={`relative w-7 h-10 text-[2rem]
-        flex items-center justify-center
+      className={`relative w-4 h-10
+        flex items-center justify-center flex-auto
         transition-all duration-300
         focus:outline-none
         focus:border-base-300
         group-hover:border-primary group-focus-within:border-primary
       `}
     >
-      <div className="absolute bottom+0 left-0 right-0 text-center text-base-300">
+      <div className="absolute bottom+0 left-0 right-0 text-center text-base-300 text-2xl">
         _
       </div>
-      <div className="opacity-100">
-        {props.char ?? ""}
-      </div>
+      <div className="opacity-100">{props.char ?? ""}</div>
       {props.hasFakeCaret && <FakeCaret />}
     </div>
   );
@@ -29,14 +27,14 @@ function Slot(props: SlotProps) {
 function FakeCaret() {
   return (
     <div className="absolute pointer-events-none inset-0 flex items-center justify-center animate-pulse">
-      <div className="w-px h-8 bg-primary"></div>
+      <div className="w-px h-4 bg-base-content"></div>
     </div>
   );
 }
 
 function FakeDash() {
   return (
-    <div className="flex w-10 justify-center items-center">
+    <div className="flex justify-center items-center">
       <div className="w-3 h-1 rounded-full bg-base-300"></div>
     </div>
   );
@@ -57,7 +55,8 @@ export default function RegisterForm() {
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const router = useRouter();
-  const { requestLicenseKey, register, checkUsernameUnique, checkEmailUnique} = useAuth();
+  const { requestLicenseKey, register, checkUsernameUnique, checkEmailUnique } =
+    useAuth();
 
   const handleRegister = async (e: FormEvent) => {
     e.preventDefault();
@@ -79,7 +78,9 @@ export default function RegisterForm() {
       setLoading(false);
     }
   };
-  const handleUsernameChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUsernameChange = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const newUsername = e.target.value;
     if (newUsername.length > 50) {
       setUsernameError("Username cannot exceed 50 characters");
@@ -108,30 +109,32 @@ export default function RegisterForm() {
     }
   };
 
-  const handleEmailChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleEmailChange = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const newEmail = e.target.value;
     if (newEmail) {
-        if (newEmail.length > 100) {
+      if (newEmail.length > 100) {
         setEmailError("Email cannot exceed 100 characters");
         setEmailAvailable(false);
         return;
-        }
-        setEmail(newEmail);
+      }
+      setEmail(newEmail);
 
-        const emailFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (newEmail && !emailFormat.test(newEmail)) {
+      const emailFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (newEmail && !emailFormat.test(newEmail)) {
         setEmailAvailable(false);
         setEmailError("Invalid email format");
         return;
-        }
-        const result = await checkEmailUnique(newEmail);
-        if (result.data.isEmailUnique) {
-            setEmailAvailable(true);
-            setEmailError("");
-        } else {
-            setEmailAvailable(false);
-            setEmailError("This Email has been used");
-        }
+      }
+      const result = await checkEmailUnique(newEmail);
+      if (result.data.isEmailUnique) {
+        setEmailAvailable(true);
+        setEmailError("");
+      } else {
+        setEmailAvailable(false);
+        setEmailError("This Email has been used");
+      }
     } else {
       setEmailAvailable(false);
       setEmailError("This field is required");
@@ -139,12 +142,14 @@ export default function RegisterForm() {
     }
   };
 
-  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePasswordChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const newPassword = e.target.value;
     if (!newPassword) {
       setPasswordError("This field is required");
       setPassword(newPassword);
-        return;
+      return;
     }
     if (newPassword.length > 50) {
       setPasswordError("Password cannot exceed 50 characters");
@@ -176,13 +181,15 @@ export default function RegisterForm() {
   const handleLicenseKeyChange = (value: string) => {
     const cleanedValue = value.replace(/[\s-]/g, "").slice(0, 16);
     setLicenseKey(cleanedValue);
-    
   };
 
   return (
-    <form className="card w-full max-w-xl bg-base-100 shadow-xl" onSubmit={handleRegister}>
-      <div className="card-body">
-        <h1 className="card-title text-center text-2xl">Register</h1>
+    <form
+      className="card w-fit min-w-sm lg:min-w-lg max-w-xl bg-base-100 shadow-xl"
+      onSubmit={handleRegister}
+    >
+      <div className="card-body gap-4">
+        <h1 className="card-title text-center text-4xl pt-12">Register</h1>
         {error && (
           <div className="alert alert-error">
             <span>{error}</span>
@@ -190,7 +197,7 @@ export default function RegisterForm() {
         )}
         <div className="form-control">
           <label className="label">
-            <span className="label-text text-lg text-base-content ">Username</span>
+            <span className="label-text text-base-content ">Username</span>
           </label>
           <input
             type="text"
@@ -199,22 +206,18 @@ export default function RegisterForm() {
             onChange={handleUsernameChange}
             className="input input-bordered w-full border focus:outline-none focus:border-base-300"
           />
-          
+
           {username && usernameAvailable && (
-            <p className="text-info mt-2">
-              √ This Username is available
-            </p>
+            <p className="text-info mt-2">√ This Username is available</p>
           )}
           {!usernameAvailable && usernameError && (
-            <p className="text-error mt-2">
-              {usernameError}
-            </p>
+            <p className="text-error mt-2">{usernameError}</p>
           )}
         </div>
 
         <div className="form-control">
           <label className="label">
-            <span className="label-text text-lg text-base-content">Email Address</span>
+            <span className="label-text text-base-content">Email Address</span>
           </label>
           <input
             type="email"
@@ -224,14 +227,10 @@ export default function RegisterForm() {
             className="input input-bordered w-full border focus:outline-none focus:border-base-300"
           />
           {emailAvailable && (
-            <p className="text-info mt-2">
-              √ This Email is available
-            </p>
+            <p className="text-info mt-2">√ This Email is available</p>
           )}
           {!emailAvailable && emailError && (
-            <p className="text-error mt-2">
-              {emailError}
-            </p>
+            <p className="text-error mt-2">{emailError}</p>
           )}
         </div>
 
@@ -250,69 +249,70 @@ export default function RegisterForm() {
               }
               handleSendActivationKey();
             }}
-            className="btn btn-secondary w-1/2 bg-base-200 text-base-content border-none"
+            className="btn btn-secondary w-fit bg-base-200 text-base-content border-none"
           >
             Send Activation Key
           </button>
           {email && emailSent && !emailError && (
             <p className="text-info mt-2">
-              √ An email containing activation key has been sent to your registered email
+              √ An email containing activation key has been sent to your
+              registered email
             </p>
           )}
         </div>
 
         <div className="form-control">
           <label className="label">
-            <span className="label-text text-lg text-base-content">Activation Key</span>
+            <span className="label-text text-base-content">Activation Key</span>
           </label>
-          <div className="border border-base-300 rounded-xl w-full">
+          <div className="border border-base-300 rounded-xl w-full px-2">
             <OTPInput
               value={licenseKey}
               onChange={handleLicenseKeyChange}
               maxLength={25}
               minLength={16}
               disabled={false}
-              containerClassName="group flex items-center has-[:disabled]:opacity-30"
+              containerClassName="flex gap-2"
               render={({ slots }) => (
-          <>
-            <div className="flex">
-              {slots.slice(0, 4).map((slot, idx) => (
-                <Slot key={idx} {...slot} />
-              ))}
-            </div>
+                <>
+                  <div className="flex flex-auto">
+                    {slots.slice(0, 4).map((slot, idx) => (
+                      <Slot key={idx} {...slot} />
+                    ))}
+                  </div>
 
-            <FakeDash />
+                  <FakeDash />
 
-            <div className="flex">
-              {slots.slice(4, 8).map((slot, idx) => (
-                <Slot key={idx} {...slot} />
-              ))}
-            </div>
+                  <div className="flex flex-auto">
+                    {slots.slice(4, 8).map((slot, idx) => (
+                      <Slot key={idx} {...slot} />
+                    ))}
+                  </div>
 
-            <FakeDash />
+                  <FakeDash />
 
-            <div className="flex">
-              {slots.slice(8, 12).map((slot, idx) => (
-                <Slot key={idx} {...slot} />
-              ))}
-            </div>
+                  <div className="flex flex-auto">
+                    {slots.slice(8, 12).map((slot, idx) => (
+                      <Slot key={idx} {...slot} />
+                    ))}
+                  </div>
 
-            <FakeDash />
+                  <FakeDash />
 
-            <div className="flex">
-              {slots.slice(12, 16).map((slot, idx) => (
-                <Slot key={idx} {...slot} />
-              ))}
-            </div>
-          </>
+                  <div className="flex flex-auto">
+                    {slots.slice(12, 16).map((slot, idx) => (
+                      <Slot key={idx} {...slot} />
+                    ))}
+                  </div>
+                </>
               )}
             />
           </div>
         </div>
-        
+
         <div className="form-control">
           <label className="label">
-            <span className="label-text text-lg text-base-content">Password</span>
+            <span className="label-text text-base-content">Password</span>
           </label>
           <input
             type="password"
@@ -330,7 +330,9 @@ export default function RegisterForm() {
 
         <div className="form-control">
           <label className="label">
-            <span className="label-text text-lg text-base-content">Confirm Password</span>
+            <span className="label-text text-base-content">
+              Confirm Password
+            </span>
           </label>
           <input
             type="password"
@@ -339,37 +341,46 @@ export default function RegisterForm() {
             value={confirmPassword}
             onChange={(e) => {
               setConfirmPassword(e.target.value);
-              if (password && (e.target.value !== password)) {
-                <p className="text-error">
-                    Passwords do not match
-                </p>
+              if (password && e.target.value !== password) {
+                <p className="text-error">Passwords do not match</p>;
               }
             }}
           />
         </div>
         {password !== confirmPassword && (
-          <p className="text-error">
-            Passwords do not match
-          </p>
+          <p className="text-error">Passwords do not match</p>
         )}
 
         <div className="form-control mt-4">
           <button
             type="submit"
-            className={`btn btn-primary text-primary-content w-full ${loading ? "loading" : ""}`}
+            className={`btn btn-primary text-primary-content w-full ${
+              loading ? "loading" : ""
+            }`}
             disabled={loading}
             onClick={(e) => {
-                if (!username || !email || !password || !confirmPassword || !licenseKey) {
-                    e.preventDefault();
-                    setUsernameError("Username is required.");
-                    setEmailError("Email is required.");
-                    setPasswordError("Password is required.");
-                    return;
-                }
-                if (usernameError || emailError || passwordError || password !== confirmPassword) {
-                    e.preventDefault();
-                    return;
-                }
+              if (
+                !username ||
+                !email ||
+                !password ||
+                !confirmPassword ||
+                !licenseKey
+              ) {
+                e.preventDefault();
+                setUsernameError("Username is required.");
+                setEmailError("Email is required.");
+                setPasswordError("Password is required.");
+                return;
+              }
+              if (
+                usernameError ||
+                emailError ||
+                passwordError ||
+                password !== confirmPassword
+              ) {
+                e.preventDefault();
+                return;
+              }
             }}
           >
             {loading ? "Creating Account..." : "Create Account"}
@@ -379,7 +390,7 @@ export default function RegisterForm() {
         <div className="form-control mt-2">
           <button
             type="button"
-            onClick = {() => window.location.href = "/login"}
+            onClick={() => (window.location.href = "/login")}
             className="btn btn-secondary w-full bg-base-200 text-base-content border-none"
           >
             Back

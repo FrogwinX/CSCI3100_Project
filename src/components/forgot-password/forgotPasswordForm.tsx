@@ -7,20 +7,18 @@ import { OTPInput, SlotProps } from "input-otp";
 function Slot(props: SlotProps) {
   return (
     <div
-      className={`relative w-10 h-10 text-[2rem]  // Increased width from w-7 to w-10
-        flex items-center justify-center
+      className={`relative w-4 h-10
+        flex items-center justify-center flex-auto
         transition-all duration-300
         focus:outline-none
         focus:border-base-300
         group-hover:border-primary group-focus-within:border-primary
       `}
     >
-      <div className="absolute bottom+0 left-0 right-0 text-center text-base-300">
+      <div className="absolute bottom+0 left-0 right-0 text-center text-base-300 text-2xl">
         _
       </div>
-      <div className="opacity-100">
-        {props.char ?? ""}
-      </div>
+      <div className="opacity-100">{props.char ?? ""}</div>
       {props.hasFakeCaret && <FakeCaret />}
     </div>
   );
@@ -36,8 +34,8 @@ function FakeCaret() {
 
 function FakeDash() {
   return (
-    <div className="flex w-16 justify-center items-center"> {/* Increased width from w-10 to w-16 */}
-      <div className="w-10 h-1 rounded-full bg-base-300"></div>
+    <div className="flex justify-center items-center">
+      <div className="w-3 h-1 rounded-full bg-base-300"></div>
     </div>
   );
 }
@@ -54,7 +52,8 @@ export default function ForgotPasswordPage() {
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const router = useRouter();
-  const { requestAuthCode,checkEmailUnique, resetPasswordByEmail} = useAuth();
+  const { requestAuthCode,checkEmailUnique, resetPasswordByEmail } =
+   useAuth();
 
   const handleRegister = async (e: FormEvent) => {
     e.preventDefault();
@@ -77,7 +76,9 @@ export default function ForgotPasswordPage() {
     }
   };
 
-  const handleEmailChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleEmailChange = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const newEmail = e.target.value;
     if (newEmail) {
         if (newEmail.length > 100) {
@@ -111,7 +112,9 @@ export default function ForgotPasswordPage() {
     }
   };
 
-  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePasswordChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const newPassword = e.target.value;
     if (!newPassword) {
       setPasswordError("This field is required");
@@ -134,7 +137,8 @@ export default function ForgotPasswordPage() {
     }
   };
 
-  const handleSendActivationKey = async () => {
+  const handleSendActivationKey = async (
+  ) => {
     try {
       await requestAuthCode(email);
       setEmailSent(true);
@@ -145,16 +149,20 @@ export default function ForgotPasswordPage() {
     }
   };
 
-  const handleAuthCodeChange = (value: string) => {
+  const handleAuthCodeChange = (
+    value: string
+  ) => {
     const cleanedValue = value.replace(/[\s-]/g, "").slice(0, 6);
     setAuthCode(cleanedValue);
-    
   };
 
   return (
-    <form className="card w-full max-w-xl bg-base-100 shadow-xl" onSubmit={handleRegister}>
-      <div className="card-body">
-        <h1 className="card-title text-center text-2xl">Forgot Password</h1>
+    <form 
+      className="card w-full max-w-xl bg-base-100 shadow-xl" 
+      onSubmit={handleRegister}
+    >
+      <div className="card-body gap-2">
+        <h1 className="card-title text-center text-4xl pt-12">Forgot Password</h1>
         {error && (
           <div className="alert alert-error">
             <span>{error}</span>
@@ -163,7 +171,7 @@ export default function ForgotPasswordPage() {
         
         <div className="form-control">
           <label className="label">
-            <span className="label-text text-lg text-base-content">Email Address</span>
+            <span className="label-text text-base-content">Email Address</span>
           </label>
           <input
             type="email"
@@ -173,10 +181,8 @@ export default function ForgotPasswordPage() {
             className="input input-bordered w-full border focus:outline-none focus:border-base-300"
           />
           
-          {emailError && ( //this is unregisterd email
-            <p className="text-error mt-2">
-              {emailError}
-            </p>
+          {emailError && (
+            <p className="text-error mt-2">{emailError}</p>
           )}
 
         </div>
@@ -194,26 +200,27 @@ export default function ForgotPasswordPage() {
                 setEmailError("Invalid email format");
                 return;
               }
-              if (emailAvailable) {
+              if (!emailAvailable) {
                 setEmailError("This Email is unregistered");
                 return;
               }
               handleSendActivationKey();
             }}
-            className="btn btn-secondary w-1/2 bg-base-200 text-base-content border-none"
+            className="btn btn-secondary w-fit bg-base-200 text-base-content border-none"
           >
             Send Authentication Code
           </button>
-          {email && !emailAvailable && emailSent && !emailError && (
+          {email && emailAvailable && emailSent && !emailError && (
             <p className="text-info mt-2">
-              √ An email containing authentication code has been sent to your registered email
+              √ An email containing authentication code has been sent to your
+              registered email
             </p>
           )}
         </div>
 
         <div className="form-control">
           <label className="label">
-            <span className="label-text text-lg text-base-content">Authentication Code</span>
+            <span className="label-text text-base-content">Authentication Code</span>
           </label>
         </div>
 
@@ -224,20 +231,20 @@ export default function ForgotPasswordPage() {
             maxLength={9}
             minLength={6}
             disabled={false}
-            containerClassName="group flex items-center has-[:disabled]:opacity-30"
+            containerClassName="group flex gap-2"
             render={({ slots }) => (
             <>
-            <div className="flex">
+            <div className="flex-auto ">
               {slots.slice(0, 3).map((slot, idx) => (
-          <Slot key={idx} {...slot} />
+                <Slot key={idx} {...slot} />
               ))}
             </div>
 
             <FakeDash />
 
-            <div className="flex">
+            <div className="flex-auto">
               {slots.slice(3, 6).map((slot, idx) => (
-          <Slot key={idx} {...slot} />
+                <Slot key={idx} {...slot} />
               ))}
             </div>
             </>
@@ -246,7 +253,7 @@ export default function ForgotPasswordPage() {
         </div>
         <div className="form-control">
           <label className="label">
-            <span className="label-text text-lg text-base-content">Password</span>
+            <span className="label-text text-base-content">Password</span>
           </label>
           <input
             type="password"
@@ -265,7 +272,9 @@ export default function ForgotPasswordPage() {
 
         <div className="form-control">
           <label className="label">
-            <span className="label-text text-lg text-base-content">Confirm Password</span>
+            <span className="label-text text-base-content">
+              Confirm Password
+            </span>
           </label>
           <input
             type="password"
@@ -279,9 +288,7 @@ export default function ForgotPasswordPage() {
         </div>
 
         {confirmPassword && password !== confirmPassword && (
-          <p className="text-error">
-            Passwords do not match
-          </p>
+          <p className="text-error">Passwords do not match</p>
         )}
 
         <div className="form-control mt-4">
@@ -290,13 +297,20 @@ export default function ForgotPasswordPage() {
             className={`btn btn-primary text-primary-content w-full ${loading ? "loading" : ""}`}
             disabled={loading}
             onClick={(e) => {
-              if (!email || !password || !confirmPassword || !AuthCode) {
+              if (!email ||
+                  !password ||
+                  !confirmPassword ||
+                  !AuthCode
+                ) {
                   e.preventDefault();
                   setEmailError("Email is required.");
                   setPasswordError("Password is required.");
                   return;
               }
-              if (emailError || passwordError || password !== confirmPassword) {
+              if (emailError ||
+                  passwordError ||
+                  password !== confirmPassword
+                ) {
                   e.preventDefault();
                   return;
               }
@@ -309,7 +323,7 @@ export default function ForgotPasswordPage() {
         <div className="form-control mt-2">
           <button
             type="button"
-            onClick = {() => window.location.href = "/login"}
+            onClick={() => window.location.href = "/login"}
             className="btn btn-secondary w-full bg-base-200 text-base-content border-none"
           >
             Back
