@@ -1,8 +1,13 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
 @import "tailwindcss";
+
+body {
+  font-family: 'Inter', sans-serif;
+}
+
 @plugin "daisyui" {
     themes: emerald --default;
-  }
+}
 @plugin "daisyui/theme" {
   name: "emerald";
   default: true;
@@ -28,12 +33,18 @@
   --color-warning-content: oklch(0% 0 0);
   --color-error: oklch(64.84% 0.293 29.349);
   --color-error-content: oklch(12.968% 0.058 29.349);
-  --radius-selector: 1rem;
-  --radius-field: 1rem;
-  --radius-box: 1rem;
+  --radius-selector: 0.65rem;
+  --radius-field: 0.65rem;
+  --radius-box: 0.65rem;
   --size-selector: 0.25rem;
   --size-field: 0.25rem;
   --border: 1px;
   --depth: 0;
   --noise: 0;
-  }
+}
+
+/* 覆寫樣式 */
+main {
+  min-height: calc(100vh - 64px);
+  background-color: oklch(95% 0 0); /* bg-base-200 */
+}
