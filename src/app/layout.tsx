@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { AuthProvider } from "@/hooks/useAuth";
 import NavBar from "@/components/navigation/NavBar";
 import "./globals.css";
+import NavbarWithDrawer from "../components/NavbarWithDrawer";
 
 export const metadata: Metadata = {
   title: "FlowChat",
@@ -10,6 +11,7 @@ export const metadata: Metadata = {
     "A discussion forum designed to provide an engaging and user-friendly platform for individuals to connect, communicate, and share ideas.",
   icons: {
     icon: "/flowchat_logo.png",
+  },
   },
 };
 

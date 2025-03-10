@@ -7,7 +7,7 @@ body {
 
 @plugin "daisyui" {
     themes: emerald --default;
-  }
+}
 @plugin "daisyui/theme" {
   name: "emerald";
   default: true;
@@ -41,4 +41,10 @@ body {
   --border: 1px;
   --depth: 0;
   --noise: 0;
-  }
+}
+
+/* 覆寫樣式 */
+main {
+  min-height: calc(100vh - 64px);
+  background-color: oklch(95% 0 0); /* bg-base-200 */
+}
