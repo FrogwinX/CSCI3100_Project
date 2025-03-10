@@ -3,5 +3,9 @@ import React from "react";
 import RegisterForm from "@/components/forms/formRegister";
 
 export default function RegisterPage() {
-  return <RegisterForm />;
+  return (
+  <div className="flex items-center justify-center h-screen">
+    <RegisterForm />
+  </div>
+  );
 }

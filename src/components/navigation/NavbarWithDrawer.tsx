@@ -2,6 +2,10 @@
 
 import Link from 'next/link';
 import { FC, useState } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faBars, faMagnifyingGlass, faUser, faCog } from '@fortawesome/free-solid-svg-icons'
+import { faComment, faPaperPlane, faBell, faEnvelope } from '@fortawesome/free-regular-svg-icons'
+import { faGithub } from '@fortawesome/free-brands-svg-icons'
 
 interface NavbarProps {
   isSidebarOpen?: boolean;
@@ -22,17 +26,14 @@ const NavbarWithDrawer: FC<NavbarProps> = () => {
 
   return (
     <>
-      <div className="navbar bg-base-100 shadow-md h-16 flex items-center fixed top-0 left-0 right-0 z-50">
+      <div className="navbar bg-base-100 shadow-md h-16 flex items-center top-0 left-0 right-0 z-50">
         <div className="navbar-start">
           <button
             onClick={toggleSidebar}
             className="btn btn-square btn-ghost z-50 flex items-center justify-center"
             style={{ marginLeft: '20px' }}
           >
-            <i
-              className="fa-solid fa-bars h-6 w-6 text-base-content"
-              style={{ transform: 'translateY(5px)', color: '#000' }}
-            ></i>
+            <FontAwesomeIcon icon={faBars} />
           </button>
           <div className="ml-2 flex items-center">
             <img
@@ -55,10 +56,7 @@ const NavbarWithDrawer: FC<NavbarProps> = () => {
               className="absolute left-3 top-1/2 transform -translate-y-1/2 z-30 p-2 bg-transparent border-none outline-none cursor-pointer flex items-center justify-center"
               onClick={() => console.log('Search button clicked')}
             >
-              <i
-                className="fa-solid fa-magnifying-glass h-5 w-5 text-base-content"
-                style={{ transform: 'translateY(2px)', color: '#000' }}
-              ></i>
+              <FontAwesomeIcon icon={faMagnifyingGlass} />
             </button>
           </div>
         </div>
@@ -66,11 +64,8 @@ const NavbarWithDrawer: FC<NavbarProps> = () => {
         <div className="navbar-end mr-4">
           <div className="dropdown dropdown-end">
             <label tabIndex={0} className="btn btn-ghost btn-circle avatar">
-              <div className="w-10 rounded-full flex items-center justify-center bg-base-200">
-                <i
-                  className="fa-solid fa-user h-6 w-6 text-base-content"
-                  style={{ transform: 'translateY(8px)', color: '#000' }}
-                ></i>
+              <div className="w-10 rounded-full flex items-center justify-center content-center bg-base-200">
+                <FontAwesomeIcon icon={faUser} />
               </div>
             </label>
             <ul tabIndex={0} className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
@@ -97,7 +92,7 @@ const NavbarWithDrawer: FC<NavbarProps> = () => {
                   onClick={toggleForum}
                   className="flex items-center w-full p-2 rounded-lg hover:bg-base-200 transition-colors"
                 >
-                  <i className="fa-solid fa-comments h-5 w-5 mr-2 text-base-content" style={{ color: '#000' }}></i>
+                  <FontAwesomeIcon icon={faComment}/>
                   Forum
                   <i
                     className={`fa-solid fa-chevron-right h-5 w-5 ml-auto transition-transform duration-200 ${
@@ -113,7 +108,6 @@ const NavbarWithDrawer: FC<NavbarProps> = () => {
                         href="/latest"
                         className="flex items-center p-2 rounded-lg hover:bg-base-200 transition-colors"
                       >
-                        <i className="fa-solid fa-clock h-5 w-5 mr-2 text-base-content" style={{ color: '#000' }}></i>
                         Latest
                       </Link>
                     </li>
@@ -122,7 +116,6 @@ const NavbarWithDrawer: FC<NavbarProps> = () => {
                         href="/popular"
                         className="flex items-center p-2 rounded-lg hover:bg-base-200 transition-colors"
                       >
-                        <i className="fa-solid fa-fire h-5 w-5 mr-2 text-base-content" style={{ color: '#000' }}></i>
                         Popular
                       </Link>
                     </li>
@@ -131,7 +124,6 @@ const NavbarWithDrawer: FC<NavbarProps> = () => {
                         href="/following"
                         className="flex items-center p-2 rounded-lg hover:bg-base-200 transition-colors"
                       >
-                        <i className="fa-solid fa-users h-5 w-5 mr-2 text-base-content" style={{ color: '#000' }}></i>
                         Following
                       </Link>
                     </li>
@@ -144,7 +136,7 @@ const NavbarWithDrawer: FC<NavbarProps> = () => {
                   href="/direct-messages"
                   className="flex items-center p-2 rounded-lg hover:bg-base-200 transition-colors"
                 >
-                  <i className="fa-solid fa-paper-plane h-5 w-5 mr-2 text-base-content" style={{ color: '#000' }}></i>
+                  <FontAwesomeIcon icon={faPaperPlane}/>
                   Direct Messages
                 </Link>
               </li>
@@ -154,7 +146,7 @@ const NavbarWithDrawer: FC<NavbarProps> = () => {
                   href="/notifications"
                   className="flex items-center p-2 rounded-lg hover:bg-base-200 transition-colors"
                 >
-                  <i className="fa-solid fa-bell h-5 w-5 mr-2 text-base-content" style={{ color: '#000' }}></i>
+                  <FontAwesomeIcon icon={faBell}/>
                   Notifications
                 </Link>
               </li>
@@ -164,7 +156,7 @@ const NavbarWithDrawer: FC<NavbarProps> = () => {
                   href="/settings"
                   className="flex items-center p-2 rounded-lg hover:bg-base-200 transition-colors"
                 >
-                  <i className="fa-solid fa-cog h-5 w-5 mr-2 text-base-content" style={{ color: '#000' }}></i>
+                  <FontAwesomeIcon icon={faCog}/>
                   Settings
                 </Link>
               </li>
@@ -179,7 +171,7 @@ const NavbarWithDrawer: FC<NavbarProps> = () => {
                 href="/source"
                 className="flex items-center p-2 rounded-lg hover:bg-base-200 transition-colors"
               >
-                <i className="fa-solid fa-code h-5 w-5 mr-2 text-base-content" style={{ color: '#000' }}></i>
+                <FontAwesomeIcon icon={faGithub}/>
                 Source
               </Link>
             </li>
@@ -188,7 +180,7 @@ const NavbarWithDrawer: FC<NavbarProps> = () => {
                 href="/contact"
                 className="flex items-center p-2 rounded-lg hover:bg-base-200 transition-colors"
               >
-                <i className="fa-solid fa-envelope h-5 w-5 mr-2 text-base-content" style={{ color: '#000' }}></i>
+                <FontAwesomeIcon icon={faEnvelope}/>
                 Contact
               </Link>
             </li>
