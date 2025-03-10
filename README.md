@@ -1,0 +1,28 @@
+## Development Guideline
+
+- Create a new branch with `git checkout -b frontend-new-feature` before building new components (replace "new-feature" with the actual name)
+- Organize the files with reference to [Project Directories](#project-directories)
+- Name components in *Camel Case* (e.g. passwordResetForm) and routes in *Kebab Case* (e.g. password-reset), nouns always come first
+- Colour components by following the [colour guideline](https://v5.daisyui.com/docs/colors/)
+- Use icons from [Font Awesome Icon](https://fontawesome.com/icons)
+- Use `npm run dev` to start a development server to see real-time file changes
+- Use `npm run build` to verifiy your code can be compiled under ESLint rules.
+- Have others to review your code before merging the component branch to the frontend branch
+
+## Project Directories
+
+- **public/**: Contains static files that are directly served by the web server
+- **src/**: Contains the application source code.
+- **src/app/**: Contains Next.js App Router pages and layouts
+- **src/components/**: Contains reusable components, <ins>each in its own folder</ins>.
+- **src/utils/**: Contains utility functions and shared libraries.
+- **src/hooks/**: Contains custom React hooks.
+
+## Documentation and Useful Links
+
+1. [Next.js](https://nextjs.org/docs/app/building-your-application)
+2. [React](https://react.dev/learn/your-first-component)
+3. [DaisyUI](https://v5.daisyui.com/components/)
+4. [Tailwind CSS](https://tailwindcss.com/docs/styling-with-utility-classes)
+5. [API Specification](https://github.com/FrogwinX/CSCI3100_Project/blob/main/API%20Specification.md)
+6. [Font Awesome Icon](https://docs.fontawesome.com/web/setup/get-started)
