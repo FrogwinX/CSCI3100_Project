@@ -35,7 +35,7 @@ function FakeCaret() {
 function FakeDash() {
   return (
     <div className="flex justify-center items-center">
-      <div className="w-3 h-1 rounded-full bg-base-300"></div>
+      <div className="w-3 h-1 rounded-full bg-neutral-400"></div>
     </div>
   );
 }

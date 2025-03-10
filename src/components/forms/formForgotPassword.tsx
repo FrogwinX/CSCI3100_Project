@@ -34,9 +34,9 @@ function FakeCaret() {
 function FakeDash() {
   return (
     <div className="flex justify-center items-center mx-1">
-      <div className="w-6 h-1 rounded-full bg-base-300"></div>
+      <div className="w-4 h-1 rounded-full bg-neutral-400"></div>
     </div>
-  );
+  ); 
 }
 
 export default function ForgotPasswordPage() {
