@@ -36,7 +36,7 @@ function FakeDash() {
     <div className="flex justify-center items-center mx-1">
       <div className="w-4 h-1 rounded-full bg-neutral-400"></div>
     </div>
-  ); 
+  );
 }
 
 export default function ForgotPasswordPage() {
@@ -51,8 +51,7 @@ export default function ForgotPasswordPage() {
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const router = useRouter();
-  const { requestAuthCode,checkEmailUnique, resetPasswordByEmail } =
-   useAuth();
+  const { requestAuthCode, checkEmailUnique, resetPasswordByEmail } = useAuth();
 
   const handleRegister = async (e: FormEvent) => {
     e.preventDefault();
@@ -75,50 +74,45 @@ export default function ForgotPasswordPage() {
     }
   };
 
-  const handleEmailChange = async (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleEmailChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const newEmail = e.target.value;
     if (newEmail) {
-        if (newEmail.length > 100) {
-          setEmailError("Email cannot exceed 100 characters");
-          setEmailAvailable(false);
-          return;
-        }
-        setEmail(newEmail);
-
-        const emailFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (newEmail && !emailFormat.test(newEmail)) {
-          setEmailAvailable(false);
-          setEmailError("Invalid email format");
-          return;
-        }
-        else {
-          setEmailError("This Email is unregistered");
-        }
-        const result = await checkEmailUnique(newEmail);
-        if (result.data.isEmailUnique) {
-            setEmailAvailable(false);
-            setEmailError("This Email is unregistered");
-        } else {
-            setEmailAvailable(true);
-            setEmailError("");
-        }
-    } else {
+      if (newEmail.length > 100) {
+        setEmailError("Email cannot exceed 100 characters");
         setEmailAvailable(false);
-        setEmailError("This field is required");
-        setEmail(newEmail);
+        return;
+      }
+      setEmail(newEmail);
+
+      const emailFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (newEmail && !emailFormat.test(newEmail)) {
+        setEmailAvailable(false);
+        setEmailError("Invalid email format");
+        return;
+      } else {
+        setEmailError("This Email is unregistered");
+      }
+      const result = await checkEmailUnique(newEmail);
+      if (result.data.isEmailUnique) {
+        setEmailAvailable(false);
+        setEmailError("This Email is unregistered");
+      } else {
+        setEmailAvailable(true);
+        setEmailError("");
+      }
+    } else {
+      setEmailAvailable(false);
+      setEmailError("This field is required");
+      setEmail(newEmail);
     }
   };
 
-  const handlePasswordChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newPassword = e.target.value;
     if (!newPassword) {
       setPasswordError("This field is required");
       setPassword(newPassword);
-        return;
+      return;
     }
     if (newPassword.length > 50) {
       setPasswordError("Password cannot exceed 50 characters");
@@ -136,8 +130,7 @@ export default function ForgotPasswordPage() {
     }
   };
 
-  const handleSendActivationKey = async (
-  ) => {
+  const handleSendActivationKey = async () => {
     try {
       await requestAuthCode(email);
       setEmailSent(true);
@@ -148,26 +141,26 @@ export default function ForgotPasswordPage() {
     }
   };
 
-  const handleAuthCodeChange = (
-    value: string
-  ) => {
+  const handleAuthCodeChange = (value: string) => {
     const cleanedValue = value.replace(/[\s-]/g, "").slice(0, 6);
     setAuthCode(cleanedValue);
   };
 
   return (
-    <form 
-      className="card w-full max-w-xl bg-base-100 shadow-xl" 
+    <form
+      className="card w-full max-w-xl bg-base-100 shadow-xl"
       onSubmit={handleRegister}
     >
       <div className="card-body gap-2">
-        <h1 className="card-title text-center text-4xl pt-12">Forgot Password</h1>
+        <h1 className="card-title text-center text-4xl pt-12">
+          Forgot Password
+        </h1>
         {error && (
           <div className="alert alert-error">
             <span>{error}</span>
           </div>
         )}
-        
+
         <div className="form-control">
           <label className="label">
             <span className="label-text text-base-content">Email Address</span>
@@ -179,11 +172,8 @@ export default function ForgotPasswordPage() {
             onChange={handleEmailChange}
             className="input input-bordered w-full border focus:outline-none focus:border-base-300"
           />
-          
-          {emailError && (
-            <p className="text-error mt-2">{emailError}</p>
-          )}
 
+          {emailError && <p className="text-error mt-2">{emailError}</p>}
         </div>
 
         <div className="form-control">
@@ -219,7 +209,9 @@ export default function ForgotPasswordPage() {
 
         <div className="form-control">
           <label className="label">
-            <span className="label-text text-base-content">Authentication Code</span>
+            <span className="label-text text-base-content">
+              Authentication Code
+            </span>
           </label>
         </div>
 
@@ -232,21 +224,21 @@ export default function ForgotPasswordPage() {
             disabled={false}
             containerClassName="group flex gap-2"
             render={({ slots }) => (
-            <>
-            <div className="flex flex-row ">
-              {slots.slice(0, 3).map((slot, idx) => (
-                <Slot key={idx} {...slot} />
-              ))}
-            </div>
+              <>
+                <div className="flex flex-row ">
+                  {slots.slice(0, 3).map((slot, idx) => (
+                    <Slot key={idx} {...slot} />
+                  ))}
+                </div>
 
-            <FakeDash />
+                <FakeDash />
 
-            <div className="flex flex-row">
-              {slots.slice(3, 6).map((slot, idx) => (
-                <Slot key={idx} {...slot} />
-              ))}
-            </div>
-            </>
+                <div className="flex flex-row">
+                  {slots.slice(3, 6).map((slot, idx) => (
+                    <Slot key={idx} {...slot} />
+                  ))}
+                </div>
+              </>
             )}
           />
         </div>
@@ -293,25 +285,20 @@ export default function ForgotPasswordPage() {
         <div className="form-control mt-4">
           <button
             type="submit"
-            className={`btn btn-primary text-primary-content w-full ${loading ? "loading" : ""}`}
+            className={`btn btn-primary text-primary-content w-full ${
+              loading ? "loading" : ""
+            }`}
             disabled={loading}
             onClick={(e) => {
-              if (!email ||
-                  !password ||
-                  !confirmPassword ||
-                  !AuthCode
-                ) {
-                  e.preventDefault();
-                  setEmailError("Email is required.");
-                  setPasswordError("Password is required.");
-                  return;
+              if (!email || !password || !confirmPassword || !AuthCode) {
+                e.preventDefault();
+                setEmailError("Email is required.");
+                setPasswordError("Password is required.");
+                return;
               }
-              if (emailError ||
-                  passwordError ||
-                  password !== confirmPassword
-                ) {
-                  e.preventDefault();
-                  return;
+              if (emailError || passwordError || password !== confirmPassword) {
+                e.preventDefault();
+                return;
               }
             }}
           >
@@ -322,7 +309,7 @@ export default function ForgotPasswordPage() {
         <div className="form-control mt-2">
           <button
             type="button"
-            onClick={() => window.location.href = "/login"}
+            onClick={() => (window.location.href = "/login")}
             className="btn btn-secondary w-full bg-base-200 text-base-content border-none"
           >
             Back

@@ -1,8 +1,8 @@
 ## Development Guideline
 
 - Organize the files with reference to [Project Directories](#project-directories)
-- Name components in *Camel Case* (e.g. passwordResetForm) and routes in *Kebab Case* (e.g. password-reset), nouns always come first
-- Colour components by following the [colour guideline](https://v5.daisyui.com/docs/colors/)
+- Name components in _Pascal Case_ (e.g. PasswordResetForm) and routes in _Kebab Case_ (e.g. password-reset)
+- Colour components by following the [colour guideline](https://daisyui.com/docs/colors/)
 - Use icons from [Font Awesome Icon](https://fontawesome.com/icons)
 - Use `npm run dev` to start a development server to see real-time file changes
 - Use `npm run build` to verifiy your code can be compiled under ESLint rules.
@@ -20,7 +20,7 @@
 
 1. [Next.js](https://nextjs.org/docs/app/building-your-application)
 2. [React](https://react.dev/learn/your-first-component)
-3. [DaisyUI](https://v5.daisyui.com/components/)
+3. [DaisyUI](https://daisyui.com/components/)
 4. [Tailwind CSS](https://tailwindcss.com/docs/styling-with-utility-classes)
 5. [API Specification](https://github.com/FrogwinX/CSCI3100_Project/blob/main/API%20Specification.md)
 6. [Font Awesome Icon](https://docs.fontawesome.com/web/setup/get-started)

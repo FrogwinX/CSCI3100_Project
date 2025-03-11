@@ -1,12 +1,14 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap");
 @import "tailwindcss";
 
-body {
-  font-family: 'Inter', sans-serif;
+/* Override focus styles */
+*:focus-visible {
+  outline: none !important;
+  box-shadow: 0 0 0 2px var(--color-primary) !important;
 }
 
 @plugin "daisyui" {
-    themes: emerald --default;
+  themes: emerald --default;
 }
 @plugin "daisyui/theme" {
   name: "emerald";
@@ -41,10 +43,4 @@ body {
   --border: 1px;
   --depth: 0;
   --noise: 0;
-}
-
-/* 覆寫樣式 */
-main {
-  min-height: calc(100vh - 64px);
-  background-color: oklch(95% 0 0); /* bg-base-200 */
 }

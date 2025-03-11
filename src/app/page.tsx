@@ -12,7 +12,7 @@ export default function Home() {
   useEffect(() => {
     // Redirect to register page if not logged in
     if (!user) {
-      router.push("/register");
+      router.push("/login");
     }
   }, [user, router]);
 
