@@ -1,7 +1,7 @@
 # Documentation
 
 > [!IMPORTANT]
-> 7 Mar | Design and Implementation (1st Version)
+> 18 Apr | Requirements Specification (Final Version), Design and Implementation (Final Version)
 
 General Format:
 - Font, Font Size, and Styles
@@ -49,7 +49,8 @@ The requirements specification document must include all necessary information i
 ## Log History
 | Date | Comments | Revised By |
 | :---: | --- | --- |
-| 09 Feb | Design and Implementation added | Edwin |
+| 11 Mar | Design and Implementation added | Edwin |
+| 09 Feb | Requirements and Specification added | Edwin |
 | 28 Jan | README.md format updated | Edwin |
 | 28 Jan | README.md created | Edwin |
 
