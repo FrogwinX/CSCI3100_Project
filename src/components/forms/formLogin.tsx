@@ -1,20 +1,25 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
 
 export default function Login() {
   const [UsernameOrEmail, setUserInput] = useState("");
   const [UsernameOrEmailError, setUsernameOrEmailError] = useState("");
-  const [UsernameOrEmailAvailable, setUsernameOrEmailAvailable] = useState(false);
+  const [UsernameOrEmailAvailable, setUsernameOrEmailAvailable] =
+    useState(false);
   const [passwordError, setPasswordError] = useState("");
   const [PasswordAvailable, setPasswordAvailable] = useState(false);
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const { login } = useAuth();
+  const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+
     let username = null;
     let email = null;
 
@@ -33,7 +38,7 @@ export default function Login() {
       }
 
       console.log("Login successful", result.data.user);
-      
+      router.push("/forum");
     } catch (error) {
       setError("Login failed. Please try again.");
       console.error("Error logging in:", error);
@@ -63,74 +68,79 @@ export default function Login() {
   };
 
   return (
-    <form className="card w-full max-w-md bg-base-100 shadow-xl" onSubmit={handleLogin}>
-      <div className="card-body">
-        <div className="border-t-10 border-transparent w-full"></div>
-        <h1 className="card-title text-center text-3xl">Sign In</h1>
-        <div className="form-control ">
+    <form
+      className="card w-fit min-w-sm lg:min-w-lg max-w-xl bg-base-100 shadow-xl"
+      onSubmit={handleLogin}
+    >
+      <div className="card-body gap-4">
+        <h1 className="card-title text-center text-4xl pt-12">Sign In</h1>
+        <div className="form-control mb-2">
           <label className="label">
-            <span className="label-text text-lg text-base-content mb-1">Username / Email</span>
+            <span className="label-text text-base-content">
+              Username / Email
+            </span>
           </label>
           <input
             type="text"
             placeholder="Username or email"
             value={UsernameOrEmail}
             onChange={handleInputChange}
-            className="input input-bordered w-full border focus:outline-none focus:border-base-300"
+            className="input input-bordered w-full my-1"
           />
           {!UsernameOrEmailAvailable && UsernameOrEmailError && (
-            <p className="text-red-500 mt-2">{UsernameOrEmailError}</p>
+            <p className="text-red-500">{UsernameOrEmailError}</p>
           )}
         </div>
 
         <div className="form-control">
           <label className="label">
-            <span className="label-text text-lg text-base-content mb-1">Password</span>
+            <span className="label-text text-base-content">Password</span>
           </label>
           <input
             type="password"
             placeholder="Password"
             value={password}
             onChange={handlePasswordChange}
-            className="input input-bordered w-full border focus:outline-none focus:border-base-300"
+            className="input input-bordered w-full my-1"
           />
           {!PasswordAvailable && passwordError && (
-            <p className="text-red-500 mt-2">{passwordError}</p>
+            <p className="text-red-500">{passwordError}</p>
           )}
           <label className="label">
-            <a href="/forgot-password" className="label-text-alt link link-hover text-info">
-              Forgot password?
-            </a>
+            <Link href="/forgot-password">
+              <p className="label-text-alt link link-hover text-info ">
+                Forgot password?
+              </p>
+            </Link>
           </label>
         </div>
 
-        <div className="form-control mt-2">
+        <div className="form-control">
           <button
             type="submit"
             className="btn btn-primary w-full"
             onClick={(e) => {
               if (!UsernameOrEmail || !password) {
-                  e.preventDefault();
-                  setUsernameOrEmailError("Username or email is required.");
-                  setPasswordError("Password is required.");
-                  return;
+                e.preventDefault();
+                setUsernameOrEmailError("Username or email is required.");
+                setPasswordError("Password is required.");
+                return;
               }
             }}
           >
             Login
           </button>
-          {error && (
-            <p className="text-red-500 mt-2">{error}</p>
-          )}
+          {error && <p className="text-red-500 mt-2">{error}</p>}
         </div>
         <div className="form-control mt-2">
-          <button
-            type="button"
-            onClick = {() => window.location.href = "/register"}
-            className="btn btn-secondary w-full bg-base-300 text-base-content border-none"
-          >
-            Sign Up
-          </button>
+          <Link href="/register">
+            <button
+              type="button"
+              className="btn btn-secondary w-full bg-base-300 text-base-content border-none"
+            >
+              Sign Up
+            </button>
+          </Link>
         </div>
       </div>
     </form>

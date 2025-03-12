@@ -10,9 +10,6 @@ function Slot(props: SlotProps) {
       className={`relative w-4 h-10
         flex items-center justify-center flex-auto
         transition-all duration-300
-        focus:outline-none
-        focus:border-base-300
-        group-hover:border-primary group-focus-within:border-primary
       `}
     >
       <div className="absolute bottom+0 left-0 right-0 text-center text-base-300 text-2xl">
@@ -109,9 +106,7 @@ export default function RegisterForm() {
     }
   };
 
-  const handleEmailChange = async (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleEmailChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const newEmail = e.target.value;
     if (newEmail) {
       if (newEmail.length > 100) {
@@ -142,9 +137,7 @@ export default function RegisterForm() {
     }
   };
 
-  const handlePasswordChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newPassword = e.target.value;
     if (!newPassword) {
       setPasswordError("This field is required");
@@ -204,14 +197,14 @@ export default function RegisterForm() {
             placeholder="Username"
             value={username}
             onChange={handleUsernameChange}
-            className="input input-bordered w-full border focus:outline-none focus:border-base-300"
+            className="input input-bordered w-full my-1"
           />
 
           {username && usernameAvailable && (
-            <p className="text-info mt-2">√ This Username is available</p>
+            <p className="text-info">√ This Username is available</p>
           )}
           {!usernameAvailable && usernameError && (
-            <p className="text-error mt-2">{usernameError}</p>
+            <p className="text-error">{usernameError}</p>
           )}
         </div>
 
@@ -224,13 +217,13 @@ export default function RegisterForm() {
             placeholder="Email Address"
             value={email}
             onChange={handleEmailChange}
-            className="input input-bordered w-full border focus:outline-none focus:border-base-300"
+            className="input input-bordered w-full my-1"
           />
           {emailAvailable && (
-            <p className="text-info mt-2">√ This Email is available</p>
+            <p className="text-info">√ This Email is available</p>
           )}
           {!emailAvailable && emailError && (
-            <p className="text-error mt-2">{emailError}</p>
+            <p className="text-error">{emailError}</p>
           )}
         </div>
 
@@ -254,7 +247,7 @@ export default function RegisterForm() {
             Send Activation Key
           </button>
           {email && emailSent && !emailError && (
-            <p className="text-info mt-2">
+            <p className="text-info">
               √ An email containing activation key has been sent to your
               registered email
             </p>
@@ -265,7 +258,7 @@ export default function RegisterForm() {
           <label className="label">
             <span className="label-text text-base-content">Activation Key</span>
           </label>
-          <div className="border border-base-300 rounded-xl w-full px-2">
+          <div className="border border-base-300 rounded-xl w-full px-2 my-1">
             <OTPInput
               value={licenseKey}
               onChange={handleLicenseKeyChange}
@@ -317,14 +310,12 @@ export default function RegisterForm() {
           <input
             type="password"
             placeholder="Password"
-            className="input input-bordered w-full border focus:outline-none focus:border-base-300"
+            className="input input-bordered w-full my-1"
             value={password}
             onChange={handlePasswordChange}
           />
           {passwordError && (
-            <p className="text-error mt-2 whitespace-pre-line">
-              {passwordError}
-            </p>
+            <p className="text-error whitespace-pre-line">{passwordError}</p>
           )}
         </div>
 
@@ -337,7 +328,7 @@ export default function RegisterForm() {
           <input
             type="password"
             placeholder="Confirm Password"
-            className="input input-bordered w-full border focus:outline-none focus:border-base-300"
+            className="input input-bordered w-full my-1"
             value={confirmPassword}
             onChange={(e) => {
               setConfirmPassword(e.target.value);
@@ -351,7 +342,7 @@ export default function RegisterForm() {
           <p className="text-error">Passwords do not match</p>
         )}
 
-        <div className="form-control mt-4">
+        <div className="form-control ">
           <button
             type="submit"
             className={`btn btn-primary text-primary-content w-full ${
@@ -387,10 +378,10 @@ export default function RegisterForm() {
           </button>
         </div>
 
-        <div className="form-control mt-2">
+        <div className="form-control">
           <button
             type="button"
-            onClick={() => (window.location.href = "/login")}
+            onClick={() => router.back()}
             className="btn btn-secondary w-full bg-base-200 text-base-content border-none"
           >
             Back

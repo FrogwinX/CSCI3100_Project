@@ -7,7 +7,7 @@ import { OTPInput, SlotProps } from "input-otp";
 function Slot(props: SlotProps) {
   return (
     <div
-      className={`relative w-10 h-10
+      className={`relative w-4 h-10
         flex items-center justify-center flex-auto
         transition-all duration-300
         focus:outline-none
@@ -17,7 +17,7 @@ function Slot(props: SlotProps) {
       <div className="absolute bottom+0 left-0 right-0 text-center text-base-300 text-2xl">
         __
       </div>
-      <div className="opacity-100">{props.char ?? ""}</div>
+      <div className="opacity-100 text-2xl">{props.char ?? ""}</div>
       {props.hasFakeCaret && <FakeCaret />}
     </div>
   );
@@ -26,15 +26,15 @@ function Slot(props: SlotProps) {
 function FakeCaret() {
   return (
     <div className="absolute pointer-events-none inset-0 flex items-center justify-center animate-pulse">
-      <div className="w-px h-4 bg-primary"></div>
+      <div className="w-px h-4 bg-base-content"></div>
     </div>
   );
 }
 
 function FakeDash() {
   return (
-    <div className="flex justify-center items-center mx-1">
-      <div className="w-4 h-1 rounded-full bg-neutral-400"></div>
+    <div className="flex justify-center items-center">
+      <div className="w-3 h-0.5 rounded-full bg-base-content opacity-40"></div>
     </div>
   );
 }
@@ -148,10 +148,10 @@ export default function ForgotPasswordPage() {
 
   return (
     <form
-      className="card w-full max-w-xl bg-base-100 shadow-xl"
+      className="card w-fit min-w-sm lg:min-w-lg max-w-xl bg-base-100 shadow-xl"
       onSubmit={handleRegister}
     >
-      <div className="card-body gap-2">
+      <div className="card-body gap-4">
         <h1 className="card-title text-center text-4xl pt-12">
           Forgot Password
         </h1>
@@ -170,10 +170,10 @@ export default function ForgotPasswordPage() {
             placeholder="Email Address"
             value={email}
             onChange={handleEmailChange}
-            className="input input-bordered w-full border focus:outline-none focus:border-base-300"
+            className="input input-bordered w-full my-1"
           />
 
-          {emailError && <p className="text-error mt-2">{emailError}</p>}
+          {emailError && <p className="text-error">{emailError}</p>}
         </div>
 
         <div className="form-control">
@@ -200,7 +200,7 @@ export default function ForgotPasswordPage() {
             Send Authentication Code
           </button>
           {email && emailAvailable && emailSent && !emailError && (
-            <p className="text-info mt-2">
+            <p className="text-info">
               √ An email containing authentication code has been sent to your
               registered email
             </p>
@@ -213,34 +213,34 @@ export default function ForgotPasswordPage() {
               Authentication Code
             </span>
           </label>
-        </div>
 
-        <div className="pl-4 inline-block border border-base-300 rounded-xl w-full max-w-xs ">
-          <OTPInput
-            value={AuthCode}
-            onChange={handleAuthCodeChange}
-            maxLength={9}
-            minLength={6}
-            disabled={false}
-            containerClassName="group flex gap-2"
-            render={({ slots }) => (
-              <>
-                <div className="flex flex-row ">
-                  {slots.slice(0, 3).map((slot, idx) => (
-                    <Slot key={idx} {...slot} />
-                  ))}
-                </div>
+          <div className="border border-base-300 rounded-xl w-full max-w-xs my-1">
+            <OTPInput
+              value={AuthCode}
+              onChange={handleAuthCodeChange}
+              maxLength={9}
+              minLength={6}
+              disabled={false}
+              containerClassName="flex gap-2"
+              render={({ slots }) => (
+                <>
+                  <div className="flex flex-auto">
+                    {slots.slice(0, 3).map((slot, idx) => (
+                      <Slot key={idx} {...slot} />
+                    ))}
+                  </div>
 
-                <FakeDash />
+                  <FakeDash />
 
-                <div className="flex flex-row">
-                  {slots.slice(3, 6).map((slot, idx) => (
-                    <Slot key={idx} {...slot} />
-                  ))}
-                </div>
-              </>
-            )}
-          />
+                  <div className="flex flex-auto">
+                    {slots.slice(3, 6).map((slot, idx) => (
+                      <Slot key={idx} {...slot} />
+                    ))}
+                  </div>
+                </>
+              )}
+            />
+          </div>
         </div>
         <div className="form-control">
           <label className="label">
@@ -249,15 +249,13 @@ export default function ForgotPasswordPage() {
           <input
             type="password"
             placeholder="Password"
-            className="input input-bordered w-full border focus:outline-none focus:border-base-300"
+            className="input input-bordered w-full my-1"
             value={password}
             onChange={handlePasswordChange}
             minLength={8}
           />
           {passwordError && (
-            <p className="text-error mt-2 whitespace-pre-line">
-              {passwordError}
-            </p>
+            <p className="text-error whitespace-pre-line">{passwordError}</p>
           )}
         </div>
 
@@ -270,7 +268,7 @@ export default function ForgotPasswordPage() {
           <input
             type="password"
             placeholder="Confirm Password"
-            className="input input-bordered w-full border focus:outline-none focus:border-base-300"
+            className="input input-bordered w-full my-1"
             value={confirmPassword}
             onChange={(e) => {
               setConfirmPassword(e.target.value);
@@ -306,10 +304,10 @@ export default function ForgotPasswordPage() {
           </button>
         </div>
 
-        <div className="form-control mt-2">
+        <div className="form-control">
           <button
             type="button"
-            onClick={() => (window.location.href = "/login")}
+            onClick={() => router.back()}
             className="btn btn-secondary w-full bg-base-200 text-base-content border-none"
           >
             Back
