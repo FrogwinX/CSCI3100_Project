@@ -2,7 +2,10 @@ package project.flowchat.backend.Controller;
 
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
 import project.flowchat.backend.Model.ResponseBody;
 import project.flowchat.backend.Service.ExceptionService;
 import project.flowchat.backend.Service.ForumService;
@@ -34,10 +37,22 @@ public class ForumController {
         return responseBody;
     }
 
-    @PostMapping("createPost")
-    private ResponseBody createPost(@RequestParam Map<String, String> requestBody) {
+    @PostMapping(value = "createPost", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    private ResponseBody createPost(@RequestPart Map<String, String> requestBody,
+                                    @RequestPart(required = false) MultipartFile file) {
         try {
-            forumService.createPostOrComment();
+            Map<String, Object> data = new HashMap<>();
+            forumService.createPostOrComment(   requestBody.get("userId"),
+                                                requestBody.get("title"),
+                                                requestBody.get("content"),
+                                                requestBody.get("tag"),
+                                                file,
+                                                requestBody.get("attachTo"));
+
+            responseBody.setMessage("A new post/comment is created");
+            data.put("isSucess", true);
+            responseBody.setData(data);
+
         } catch (ExceptionService e) {
             responseBody.setMessage(e.getMessage());
             Map<String, Object> data = new HashMap<>();
