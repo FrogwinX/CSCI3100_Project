@@ -8,12 +8,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 function Slot(props: SlotProps) {
   return (
-    <div
-      className={`relative w-4 h-10
-        flex items-center justify-center flex-auto
-        transition-all duration-300
-      `}
-    >
+    <div className={`relative w-4 h-10 flex items-center justify-center flex-auto transition-all duration-300`}>
       <div className="absolute bottom+0 left-0 right-0 text-center text-base-300 text-2xl">_</div>
       <div className="opacity-100">{props.char ?? ""}</div>
       {props.hasFakeCaret && <FakeCaret />}
@@ -44,62 +39,64 @@ export default function RegisterForm() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [licenseKey, setLicenseKey] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  // Using the same error implementation as formLogin.tsx
+  const [passwordFormatError, setPasswordFormatError] = useState(false);
+  const [errors, setErrors] = useState<string[]>([]);
   const [emailSent, setEmailSent] = useState(false);
   const [usernameAvailable, setUsernameAvailable] = useState(false);
   const [emailAvailable, setEmailAvailable] = useState(false);
-  const [usernameError, setUsernameError] = useState("");
-  const [emailError, setEmailError] = useState("");
-  const [passwordError, setPasswordError] = useState("");
+
   const router = useRouter();
   const { requestLicenseKey, register, checkUsernameUnique, checkEmailUnique } = useAuth();
 
   const handleRegister = async (e: FormEvent) => {
     e.preventDefault();
-    setError("");
     setLoading(true);
-
     try {
-      const success = await register(username, email, password, licenseKey);
-
-      if (success) {
-        router.push("/");
+      const result = await register(username, email, password, licenseKey);
+      if (result.data.user && result.data.isSuccess) {
+        router.push("/login");
       } else {
-        setError("Registration failed");
+        setErrors((prevErrors) => [result.message, ...prevErrors]);
       }
-    } catch (error) {
-      console.error("Registration error:", error);
-      setError("An error occurred during registration. Please try again.");
-    } finally {
-      setLoading(false);
-    }
+    } catch {}
   };
+
   const handleUsernameChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const newUsername = e.target.value;
     if (newUsername.length > 50) {
-      setUsernameError("Username cannot exceed 50 characters");
+      setErrors((prevErrors) => ["Username cannot exceed 50 characters", ...prevErrors]);
       setUsernameAvailable(false);
       return;
+    } else {
+      setErrors((prevErrors) => prevErrors.filter((error) => error !== "Username cannot exceed 50 characters"));
     }
-    if (newUsername.includes("@")) {
-      setUsernameError("Username cannot contain the symbol '@'");
+
+    if (newUsername.includes("@") || newUsername.includes(" ") || newUsername.includes(":")) {
+      setErrors((prevErrors) => ["Username cannot contain the symbol :, @ or space", ...prevErrors]);
       setUsernameAvailable(false);
       setUsername(newUsername);
       return;
+    } else {
+      setErrors((prevErrors) =>
+        prevErrors.filter((error) => error !== "Username cannot contain the symbol :, @ or space")
+      );
     }
+
     setUsername(newUsername);
     if (newUsername) {
+      setErrors((prevErrors) => prevErrors.filter((error) => error !== "Username is required"));
       const result = await checkUsernameUnique(newUsername);
       if (result.data.isUsernameUnique) {
         setUsernameAvailable(true);
-        setUsernameError("");
+        setErrors((prevErrors) => prevErrors.filter((error) => error !== "This username has been used"));
       } else {
         setUsernameAvailable(false);
-        setUsernameError("This username has been used");
+        setErrors((prevErrors) => ["This username has been used", ...prevErrors]);
       }
     } else {
       setUsernameAvailable(false);
-      setUsernameError("This field is required");
+      setErrors((prevErrors) => ["Username is required", ...prevErrors]);
     }
   };
 
@@ -107,32 +104,36 @@ export default function RegisterForm() {
     const newEmail = e.target.value;
     if (newEmail) {
       if (newEmail.length > 100) {
-        setEmailError("Email cannot exceed 100 characters");
+        setErrors((prevErrors) => ["Email cannot exceed 100 characters", ...prevErrors]);
         setEmailAvailable(false);
         setEmailSent(false);
         return;
+      } else {
+        setErrors((prevErrors) => prevErrors.filter((error) => error !== "Email cannot exceed 100 characters"));
       }
       setEmail(newEmail);
 
-      const emailFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (newEmail && !emailFormat.test(newEmail)) {
+      const emailFormat = /.*/;
+      if (!emailFormat.test(newEmail)) {
         setEmailAvailable(false);
-        setEmailError("Invalid email format");
+        setErrors((prevErrors) => ["Invalid email format", ...prevErrors]);
         setEmailSent(false);
         return;
+      } else {
+        setErrors((prevErrors) => prevErrors.filter((error) => error !== "Invalid email format"));
       }
       const result = await checkEmailUnique(newEmail);
       if (result.data.isEmailUnique) {
         setEmailAvailable(true);
-        setEmailError("");
+        setErrors((prevErrors) => prevErrors.filter((error) => error !== "This Email has been used"));
       } else {
         setEmailAvailable(false);
-        setEmailError("This Email has been used");
+        setErrors((prevErrors) => ["This Email has been used", ...prevErrors]);
         setEmailSent(false);
       }
     } else {
       setEmailAvailable(false);
-      setEmailError("This field is required");
+      setErrors((prevErrors) => ["Email is required", ...prevErrors]);
       setEmailSent(false);
       setEmail(newEmail);
     }
@@ -141,23 +142,27 @@ export default function RegisterForm() {
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newPassword = e.target.value;
     if (!newPassword) {
-      setPasswordError("This field is required");
+      setErrors((prevErrors) => ["Password is required", ...prevErrors]);
       setPassword(newPassword);
       return;
+    } else {
+      setErrors((prevErrors) => prevErrors.filter((error) => error !== "Password is required"));
     }
+
     if (newPassword.length > 50) {
-      setPasswordError("Password cannot exceed 50 characters");
+      setErrors((prevErrors) => ["Password cannot exceed 50 characters", ...prevErrors]);
       return;
+    } else {
+      setErrors((prevErrors) => prevErrors.filter((error) => error !== "Password cannot exceed 50 characters"));
     }
+
     setPassword(newPassword);
 
     const passwordCriteria = /^(?=.*[A-Za-z])(?=.*\d)(?!.*\s).{8,}$/;
     if (!passwordCriteria.test(newPassword)) {
-      setPasswordError(
-        "Must be at least 8 characters long, including\nAt least one alphabet (a~z, A~Z)\nAt least one numerical character (0~9)"
-      );
+      setPasswordFormatError(true);
     } else {
-      setPasswordError("");
+      setPasswordFormatError(false);
     }
   };
 
@@ -165,10 +170,12 @@ export default function RegisterForm() {
     try {
       await requestLicenseKey(email);
       setEmailSent(true);
-      setError("");
+      setErrors((prevErrors) =>
+        prevErrors.filter((error) => error !== "Failed to send activation key. Please try again.")
+      );
     } catch (error) {
       console.error("Error sending activation key:", error);
-      setError("Failed to send activation key. Please try again.");
+      setErrors((prevErrors) => ["Failed to send activation key. Please try again.", ...prevErrors]);
     }
   };
 
@@ -180,38 +187,26 @@ export default function RegisterForm() {
   return (
     <form className="card w-fit min-w-sm lg:min-w-lg max-w-xl bg-base-100 shadow-xl" onSubmit={handleRegister}>
       <div className="card-body gap-4">
-        {(error || usernameError || emailError || passwordError) && (
-          <div role="alert" className="p-4 mt-12 alert alert-error alert-soft">
-            <FontAwesomeIcon icon={faTriangleExclamation} className="text-2xl text-error" />
+        <div
+          role="alert"
+          className={`alert alert-error alert-soft ${passwordFormatError || errors.length ? "" : "invisible"}`}
+        >
+          <FontAwesomeIcon icon={faTriangleExclamation} className="text-2xl text-error" />
+          {passwordFormatError ? (
             <p>
-              {
-                <span>
-                  {usernameError}
-                  <br />
-                </span>
-              }
-              {
-                <span>
-                  {emailError}
-                  <br />
-                </span>
-              }
-              {
-                <span>
-                  {error}
-                  <br />
-                </span>
-              }
-              {<span>{passwordError}</span>}
+              The password must be at least 8 characters long, including <br /> At least one alphabet (a~z, A~Z)
+              <br /> At least one numerical character (0~9)
             </p>
-          </div>
-        )}
+          ) : (
+            <p>{errors[0]}</p>
+          )}
+        </div>
 
         <h1 className="card-title text-center text-4xl ">Register</h1>
 
         <div className="form-control">
           <label className="label">
-            <span className="label-text text-base-content ">Username</span>
+            <span className="label-text text-base-content">Username</span>
           </label>
           <input
             type="text"
@@ -220,9 +215,7 @@ export default function RegisterForm() {
             onChange={handleUsernameChange}
             className="input input-bordered w-full my-1"
           />
-
           {username && usernameAvailable && <p className="text-info">√ This Username is available</p>}
-          {!usernameAvailable && usernameError && <p className="text-error">{usernameError}</p>}
         </div>
         <div className="form-control">
           <label className="label">
@@ -236,20 +229,19 @@ export default function RegisterForm() {
             className="input input-bordered w-full my-1"
           />
           {emailAvailable && <p className="text-info">√ This Email is available</p>}
-          {!emailAvailable && emailError && <p className="text-error">{emailError}</p>}
         </div>
         <div className="form-control">
           <button
             type="button"
             onClick={() => {
               if (!email) {
-                setEmailError("Email is required to send activation key");
+                setErrors((prevErrors) => ["Email is required.", ...prevErrors]);
                 setEmailSent(false);
                 return;
               }
               const emailFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
               if (!emailFormat.test(email)) {
-                setEmailError("Invalid email format");
+                setErrors((prevErrors) => ["Invalid email format", ...prevErrors]);
                 setEmailSent(false);
                 return;
               }
@@ -259,7 +251,7 @@ export default function RegisterForm() {
           >
             Send Activation Key
           </button>
-          {email && emailSent && !emailError && emailAvailable && (
+          {email && emailSent && emailAvailable && (
             <p className="text-info">√ An email containing activation key has been sent to your registered email</p>
           )}
         </div>
@@ -322,7 +314,7 @@ export default function RegisterForm() {
             value={password}
             onChange={handlePasswordChange}
           />
-          {passwordError && <p className="text-error whitespace-pre-line">{passwordError}</p>}
+          {passwordFormatError && <p className="text-error">{passwordFormatError}</p>}
         </div>
         <div className="form-control">
           <label className="label">
@@ -336,28 +328,41 @@ export default function RegisterForm() {
             onChange={(e) => {
               setConfirmPassword(e.target.value);
               if (password && e.target.value !== password) {
-                <p className="text-error">Passwords do not match</p>;
+                setErrors((prevErrors) => ["Passwords do not match", ...prevErrors]);
               }
             }}
           />
           {confirmPassword && password !== confirmPassword && <p className="text-error">Passwords do not match</p>}
         </div>
-        <div className="form-control ">
+        <div className="form-control">
           <button
             type="submit"
             className={`btn btn-primary text-primary-content w-full ${loading ? "loading" : ""}`}
             disabled={loading}
             onClick={(e) => {
-              if (!username || !email || !password || !confirmPassword || !licenseKey) {
+              if (!username) {
                 e.preventDefault();
-                setUsernameError("Username is required.");
-                setEmailError("Email is required.");
-                setError("Confirm Password is required.");
-                setError("Activation Key is required.");
+                setErrors((prevErrors) => ["Username is required.", ...prevErrors]);
                 return;
               }
-              if (usernameError || emailError || passwordError || password !== confirmPassword) {
+              if (!email) {
                 e.preventDefault();
+                setErrors((prevErrors) => ["Email is required.", ...prevErrors]);
+                return;
+              }
+              if (!password) {
+                e.preventDefault();
+                setErrors((prevErrors) => ["Password is required.", ...prevErrors]);
+                return;
+              }
+              if (!confirmPassword) {
+                e.preventDefault();
+                setErrors((prevErrors) => ["Confirm password is required.", ...prevErrors]);
+                return;
+              }
+              if (!licenseKey) {
+                e.preventDefault();
+                setErrors((prevErrors) => ["Licence key is required.", ...prevErrors]);
                 return;
               }
             }}

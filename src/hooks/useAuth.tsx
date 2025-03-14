@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  ReactNode,
-} from "react";
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
 // API Endpoints
 const API_BASE_URL = "https://flowchatbackend.azurewebsites.net/api";
@@ -67,11 +61,7 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
-  login: (
-    username: string | null,
-    email: string | null,
-    password: string
-  ) => Promise<ApiResponse<LoginData>>;
+  login: (username: string | null, email: string | null, password: string) => Promise<ApiResponse<LoginData>>;
   register: (
     username: string,
     email: string,
@@ -82,9 +72,7 @@ interface AuthContextType {
   requestLicenseKey: (email: string) => Promise<ApiResponse<RequestData>>;
   requestAuthCode: (email: string) => Promise<ApiResponse<RequestData>>;
   checkEmailUnique: (email: string) => Promise<ApiResponse<EmailCheckData>>;
-  checkUsernameUnique: (
-    username: string
-  ) => Promise<ApiResponse<UsernameCheckData>>;
+  checkUsernameUnique: (username: string) => Promise<ApiResponse<UsernameCheckData>>;
   deleteAccount: (
     username: string | null,
     email: string | null,
@@ -103,10 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
 
   // Helper function for API calls to reduce repetition
-  async function apiFetch<T>(
-    endpoint: string,
-    options?: RequestInit
-  ): Promise<ApiResponse<T>> {
+  async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<ApiResponse<T>> {
     try {
       const response = await fetch(`${API_BASE_URL}/${endpoint}`, options);
       const result: ApiResponse<T> = await response.json();
@@ -141,11 +126,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       // Successful login
-      if (
-        result.data.isPasswordCorrect &&
-        result.data.isAccountActive &&
-        result.data.user
-      ) {
+      if (result.data.isPasswordCorrect && result.data.isAccountActive && result.data.user) {
         const userData: User = {
           id: result.data.user.id,
           name: result.data.user.username,
@@ -193,9 +174,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const requestLicenseKey = async (
-    email: string
-  ): Promise<ApiResponse<RequestData>> => {
+  const requestLicenseKey = async (email: string): Promise<ApiResponse<RequestData>> => {
     try {
       const result = await apiFetch<RequestData>("Account/requestLicenseKey", {
         method: "POST",
@@ -212,18 +191,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const requestAuthCode = async (
-    email: string
-  ): Promise<ApiResponse<RequestData>> => {
+  const requestAuthCode = async (email: string): Promise<ApiResponse<RequestData>> => {
     try {
-      const result = await apiFetch<RequestData>(
-        "Account/requestAuthenticationCode",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email }),
-        }
-      );
+      const result = await apiFetch<RequestData>("Account/requestAuthenticationCode", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
 
       return result;
     } catch {
@@ -234,13 +208,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const checkEmailUnique = async (
-    email: string
-  ): Promise<ApiResponse<EmailCheckData>> => {
+  const checkEmailUnique = async (email: string): Promise<ApiResponse<EmailCheckData>> => {
     try {
-      return await apiFetch<EmailCheckData>(
-        `Account/isEmailUnique?email=${encodeURIComponent(email)}`
-      );
+      return await apiFetch<EmailCheckData>(`Account/isEmailUnique?email=${encodeURIComponent(email)}`);
     } catch {
       return {
         message: "Failed to check email uniqueness",
@@ -249,13 +219,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const checkUsernameUnique = async (
-    username: string
-  ): Promise<ApiResponse<UsernameCheckData>> => {
+  const checkUsernameUnique = async (username: string): Promise<ApiResponse<UsernameCheckData>> => {
     try {
-      return await apiFetch<UsernameCheckData>(
-        `Account/isUsernameUnique?username=${encodeURIComponent(username)}`
-      );
+      return await apiFetch<UsernameCheckData>(`Account/isUsernameUnique?username=${encodeURIComponent(username)}`);
     } catch {
       return {
         message: "Failed to check username uniqueness",
@@ -275,14 +241,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     password: string
   ): Promise<ApiResponse<DeleteAccountData>> => {
     try {
-      const result = await apiFetch<DeleteAccountData>(
-        "Account/deleteAccount",
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, username, password }),
-        }
-      );
+      const result = await apiFetch<DeleteAccountData>("Account/deleteAccount", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, username, password }),
+      });
 
       // If the current user was deleted, also log them out
       if (result.data.isSuccess) {
@@ -304,14 +267,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     authenticationCode: string
   ): Promise<ApiResponse<ResetPasswordData>> => {
     try {
-      const result = await apiFetch<ResetPasswordData>(
-        "Account/resetPasswordByEmail",
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password, authenticationCode }),
-        }
-      );
+      const result = await apiFetch<ResetPasswordData>("Account/resetPasswordByEmail", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, authenticationCode }),
+      });
 
       return result;
     } catch {
