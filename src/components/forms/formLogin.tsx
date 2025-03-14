@@ -4,15 +4,13 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
+import { faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 export default function Login() {
   const [UsernameOrEmail, setUserInput] = useState("");
-  const [UsernameOrEmailError, setUsernameOrEmailError] = useState("");
-  const [UsernameOrEmailAvailable, setUsernameOrEmailAvailable] = useState(false);
-  const [passwordError, setPasswordError] = useState("");
-  const [PasswordAvailable, setPasswordAvailable] = useState(false);
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [errors, setErrors] = useState<string[]>([]);
   const { login } = useAuth();
   const router = useRouter();
 
@@ -29,58 +27,60 @@ export default function Login() {
     }
 
     if (!UsernameOrEmail) {
-      setError("Username or email is required.");
+      setErrors((prevErrors) => ["Username or email is required.", ...prevErrors]);
       return;
     }
 
     if (!password) {
-      setError("Password is required.");
+      setErrors((prevErrors) => ["Password is required.", ...prevErrors]);
       return;
     }
 
     try {
       const result = await login(username, email, password);
-
-      if (!result.data.isPasswordCorrect || !result.data.isAccountActive) {
-        setError("Invalid username or password.");
-        return;
+      if (result.data.isPasswordCorrect && result.data.isAccountActive && result.data.user) {
+        router.push("/forum");
+      } else {
+        setErrors((prevErrors) => [result.message, ...prevErrors]);
       }
-
-      console.log("Login successful", result.data.user);
-      router.push("/forum");
-    } catch (error) {
-      setError("Login failed. Please try again.");
-      console.error("Error logging in:", error);
+    } catch {
+      setErrors((prevErrors) => ["Login failed. Please try again.", ...prevErrors]);
     }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUserInput(e.target.value);
     if (e.target.value) {
-      setUsernameOrEmailAvailable(true);
-      setUsernameOrEmailError("");
+      setErrors((prevErrors) => prevErrors.filter((error) => error !== "Username or email is required."));
     } else {
-      setUsernameOrEmailAvailable(false);
-      setUsernameOrEmailError("Username or email is required.");
+      setErrors((prevErrors) => ["Username or email is required.", ...prevErrors]);
     }
   };
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPassword(e.target.value);
     if (e.target.value) {
-      setPasswordAvailable(true);
-      setPasswordError("");
+      setErrors((prevErrors) => prevErrors.filter((error) => error !== "Password is required."));
     } else {
-      setPasswordAvailable(false);
-      setPasswordError("Password is required.");
+      setErrors((prevErrors) => ["Password is required.", ...prevErrors]);
     }
   };
 
   return (
     <form className="card w-fit min-w-sm lg:min-w-lg max-w-xl bg-base-100 shadow-xl" onSubmit={handleLogin}>
       <div className="card-body gap-4">
-        <h1 className="card-title text-center text-4xl pt-12">Sign In</h1>
-        <div className="form-control mb-2">
+        <div role="alert" className={`alert alert-error alert-soft ${errors.length ? "" : "invisible"}`}>
+          <FontAwesomeIcon icon={faTriangleExclamation} className="text-2xl text-error" />
+          <p>
+            <span>
+              {errors[0] || "\u00A0"}
+              <br />
+            </span>
+          </p>
+        </div>
+
+        <h1 className="card-title text-center text-4xl ">Sign In</h1>
+        <div className="form-control">
           <label className="label">
             <span className="label-text text-base-content">Username / Email</span>
           </label>
@@ -91,7 +91,6 @@ export default function Login() {
             onChange={handleInputChange}
             className="input input-bordered w-full my-1"
           />
-          {!UsernameOrEmailAvailable && UsernameOrEmailError && <p className="text-red-500">{UsernameOrEmailError}</p>}
         </div>
 
         <div className="form-control">
@@ -105,7 +104,6 @@ export default function Login() {
             onChange={handlePasswordChange}
             className="input input-bordered w-full my-1"
           />
-          {!PasswordAvailable && passwordError && <p className="text-red-500">{passwordError}</p>}
           <label className="label">
             <Link href="/forgot-password">
               <p className="label-text-alt link link-hover text-info ">Forgot password?</p>
@@ -120,19 +118,18 @@ export default function Login() {
             onClick={(e) => {
               if (!UsernameOrEmail) {
                 e.preventDefault();
-                setError("Username or email is required.");
+                setErrors((prevErrors) => ["Username or email is required.", ...prevErrors]);
                 return;
               }
               if (!password) {
                 e.preventDefault();
-                setError("Password is required.");
+                setErrors((prevErrors) => ["Password is required.", ...prevErrors]);
                 return;
               }
             }}
           >
             Login
           </button>
-          {error && <p className="text-red-500 mt-2">{error}</p>}
         </div>
         <div className="form-control mt-2">
           <Link href="/register">
