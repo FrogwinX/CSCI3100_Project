@@ -34,4 +34,52 @@ public class ForumController {
         return responseBody;
     }
 
+    @PostMapping("createPost")
+    private ResponseBody createPost(@RequestParam Map<String, String> requestBody) {
+        try {
+            forumService.createPostOrComment();
+        } catch (ExceptionService e) {
+            responseBody.setMessage(e.getMessage());
+            Map<String, Object> data = new HashMap<>();
+            data.put("isSuccess", false);
+            responseBody.setData(data);
+        } catch (Exception e) {
+            responseBody.setMessage("Fail: " + e);
+            responseBody.setData(null);
+        }
+        return responseBody;
+    }
+
+    @PutMapping("updatePost")
+    private ResponseBody updatePost(@RequestParam Map<String, String> requestBody) {
+        try {
+            forumService.updatePostOrComment();
+        } catch (ExceptionService e) {
+            responseBody.setMessage(e.getMessage());
+            Map<String, Object> data = new HashMap<>();
+            data.put("isSuccess", false);
+            responseBody.setData(data);
+        } catch (Exception e) {
+            responseBody.setMessage("Fail: " + e);
+            responseBody.setData(null);
+        }
+        return responseBody;
+    }
+
+    @PutMapping("deletePost")
+    private ResponseBody deletePost(@RequestParam Map<String, String> requestBody) {
+        try {
+            forumService.deletePostOrComment();
+        } catch (ExceptionService e) {
+            responseBody.setMessage(e.getMessage());
+            Map<String, Object> data = new HashMap<>();
+            data.put("isSuccess", false);
+            responseBody.setData(data);
+        } catch (Exception e) {
+            responseBody.setMessage("Fail: " + e);
+            responseBody.setData(null);
+        }
+        return responseBody;
+    }    
+
 }

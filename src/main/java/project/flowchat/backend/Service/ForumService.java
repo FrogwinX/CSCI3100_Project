@@ -13,4 +13,15 @@ public class ForumService {
     private final ForumRepository forumRepository;
 
 
+    public void createPostOrComment() throws Exception {
+
+    }
+
+    public void updatePostOrComment() throws Exception {
+
+    }
+
+    public void deletePostOrComment() throws Exception {
+
+    }    
 }
