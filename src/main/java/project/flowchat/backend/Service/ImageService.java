@@ -24,12 +24,16 @@ public class ImageService {
     private static final long MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
 
     private static byte[] compressImage(MultipartFile file) throws Exception {
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         BufferedImage originalImage = ImageIO.read(file.getInputStream());
         byte[] compressedImage;
         float quality = 1.0f;
         do {
-            Thumbnails.of(originalImage).scale(1.0).outputQuality(quality).toOutputStream(byteArrayOutputStream);
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            Thumbnails.of(originalImage)
+                    .scale(1.0)
+                    .outputQuality(quality)
+                    .outputFormat(file.getContentType().replace("image/", ""))
+                    .toOutputStream(byteArrayOutputStream);
             compressedImage = byteArrayOutputStream.toByteArray();
             quality -= 0.1f;
             if (quality <= 0) {
@@ -39,7 +43,7 @@ public class ImageService {
         return compressedImage;
     }
 
-    public void saveImage(MultipartFile file) throws Exception {
+    public Integer saveImage(MultipartFile file) throws Exception {
         if (file.getContentType() == null || !file.getContentType().startsWith("image/")) {
             throw new ExceptionService("The file is not an image");
         }
@@ -51,8 +55,9 @@ public class ImageService {
             imageModel.setImageData(file.getBytes());
         }
         imageModel.setImageName(file.getOriginalFilename());
-        imageModel.setImageFormat(file.getContentType().toString());
+        imageModel.setImageFormat(file.getContentType());
         imageRepository.save(imageModel);
+        return imageModel.getImageId();
     }
 
     public Optional<ImageModel> getImage(Integer imageId) throws Exception {

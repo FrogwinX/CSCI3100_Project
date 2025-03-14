@@ -31,14 +31,16 @@ public class ImageController {
     private ResponseBody uploadImage(@RequestPart MultipartFile file) {
         try {
             Map<String, Object> data = new HashMap<>();
-            imageService.saveImage(file);
+            Integer imageId = imageService.saveImage(file);
             data.put("isSuccess", true);
+            data.put("imageId", imageId);
             responseBody.setData(data);
             responseBody.setMessage("The image is saved");
         } catch (ExceptionService e) {
             responseBody.setMessage(e.getMessage());
             Map<String, Object> data = new HashMap<>();
             data.put("isSuccess", false);
+            data.put("imageId", null);
             responseBody.setData(data);
         } catch (Exception e) {
             responseBody.setMessage("Fail: " + e);
