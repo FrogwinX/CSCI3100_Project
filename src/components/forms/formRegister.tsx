@@ -1,5 +1,5 @@
 "use client";
-import React, { FormEvent, useState } from "react";
+import React, { useEffect, FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { OTPInput, SlotProps } from "input-otp";
@@ -45,9 +45,24 @@ export default function RegisterForm() {
   const [emailSent, setEmailSent] = useState(false);
   const [usernameAvailable, setUsernameAvailable] = useState(false);
   const [emailAvailable, setEmailAvailable] = useState(false);
+  const [cooldownSeconds, setCooldownSeconds] = useState(0);
 
   const router = useRouter();
   const { requestLicenseKey, register, checkUsernameUnique, checkEmailUnique } = useAuth();
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
+
+    if (cooldownSeconds > 0) {
+      timer = setInterval(() => {
+        setCooldownSeconds((prevSeconds) => prevSeconds - 1);
+      }, 1000);
+    }
+
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [cooldownSeconds]);
 
   const handleRegister = async (e: FormEvent) => {
     e.preventDefault();
@@ -113,7 +128,7 @@ export default function RegisterForm() {
       }
       setEmail(newEmail);
 
-      const emailFormat = /.*/;
+      const emailFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailFormat.test(newEmail)) {
         setEmailAvailable(false);
         setErrors((prevErrors) => ["Invalid email format", ...prevErrors]);
@@ -168,8 +183,11 @@ export default function RegisterForm() {
 
   const handleSendActivationKey = async () => {
     try {
+      console.log("Sending activation key to", email);
       await requestLicenseKey(email);
       setEmailSent(true);
+      setCooldownSeconds(60);
+      console.log("Activation key sent to", email);
       setErrors((prevErrors) =>
         prevErrors.filter((error) => error !== "Failed to send activation key. Please try again.")
       );
@@ -248,8 +266,9 @@ export default function RegisterForm() {
               handleSendActivationKey();
             }}
             className="btn btn-secondary w-fit bg-base-200 text-base-content border-none"
+            disabled={cooldownSeconds > 0}
           >
-            Send Activation Key
+            {cooldownSeconds > 0 ? `Resend in ${cooldownSeconds}s` : "Send Activation Key"}
           </button>
           {email && emailSent && emailAvailable && (
             <p className="text-info">√ An email containing activation key has been sent to your registered email</p>
