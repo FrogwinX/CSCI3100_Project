@@ -18,6 +18,7 @@ public class ForumService {
 
     @Autowired
     private final ForumRepository forumRepository;
+    private final ImageService imageService;
 
     /**
      * Save a post or a comment to the database
@@ -30,9 +31,10 @@ public class ForumService {
      * @throws Exception
      */
     public void createPostOrComment(String userId, String title, String content, String tag, MultipartFile image, String attachTo) throws Exception {
+        PostModel postOrComment;
         if (Integer.parseInt(attachTo) == 0) {
             // Post
-            PostModel postOrComment = addPostOrCommentToDatabase(userId, title, content, attachTo);
+            postOrComment = addPostOrCommentToDatabase(userId, title, content, attachTo);
             Integer tagId = forumRepository.getTagIdFromTagName(tag);
             if (tagId != null) {
                 System.err.println(tagId);
@@ -41,8 +43,12 @@ public class ForumService {
         }
         else {
             // Comment
-            PostModel postOrComment = addPostOrCommentToDatabase(userId, null, content, attachTo);
+            postOrComment = addPostOrCommentToDatabase(userId, null, content, attachTo);
             forumRepository.addCommentCountByOne(Integer.parseInt(attachTo));
+        }
+        if (image != null) {
+            int imageId = imageService.saveImage(image);
+            forumRepository.connectPostWithImage(postOrComment.getPostId(), imageId);
         }
     }
 
