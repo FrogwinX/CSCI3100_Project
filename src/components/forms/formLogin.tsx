@@ -8,8 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 export default function Login() {
   const [UsernameOrEmail, setUserInput] = useState("");
   const [UsernameOrEmailError, setUsernameOrEmailError] = useState("");
-  const [UsernameOrEmailAvailable, setUsernameOrEmailAvailable] =
-    useState(false);
+  const [UsernameOrEmailAvailable, setUsernameOrEmailAvailable] = useState(false);
   const [passwordError, setPasswordError] = useState("");
   const [PasswordAvailable, setPasswordAvailable] = useState(false);
   const [password, setPassword] = useState("");
@@ -27,6 +26,16 @@ export default function Login() {
       email = UsernameOrEmail;
     } else {
       username = UsernameOrEmail;
+    }
+
+    if (!UsernameOrEmail) {
+      setError("Username or email is required.");
+      return;
+    }
+
+    if (!password) {
+      setError("Password is required.");
+      return;
     }
 
     try {
@@ -68,17 +77,12 @@ export default function Login() {
   };
 
   return (
-    <form
-      className="card w-fit min-w-sm lg:min-w-lg max-w-xl bg-base-100 shadow-xl"
-      onSubmit={handleLogin}
-    >
+    <form className="card w-fit min-w-sm lg:min-w-lg max-w-xl bg-base-100 shadow-xl" onSubmit={handleLogin}>
       <div className="card-body gap-4">
         <h1 className="card-title text-center text-4xl pt-12">Sign In</h1>
         <div className="form-control mb-2">
           <label className="label">
-            <span className="label-text text-base-content">
-              Username / Email
-            </span>
+            <span className="label-text text-base-content">Username / Email</span>
           </label>
           <input
             type="text"
@@ -87,9 +91,7 @@ export default function Login() {
             onChange={handleInputChange}
             className="input input-bordered w-full my-1"
           />
-          {!UsernameOrEmailAvailable && UsernameOrEmailError && (
-            <p className="text-red-500">{UsernameOrEmailError}</p>
-          )}
+          {!UsernameOrEmailAvailable && UsernameOrEmailError && <p className="text-red-500">{UsernameOrEmailError}</p>}
         </div>
 
         <div className="form-control">
@@ -103,14 +105,10 @@ export default function Login() {
             onChange={handlePasswordChange}
             className="input input-bordered w-full my-1"
           />
-          {!PasswordAvailable && passwordError && (
-            <p className="text-red-500">{passwordError}</p>
-          )}
+          {!PasswordAvailable && passwordError && <p className="text-red-500">{passwordError}</p>}
           <label className="label">
             <Link href="/forgot-password">
-              <p className="label-text-alt link link-hover text-info ">
-                Forgot password?
-              </p>
+              <p className="label-text-alt link link-hover text-info ">Forgot password?</p>
             </Link>
           </label>
         </div>
@@ -120,10 +118,14 @@ export default function Login() {
             type="submit"
             className="btn btn-primary w-full"
             onClick={(e) => {
-              if (!UsernameOrEmail || !password) {
+              if (!UsernameOrEmail) {
                 e.preventDefault();
-                setUsernameOrEmailError("Username or email is required.");
-                setPasswordError("Password is required.");
+                setError("Username or email is required.");
+                return;
+              }
+              if (!password) {
+                e.preventDefault();
+                setError("Password is required.");
                 return;
               }
             }}
@@ -134,10 +136,7 @@ export default function Login() {
         </div>
         <div className="form-control mt-2">
           <Link href="/register">
-            <button
-              type="button"
-              className="btn btn-secondary w-full bg-base-300 text-base-content border-none"
-            >
+            <button type="button" className="btn btn-secondary w-full bg-base-300 text-base-content border-none">
               Sign Up
             </button>
           </Link>

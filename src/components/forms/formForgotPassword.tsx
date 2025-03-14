@@ -14,9 +14,7 @@ function Slot(props: SlotProps) {
         focus:border-base-300
       `}
     >
-      <div className="absolute bottom+0 left-0 right-0 text-center text-base-300 text-2xl">
-        __
-      </div>
+      <div className="absolute bottom+0 left-0 right-0 text-center text-base-300 text-2xl">__</div>
       <div className="opacity-100 text-2xl">{props.char ?? ""}</div>
       {props.hasFakeCaret && <FakeCaret />}
     </div>
@@ -120,7 +118,7 @@ export default function ForgotPasswordPage() {
     }
     setPassword(newPassword);
 
-    const passwordCriteria = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
+    const passwordCriteria = /^(?=.*[A-Za-z])(?=.*\d)(?!.*\s).{8,}$/;
     if (!passwordCriteria.test(newPassword)) {
       setPasswordError(
         "Must be at least 8 characters long, including\nAt least one alphabet (a~z, A~Z)\nAt least one numerical character (0~9)"
@@ -147,19 +145,9 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <form
-      className="card w-fit min-w-sm lg:min-w-lg max-w-xl bg-base-100 shadow-xl"
-      onSubmit={handleRegister}
-    >
+    <form className="card w-fit min-w-sm lg:min-w-lg max-w-xl bg-base-100 shadow-xl" onSubmit={handleRegister}>
       <div className="card-body gap-4">
-        <h1 className="card-title text-center text-4xl pt-12">
-          Forgot Password
-        </h1>
-        {error && (
-          <div className="alert alert-error">
-            <span>{error}</span>
-          </div>
-        )}
+        <h1 className="card-title text-center text-4xl pt-12">Forgot Password</h1>
 
         <div className="form-control">
           <label className="label">
@@ -181,16 +169,16 @@ export default function ForgotPasswordPage() {
             type="button"
             onClick={() => {
               if (!email) {
-                setEmailError("Email is required to send activation key");
+                setError("Email is required to send activation key");
                 return;
               }
               const emailFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
               if (!emailFormat.test(email)) {
-                setEmailError("Invalid email format");
+                setError("Invalid email format");
                 return;
               }
               if (!emailAvailable) {
-                setEmailError("This Email is unregistered");
+                setError("This Email is unregistered");
                 return;
               }
               handleSendActivationKey();
@@ -201,17 +189,14 @@ export default function ForgotPasswordPage() {
           </button>
           {email && emailAvailable && emailSent && !emailError && (
             <p className="text-info">
-              √ An email containing authentication code has been sent to your
-              registered email
+              √ An email containing authentication code has been sent to your registered email
             </p>
           )}
         </div>
 
         <div className="form-control">
           <label className="label">
-            <span className="label-text text-base-content">
-              Authentication Code
-            </span>
+            <span className="label-text text-base-content">Authentication Code</span>
           </label>
 
           <div className="border border-base-300 rounded-xl w-full max-w-xs my-1">
@@ -254,16 +239,12 @@ export default function ForgotPasswordPage() {
             onChange={handlePasswordChange}
             minLength={8}
           />
-          {passwordError && (
-            <p className="text-error whitespace-pre-line">{passwordError}</p>
-          )}
+          {passwordError && <p className="text-error whitespace-pre-line">{passwordError}</p>}
         </div>
 
         <div className="form-control">
           <label className="label">
-            <span className="label-text text-base-content">
-              Confirm Password
-            </span>
+            <span className="label-text text-base-content">Confirm Password</span>
           </label>
           <input
             type="password"
@@ -276,22 +257,32 @@ export default function ForgotPasswordPage() {
           />
         </div>
 
-        {confirmPassword && password !== confirmPassword && (
-          <p className="text-error">Passwords do not match</p>
-        )}
+        {confirmPassword && password !== confirmPassword && <p className="text-error">Passwords do not match</p>}
 
         <div className="form-control mt-4">
           <button
             type="submit"
-            className={`btn btn-primary text-primary-content w-full ${
-              loading ? "loading" : ""
-            }`}
+            className={`btn btn-primary text-primary-content w-full ${loading ? "loading" : ""}`}
             disabled={loading}
             onClick={(e) => {
-              if (!email || !password || !confirmPassword || !AuthCode) {
+              if (!email) {
                 e.preventDefault();
-                setEmailError("Email is required.");
-                setPasswordError("Password is required.");
+                setError("Email is required.");
+                return;
+              }
+              if (!password) {
+                e.preventDefault();
+                setError("Password is required.");
+                return;
+              }
+              if (!confirmPassword) {
+                e.preventDefault();
+                setError("Confirm Password is required.");
+                return;
+              }
+              if (!AuthCode) {
+                e.preventDefault();
+                setError("Authentication Code is required.");
                 return;
               }
               if (emailError || passwordError || password !== confirmPassword) {
