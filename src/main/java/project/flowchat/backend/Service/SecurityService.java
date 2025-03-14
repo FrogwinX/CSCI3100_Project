@@ -3,13 +3,13 @@ package project.flowchat.backend.Service;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import lombok.AllArgsConstructor;
 import project.flowchat.backend.Model.LicenseModel;
 import project.flowchat.backend.Model.UserAccountModel;
 import project.flowchat.backend.Repository.LicenseRepository;
 import project.flowchat.backend.Repository.UserAccountRepository;
 
 import java.security.Key;
-import java.security.NoSuchAlgorithmException;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -20,13 +20,13 @@ import javax.crypto.SecretKey;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+@AllArgsConstructor
 @Service
 public class SecurityService {
 
     @Autowired
     private final UserAccountRepository userAccountRepository;
     private final LicenseRepository licenseRepository;
-    private String tokenKey;
 
     protected enum KeyType {
         LICENSE,
@@ -35,25 +35,13 @@ public class SecurityService {
     }
 
     /**
-     * Generate key for validating JWT
-     */
-    protected SecurityService(UserAccountRepository userAccountRepository, LicenseRepository licenseRepository) {
-        this.userAccountRepository = userAccountRepository;
-        this.licenseRepository =  licenseRepository;
-        try {
-            KeyGenerator gen = KeyGenerator.getInstance("HmacSHA256");
-            SecretKey k = gen.generateKey();
-            tokenKey = Base64.getEncoder().encodeToString(k.getEncoded());
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
-    }
-
-    /**
      * Turn key from String to Key object
      * @return key for signing JWT
      */
-    protected Key getTokenKey() {
+    protected Key getTokenKey() throws Exception {
+        KeyGenerator gen = KeyGenerator.getInstance("HmacSHA256");
+        SecretKey k = gen.generateKey();
+        String tokenKey = Base64.getEncoder().encodeToString(k.getEncoded());
         byte[] keyBytes = Decoders.BASE64.decode(tokenKey);
         return Keys.hmacShaKeyFor(keyBytes);
     }
@@ -63,7 +51,7 @@ public class SecurityService {
      * @param user UserAccountModel Object
      * @return JWT for user with that username
      */
-    protected String generateToken(UserAccountModel user) {
+    protected String generateToken(UserAccountModel user) throws Exception {
         Map<String, Object> claims = new HashMap<>();
         String role = userAccountRepository.findRoleById(user.getRoleId());
         claims.put("role", role);

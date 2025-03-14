@@ -19,10 +19,10 @@ public class AccountController {
 
     @Autowired
     private final AccountService accountService;
+    private ResponseBody responseBody;
 
     @GetMapping("isUsernameUnique")
     private ResponseBody isUsernameUnique(@RequestParam String username) {
-        ResponseBody responseBody = new ResponseBody();
         try {
             Map<String, Object> data = new HashMap<>();
             Boolean isUsernameUnique = accountService.isUsernameUnique(username);
@@ -48,7 +48,6 @@ public class AccountController {
 
     @GetMapping("isEmailUnique")
     private ResponseBody isEmailUnique(@RequestParam String email) {
-        ResponseBody responseBody = new ResponseBody();
         try {
             Map<String, Object> data = new HashMap<>();
             Boolean isEmailUnique = accountService.isEmailUnique(email);
@@ -74,7 +73,6 @@ public class AccountController {
 
     @PostMapping("registerAccount")
     private ResponseBody registerAccount(@RequestBody Map<String, String> requestBody) {
-        ResponseBody responseBody = new ResponseBody();
         try {
             Map<String, Object> data = new HashMap<>();
             UserAccountModel account = accountService.registerAccount(  requestBody.get("username"),
@@ -104,7 +102,6 @@ public class AccountController {
 
     @PostMapping("requestLicenseKey")
     private ResponseBody requestLicenseKey(@RequestBody Map<String, String> requestBody) {
-        ResponseBody responseBody = new ResponseBody();
         try {
             Map<String, Object> data = new HashMap<>();
             accountService.requestLicenseKey(requestBody.get("email"));
@@ -125,7 +122,6 @@ public class AccountController {
 
     @PostMapping("requestAuthenticationCode")
     private ResponseBody requestAuthenticationCode(@RequestBody Map<String, String> requestBody) {
-        ResponseBody responseBody = new ResponseBody();
         try {
             Map<String, Object> data = new HashMap<>();
             accountService.requestAuthenticationCode(requestBody.get("email"));
@@ -146,7 +142,6 @@ public class AccountController {
 
     @PostMapping("login")
     private ResponseBody login(@RequestBody Map<String, String> requestBody) {
-        ResponseBody responseBody = new ResponseBody();
         String username = requestBody.get("username");
         String email = requestBody.get("email");
         String password = requestBody.get("password");
@@ -181,7 +176,6 @@ public class AccountController {
 
     @PutMapping("resetPasswordByEmail")
     private ResponseBody resetPasswordByEmail(@RequestBody Map<String, String> requestBody) {
-        ResponseBody responseBody = new ResponseBody();
         String email = requestBody.get("email");
         String password = requestBody.get("password");
         String authenticationCode = requestBody.get("authenticationCode");
@@ -208,7 +202,6 @@ public class AccountController {
 
     @PutMapping("deleteAccount")
     private ResponseBody deleteAccount(@RequestBody Map<String, String> requestBody) {
-        ResponseBody responseBody = new ResponseBody();
         try {
             Map<String, Object> data = new HashMap<>();
             String username = requestBody.get("username");

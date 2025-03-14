@@ -1,0 +1,63 @@
+package project.flowchat.backend.Service;
+
+import lombok.AllArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import project.flowchat.backend.Model.ImageModel;
+import project.flowchat.backend.Repository.ImageRepository;
+
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.util.Optional;
+
+import net.coobird.thumbnailator.Thumbnails;
+
+@AllArgsConstructor
+@Service
+public class ImageService {
+
+    @Autowired
+    private final ImageRepository imageRepository;
+
+    private static final long MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
+
+    private static byte[] compressImage(MultipartFile file) throws Exception {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        BufferedImage originalImage = ImageIO.read(file.getInputStream());
+        byte[] compressedImage;
+        float quality = 1.0f;
+        do {
+            Thumbnails.of(originalImage).scale(1.0).outputQuality(quality).toOutputStream(byteArrayOutputStream);
+            compressedImage = byteArrayOutputStream.toByteArray();
+            quality -= 0.1f;
+            if (quality <= 0) {
+                throw new ExceptionService("The image cannot be compressed under 5MB");
+            }
+        } while (compressedImage.length > MAX_IMAGE_SIZE);
+        return compressedImage;
+    }
+
+    public void saveImage(MultipartFile file) throws Exception {
+        if (file.getContentType() == null || !file.getContentType().startsWith("image/")) {
+            throw new ExceptionService("The file is not an image");
+        }
+        ImageModel imageModel = new ImageModel();
+        if (file.getSize() > MAX_IMAGE_SIZE) {
+            imageModel.setImageData(compressImage(file));
+        }
+        else {
+            imageModel.setImageData(file.getBytes());
+        }
+        imageModel.setImageName(file.getOriginalFilename());
+        imageModel.setImageFormat(file.getContentType().toString());
+        imageRepository.save(imageModel);
+    }
+
+    public Optional<ImageModel> getImage(Integer imageId) throws Exception {
+        return imageRepository.findById(imageId);
+    }
+
+
+}
