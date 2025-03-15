@@ -181,6 +181,23 @@ export default function RegisterForm() {
     }
   };
 
+  const handleConfirmPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newConfirmPassword = e.target.value;
+    if (!newConfirmPassword) {
+      setErrors((prevErrors) => ["Confirm password is required", ...prevErrors]);
+      setConfirmPassword(newConfirmPassword);
+      return;
+    } else {
+      setErrors((prevErrors) => prevErrors.filter((error) => error !== "Confirm password is required"));
+    }
+    if (newConfirmPassword !== password) {
+      setErrors((prevErrors) => ["Passwords do not match", ...prevErrors]);
+    } else {
+      setErrors((prevErrors) => prevErrors.filter((error) => error !== "Passwords do not match"));
+    }
+    setConfirmPassword(newConfirmPassword);
+  };
+
   const handleSendActivationKey = async () => {
     try {
       console.log("Sending activation key to", email);
@@ -198,6 +215,11 @@ export default function RegisterForm() {
   };
 
   const handleLicenseKeyChange = (value: string) => {
+    if (value.length === 0) {
+      setErrors((prevErrors) => ["Licence key is required", ...prevErrors]);
+    } else {
+      setErrors((prevErrors) => prevErrors.filter((error) => error !== "Licence key is required"));
+    }
     const cleanedValue = value.replace(/[\s-]/g, "").slice(0, 16);
     setLicenseKey(cleanedValue);
   };
@@ -333,7 +355,7 @@ export default function RegisterForm() {
             value={password}
             onChange={handlePasswordChange}
           />
-          {passwordFormatError && <p className="text-error">{passwordFormatError}</p>}
+          {/* {passwordFormatError && <p className="text-error">{passwordFormatError}</p>} */}
         </div>
         <div className="form-control">
           <label className="label">
@@ -344,44 +366,48 @@ export default function RegisterForm() {
             placeholder="Confirm Password"
             className="input input-bordered w-full my-1"
             value={confirmPassword}
-            onChange={(e) => {
-              setConfirmPassword(e.target.value);
-              if (password && e.target.value !== password) {
-                setErrors((prevErrors) => ["Passwords do not match", ...prevErrors]);
-              }
-            }}
+            onChange={handleConfirmPasswordChange}
           />
-          {confirmPassword && password !== confirmPassword && <p className="text-error">Passwords do not match</p>}
         </div>
         <div className="form-control">
           <button
             type="submit"
-            className={`btn btn-primary text-primary-content w-full ${loading ? "loading" : ""}`}
+            className={`btn btn-primary text-primary-content w-full `}
             disabled={loading}
             onClick={(e) => {
+              if (errors.length) {
+                e.preventDefault();
+                window.scrollTo({ top: 0, behavior: "smooth" });
+                return;
+              }
               if (!username) {
                 e.preventDefault();
-                setErrors((prevErrors) => ["Username is required.", ...prevErrors]);
+                setErrors((prevErrors) => ["Username is required", ...prevErrors]);
+                window.scrollTo({ top: 0, behavior: "smooth" });
                 return;
               }
               if (!email) {
                 e.preventDefault();
                 setErrors((prevErrors) => ["Email is required", ...prevErrors]);
+                window.scrollTo({ top: 0, behavior: "smooth" });
                 return;
               }
               if (!password) {
                 e.preventDefault();
-                setErrors((prevErrors) => ["Password is required.", ...prevErrors]);
+                setErrors((prevErrors) => ["Password is required", ...prevErrors]);
+                window.scrollTo({ top: 0, behavior: "smooth" });
                 return;
               }
               if (!confirmPassword) {
                 e.preventDefault();
-                setErrors((prevErrors) => ["Confirm password is required.", ...prevErrors]);
+                setErrors((prevErrors) => ["Confirm password is required", ...prevErrors]);
+                window.scrollTo({ top: 0, behavior: "smooth" });
                 return;
               }
               if (!licenseKey) {
                 e.preventDefault();
-                setErrors((prevErrors) => ["Licence key is required.", ...prevErrors]);
+                setErrors((prevErrors) => ["Licence key is required", ...prevErrors]);
+                window.scrollTo({ top: 0, behavior: "smooth" });
                 return;
               }
             }}
