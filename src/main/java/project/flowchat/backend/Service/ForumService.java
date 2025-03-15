@@ -98,6 +98,10 @@ public class ForumService {
             throw new ExceptionService("The post or comment is not created by that user");
         }
 
+        if (!postModel.getIsActive()) {
+            throw new ExceptionService("The post or comment is not active");
+        }
+        
         if (content != null) postModel.setContent(content);
         if (postModel.getAttachTo() == 0) {
             // post
@@ -127,6 +131,9 @@ public class ForumService {
                     forumRepository.addCommentCountByNum(parent.getAttachTo(), removeCommentCount);
                     parent = forumRepository.findById(parent.getAttachTo()).get();
                 }
+            }
+            else {
+                throw new ExceptionService("Cannot make a comment become a post");
             }
         }
 
