@@ -101,7 +101,7 @@ public class ForumService {
         if (!postModel.getIsActive()) {
             throw new ExceptionService("The post or comment is not active");
         }
-        
+
         if (content != null) postModel.setContent(content);
         if (postModel.getAttachTo() == 0) {
             // post
@@ -125,7 +125,7 @@ public class ForumService {
 
                 postModel.setAttachTo(Integer.parseInt(attachTo));
                 forumRepository.addCommentCountByNum(Integer.parseInt(attachTo), removeCommentCount);
-                
+
                 parent = forumRepository.findById(Integer.parseInt(attachTo)).get();
                 while (parent.getAttachTo() != 0) {
                     forumRepository.addCommentCountByNum(parent.getAttachTo(), removeCommentCount);
@@ -156,7 +156,55 @@ public class ForumService {
         }
     }
 
-    public void deletePostOrComment() throws Exception {
+    /**
+     * Set post or comment is_active to false, delete image and tag in the database
+     * @param postId post id of the post or comment that user want to delete
+     * @param userId user id of user who wants to delete the post or comment
+     * @throws Exception
+     */
+    @Transactional
+    public void deletePostOrComment(String postId, String userId) throws Exception {
+        Optional<PostModel> postModelOptional = forumRepository.findById(Integer.parseInt(postId));
+        PostModel postModel = postModelOptional.get();
+        if (Integer.parseInt(userId) != postModel.getUserId()) {
+            throw new ExceptionService("The post or comment is not created by that user");
+        }
 
-    }    
+        if (!postModel.getIsActive()) {
+            throw new ExceptionService("The post or comment is not active");
+        }
+
+        postModel.setIsActive(false);
+        deleteImage(Integer.parseInt(postId));
+
+        if (postModel.getAttachTo() == 0) {
+            // Post
+            forumRepository.deleteTagInPost(Integer.parseInt(postId));
+        }
+        else {
+            // Comment
+            forumRepository.minusCommentCountByOne(postModel.getAttachTo());
+            PostModel parent = forumRepository.findById(postModel.getAttachTo()).get();
+            
+            while (parent.getAttachTo() != 0) {
+                forumRepository.minusCommentCountByOne(parent.getAttachTo());
+                parent = forumRepository.findById(parent.getAttachTo()).get();
+            }
+        }
+
+        postModel.setUpdatedAt(ZonedDateTime.now(ZoneId.of("Asia/Hong_Kong")));
+        forumRepository.save(postModel);
+    }
+    
+    /**
+     * Delete data in Post_Image and Image_Data
+     * @param postId
+     */
+    private void deleteImage(int postId) {
+        Integer imageId = forumRepository.findImageId(postId);
+        if (imageId != null) {
+            forumRepository.deleteInPostImage(imageId);
+            forumRepository.deleteInImageData(imageId);
+        }
+    }
 }

@@ -76,4 +76,39 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
     @Transactional
     @NativeQuery("UPDATE FORUM.Post SET comment_count = comment_count + ?2 WHERE post_id = ?1")
     void addCommentCountByNum(int postId, int count);
+
+    /**
+     * Find the image id with the given post id
+     * @param postId postId int
+     * @return corresponding image id
+     */
+    @NativeQuery("SELECT image_id FROM FORUM.Post_Image WHERE post_id = ?1")
+    Integer findImageId(int postId);
+
+    /**
+     * Delete relevant record in Post_Image table
+     * @param imageId imageId int
+     */
+    @Modifying
+    @Transactional
+    @NativeQuery("DELETE FROM FORUM.Post_Image WHERE image_id = ?1")
+    void deleteInPostImage(int imageId);
+
+    /**
+     * Delete relevant record in Image_Data table
+     * @param imageId imageId int
+     */
+    @Modifying
+    @Transactional
+    @NativeQuery("DELETE FROM FORUM.Image_Data WHERE image_id = ?1")
+    void deleteInImageData(int imageId);   
+    
+    /**
+     * Minus the comment count by 1 of the given post id
+     * @param postId postId int
+     */
+    @Modifying
+    @Transactional
+    @NativeQuery("UPDATE FORUM.Post SET comment_count = comment_count - 1 WHERE post_id = ?1")
+    void minusCommentCountByOne(int postId);   
 }

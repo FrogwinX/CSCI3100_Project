@@ -96,7 +96,10 @@ public class ForumController {
     @PutMapping("deletePost")
     private ResponseBody deletePost(@RequestParam Map<String, String> requestBody) {
         try {
-            forumService.deletePostOrComment();
+            Map<String, Object> data = new HashMap<>();
+            forumService.deletePostOrComment(requestBody.get("postId"), requestBody.get("userId"));
+            responseBody.setMessage("The post/comment is deleted");
+            data.put("isSucess", true);
         } catch (ExceptionService e) {
             responseBody.setMessage(e.getMessage());
             Map<String, Object> data = new HashMap<>();
