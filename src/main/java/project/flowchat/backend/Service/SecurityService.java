@@ -1,5 +1,6 @@
 package project.flowchat.backend.Service;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -69,6 +70,38 @@ public class SecurityService {
                 .expiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
                 .signWith(getTokenKey())
                 .compact();
+    }
+
+    /**
+     * check if the token is valid
+     * @param token JWT stored in the header
+     * @return claims if the token is valid
+     * @throws Exception if the token is not valid
+     */
+    public Claims validateToken(String token) throws Exception {
+        try {
+            Claims claims = Jwts.parser()
+                                .verifyWith((SecretKey) key)
+                                .build()
+                                .parseSignedClaims(token)
+                                .getPayload();
+            return claims;
+        } 
+        catch (io.jsonwebtoken.security.SignatureException e) {
+            throw new Exception("Invalid JWT signature");
+        } 
+        catch (io.jsonwebtoken.MalformedJwtException e) {
+            throw new Exception("Invalid JWT token");
+        } 
+        catch (io.jsonwebtoken.ExpiredJwtException e) {
+            throw new Exception("JWT token is expired");
+        } 
+        catch (io.jsonwebtoken.UnsupportedJwtException e) {
+            throw new Exception("Unsupported JWT token");
+        } 
+        catch (IllegalArgumentException e) {
+            throw new Exception("JWT claims string is empty");
+        }
     }
 
     /**
