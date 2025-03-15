@@ -28,6 +28,9 @@ public class SecurityService {
     private final UserAccountRepository userAccountRepository;
     private final LicenseRepository licenseRepository;
 
+    private final int EXPIRATION_TIME = 7 * 24 * 60 * 60 * 1000; // 7 days
+    private static Key key = null;
+
     protected enum KeyType {
         LICENSE,
         AUTHENTICATION,
@@ -39,11 +42,12 @@ public class SecurityService {
      * @return key for signing JWT
      */
     protected Key getTokenKey() throws Exception {
-        KeyGenerator gen = KeyGenerator.getInstance("HmacSHA256");
-        SecretKey k = gen.generateKey();
-        String tokenKey = Base64.getEncoder().encodeToString(k.getEncoded());
-        byte[] keyBytes = Decoders.BASE64.decode(tokenKey);
-        return Keys.hmacShaKeyFor(keyBytes);
+        if (key == null) {
+            KeyGenerator gen = KeyGenerator.getInstance("HmacSHA256");
+            SecretKey k = gen.generateKey();
+            key = Keys.hmacShaKeyFor(k.getEncoded());
+        }
+        return key;
     }
 
     /**
@@ -61,6 +65,8 @@ public class SecurityService {
                 .add(claims)
                 .and()
                 .subject(user.getUsername())
+                .issuedAt(new Date(System.currentTimeMillis()))
+                .expiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
                 .signWith(getTokenKey())
                 .compact();
     }
