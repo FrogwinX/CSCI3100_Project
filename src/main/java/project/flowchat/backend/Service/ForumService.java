@@ -138,7 +138,21 @@ public class ForumService {
         }
 
         if (image != null) {
-
+            if (image.isEmpty()) {
+                deleteImage(Integer.parseInt(postId));
+            }
+            else {
+                Integer imageId = forumRepository.findImageId(Integer.parseInt(postId));
+                if (imageId == null) {
+                    // Add new image
+                    imageId = imageService.saveImage(image);
+                    forumRepository.connectPostWithImage(Integer.parseInt(postId), imageId);
+                }
+                else {
+                    // Change image
+                    imageService.changeImage(image, imageId);
+                }
+            }
         }
         postModel.setUpdatedAt(ZonedDateTime.now(ZoneId.of("Asia/Hong_Kong")));
         forumRepository.save(postModel);
