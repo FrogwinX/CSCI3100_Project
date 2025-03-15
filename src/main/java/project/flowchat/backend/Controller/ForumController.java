@@ -65,10 +65,22 @@ public class ForumController {
         return responseBody;
     }
 
-    @PutMapping("updatePost")
-    private ResponseBody updatePost(@RequestParam Map<String, String> requestBody) {
+    @PutMapping(value = "updatePost", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    private ResponseBody updatePost(@RequestPart Map<String, String> requestBody,
+                                    @RequestPart(required = false) MultipartFile file) {
         try {
-            forumService.updatePostOrComment();
+            Map<String, Object> data = new HashMap<>();
+            forumService.updatePostOrComment(   requestBody.get("postId"),
+                                                requestBody.get("userId"),
+                                                requestBody.get("title"),
+                                                requestBody.get("content"),
+                                                requestBody.get("tag"),
+                                                file,
+                                                requestBody.get("attachTo"));
+
+            responseBody.setMessage("A new post/comment is updated");
+            data.put("isSucess", true);
+            responseBody.setData(data);
         } catch (ExceptionService e) {
             responseBody.setMessage(e.getMessage());
             Map<String, Object> data = new HashMap<>();

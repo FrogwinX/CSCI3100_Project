@@ -4,11 +4,13 @@ import lombok.AllArgsConstructor;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import jakarta.transaction.Transactional;
 import project.flowchat.backend.Model.PostModel;
 import project.flowchat.backend.Repository.ForumRepository;
 
@@ -35,11 +37,7 @@ public class ForumService {
         if (Integer.parseInt(attachTo) == 0) {
             // Post
             postOrComment = addPostOrCommentToDatabase(userId, title, content, attachTo);
-            Integer tagId = forumRepository.getTagIdFromTagName(tag);
-            if (tagId != null) {
-                System.err.println(tagId);
-                forumRepository.connectPostWithTag(postOrComment.getPostId(), tagId);
-            }
+            addTag(postOrComment.getPostId(), tag);
         }
         else {
             // Comment
@@ -81,8 +79,74 @@ public class ForumService {
         return forumRepository.save(postModel);
     }
 
-    public void updatePostOrComment() throws Exception {
+    /**
+     * Update post or comment title, content, tag or image
+     * @param postId post id of the post or comment that need to update
+     * @param userId user id of the user that creates the post or comment
+     * @param title new title of the post, null if user does need to update
+     * @param content new content of the post or comment, null if user does not need update
+     * @param tag new tag of the post, null if user does need to update, empty string if user wants to delete tag
+     * @param image new image of the post or comment, null if user does not need update, empty image if user wants to delete image
+     * @param attachTo 0 if it is a post, post id if it is a comment, can only change from non-zero to non-zero
+     * @throws Exception
+     */
+    @Transactional
+    public void updatePostOrComment(String postId, String userId, String title, String content, String tag, MultipartFile image, String attachTo) throws Exception {
+        Optional<PostModel> postModelOptional = forumRepository.findById(Integer.parseInt(postId));
+        PostModel postModel = postModelOptional.get();
+        if (Integer.parseInt(userId) != postModel.getUserId()) {
+            throw new ExceptionService("The post or comment is not created by that user");
+        }
 
+        if (content != null) postModel.setContent(content);
+        if (postModel.getAttachTo() == 0) {
+            // post
+            if (title != null) postModel.setTitle(title);
+            if (tag != null) {
+                forumRepository.deleteTagInPost(Integer.parseInt(postId));
+                addTag(Integer.parseInt(postId), tag);
+            }
+        }
+        else {
+            // comment
+            if (Integer.parseInt(attachTo) != 0) {
+                int removeCommentCount = postModel.getCommentCount() + 1;
+                forumRepository.removeCommentCountByNum(postModel.getAttachTo(), removeCommentCount);
+
+                PostModel parent = forumRepository.findById(postModel.getAttachTo()).get();
+                while (parent.getAttachTo() != 0) {
+                    forumRepository.removeCommentCountByNum(parent.getAttachTo(), removeCommentCount);
+                    parent = forumRepository.findById(parent.getAttachTo()).get();
+                }
+
+                postModel.setAttachTo(Integer.parseInt(attachTo));
+                forumRepository.addCommentCountByNum(Integer.parseInt(attachTo), removeCommentCount);
+                
+                parent = forumRepository.findById(Integer.parseInt(attachTo)).get();
+                while (parent.getAttachTo() != 0) {
+                    forumRepository.addCommentCountByNum(parent.getAttachTo(), removeCommentCount);
+                    parent = forumRepository.findById(parent.getAttachTo()).get();
+                }
+            }
+        }
+
+        if (image != null) {
+
+        }
+        postModel.setUpdatedAt(ZonedDateTime.now(ZoneId.of("Asia/Hong_Kong")));
+        forumRepository.save(postModel);
+    }
+
+    /**
+     * Add tag for post with given post id
+     * @param postId postId int
+     * @param tag tag string
+     */
+    private void addTag(int postId, String tag) {
+        Integer tagId = forumRepository.getTagIdFromTagName(tag);
+        if (tagId != null) {
+            forumRepository.connectPostWithTag(postId, tagId);
+        }
     }
 
     public void deletePostOrComment() throws Exception {
