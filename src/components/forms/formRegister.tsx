@@ -118,6 +118,7 @@ export default function RegisterForm() {
   const handleEmailChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const newEmail = e.target.value;
     if (newEmail) {
+      setErrors((prevErrors) => prevErrors.filter((error) => error !== "Email is required"));
       if (newEmail.length > 100) {
         setErrors((prevErrors) => ["Email cannot exceed 100 characters", ...prevErrors]);
         setEmailAvailable(false);
@@ -153,7 +154,6 @@ export default function RegisterForm() {
       setEmail(newEmail);
     }
   };
-
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newPassword = e.target.value;
     if (!newPassword) {
@@ -246,14 +246,14 @@ export default function RegisterForm() {
             onChange={handleEmailChange}
             className="input input-bordered w-full my-1"
           />
-          {emailAvailable && <p className="text-info">√ This Email is available</p>}
+          {email && emailAvailable && <p className="text-info">√ This Email is available</p>}
         </div>
         <div className="form-control">
           <button
             type="button"
             onClick={() => {
               if (!email) {
-                setErrors((prevErrors) => ["Email is required.", ...prevErrors]);
+                setErrors((prevErrors) => ["Email is required", ...prevErrors]);
                 setEmailSent(false);
                 return;
               }
@@ -366,7 +366,7 @@ export default function RegisterForm() {
               }
               if (!email) {
                 e.preventDefault();
-                setErrors((prevErrors) => ["Email is required.", ...prevErrors]);
+                setErrors((prevErrors) => ["Email is required", ...prevErrors]);
                 return;
               }
               if (!password) {
