@@ -40,6 +40,7 @@ export default function RegisterForm() {
   const [licenseKey, setLicenseKey] = useState("");
   const [loading, setLoading] = useState(false);
   // Using the same error implementation as formLogin.tsx
+  const [failure, setFailure] = useState(false);
   const [passwordFormatError, setPasswordFormatError] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
   const [emailSent, setEmailSent] = useState(false);
@@ -66,13 +67,19 @@ export default function RegisterForm() {
 
   const handleRegister = async (e: FormEvent) => {
     e.preventDefault();
+    setFailure(false);
     setLoading(true);
     try {
       const result = await register(username, email, password, licenseKey);
       if (result.data.user && result.data.isSuccess) {
+        setFailure(false);
+        setLoading(false);
         router.push("/login");
       } else {
         setErrors((prevErrors) => [result.message, ...prevErrors]);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        setLoading(false);
+        setFailure(true);
       }
     } catch {}
   };
@@ -373,7 +380,6 @@ export default function RegisterForm() {
           <button
             type="submit"
             className={`btn btn-primary text-primary-content w-full `}
-            disabled={loading}
             onClick={(e) => {
               if (errors.length) {
                 e.preventDefault();
@@ -404,6 +410,12 @@ export default function RegisterForm() {
                 window.scrollTo({ top: 0, behavior: "smooth" });
                 return;
               }
+              if (password !== confirmPassword) {
+                e.preventDefault();
+                setErrors((prevErrors) => ["Passwords do not match", ...prevErrors]);
+                window.scrollTo({ top: 0, behavior: "smooth" });
+                return;
+              }
               if (!licenseKey) {
                 e.preventDefault();
                 setErrors((prevErrors) => ["Licence key is required", ...prevErrors]);
@@ -412,7 +424,7 @@ export default function RegisterForm() {
               }
             }}
           >
-            {loading ? "Creating Account..." : "Create Account"}
+            {loading ? "Creating Account" : failure ? "Retry" : "Create Account"}
           </button>
         </div>
         <div className="form-control">
