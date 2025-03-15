@@ -1,8 +1,10 @@
 "use client";
-import React, { FormEvent, useState } from "react";
+import React, { FormEvent, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { OTPInput, SlotProps } from "input-otp";
+import { faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 function Slot(props: SlotProps) {
   return (
@@ -43,64 +45,88 @@ export default function ForgotPasswordPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [AuthCode, setAuthCode] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [failure, setFailure] = useState(false);
+  const [errors, setErrors] = useState<string[]>([]);
   const [emailSent, setEmailSent] = useState(false);
   const [emailAvailable, setEmailAvailable] = useState(false);
-  const [emailError, setEmailError] = useState("");
-  const [passwordError, setPasswordError] = useState("");
+
+  const [passwordFormatError, setPasswordFormatError] = useState(false);
+  const [cooldownSeconds, setCooldownSeconds] = useState(0);
+
   const router = useRouter();
   const { requestAuthCode, checkEmailUnique, resetPasswordByEmail } = useAuth();
 
-  const handleRegister = async (e: FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
+  useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
 
-    try {
-      const success = await resetPasswordByEmail(email, AuthCode, password);
-
-      if (success) {
-        router.push("/");
-      } else {
-        setError("Registration failed");
-      }
-    } catch (error) {
-      console.error("Registration error:", error);
-      setError("An error occurred during registration. Please try again.");
-    } finally {
-      setLoading(false);
+    if (cooldownSeconds > 0) {
+      timer = setInterval(() => {
+        setCooldownSeconds((prevSeconds) => prevSeconds - 1);
+      }, 1000);
     }
+
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [cooldownSeconds]);
+
+  const handleForgotPassword = async (e: FormEvent) => {
+    e.preventDefault();
+    setFailure(false);
+    setLoading(true);
+    try {
+      const result = await resetPasswordByEmail(email, AuthCode, password);
+      if (result.data.username && result.data.isSuccess) {
+        setFailure(false);
+        setLoading(false);
+        router.push("/login");
+      } else {
+        setErrors((prevErrors) => [result.message, ...prevErrors]);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        setLoading(false);
+        setFailure(true);
+      }
+    } catch {}
   };
 
   const handleEmailChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const newEmail = e.target.value;
     if (newEmail) {
+      setErrors((prevErrors) => prevErrors.filter((error) => error !== "Email is required"));
       if (newEmail.length > 100) {
-        setEmailError("Email cannot exceed 100 characters");
+        setErrors((prevErrors) => ["Email cannot exceed 100 characters", ...prevErrors]);
         setEmailAvailable(false);
+        setEmailSent(false);
         return;
+      } else {
+        setErrors((prevErrors) => prevErrors.filter((error) => error !== "Email cannot exceed 100 characters"));
       }
       setEmail(newEmail);
 
       const emailFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (newEmail && !emailFormat.test(newEmail)) {
+      if (!emailFormat.test(newEmail)) {
         setEmailAvailable(false);
-        setEmailError("Invalid email format");
+        setErrors((prevErrors) => ["Invalid email format", ...prevErrors]);
+        setEmailSent(false);
         return;
       } else {
-        setEmailError("This Email is unregistered");
+        setErrors((prevErrors) => prevErrors.filter((error) => error !== "Invalid email format"));
       }
       const result = await checkEmailUnique(newEmail);
       if (result.data.isEmailUnique) {
         setEmailAvailable(false);
-        setEmailError("This Email is unregistered");
+        setErrors((prevErrors) => ["This Email has not registered", ...prevErrors]);
+        setEmailSent(false);
       } else {
+        //not unique == email is registered
         setEmailAvailable(true);
-        setEmailError("");
+        setErrors((prevErrors) => prevErrors.filter((error) => error !== "This Email has not registered"));
       }
     } else {
+      //field is empty
       setEmailAvailable(false);
-      setEmailError("This field is required");
+      setErrors((prevErrors) => ["Email is required", ...prevErrors]);
+      setEmailSent(false);
       setEmail(newEmail);
     }
   };
@@ -108,46 +134,92 @@ export default function ForgotPasswordPage() {
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newPassword = e.target.value;
     if (!newPassword) {
-      setPasswordError("This field is required");
+      setErrors((prevErrors) => ["Password is required", ...prevErrors]);
       setPassword(newPassword);
       return;
+    } else {
+      setErrors((prevErrors) => prevErrors.filter((error) => error !== "Password is required"));
     }
+
     if (newPassword.length > 50) {
-      setPasswordError("Password cannot exceed 50 characters");
+      setErrors((prevErrors) => ["Password cannot exceed 50 characters", ...prevErrors]);
       return;
+    } else {
+      setErrors((prevErrors) => prevErrors.filter((error) => error !== "Password cannot exceed 50 characters"));
     }
+
     setPassword(newPassword);
 
     const passwordCriteria = /^(?=.*[A-Za-z])(?=.*\d)(?!.*\s).{8,}$/;
     if (!passwordCriteria.test(newPassword)) {
-      setPasswordError(
-        "Must be at least 8 characters long, including\nAt least one alphabet (a~z, A~Z)\nAt least one numerical character (0~9)"
-      );
+      setPasswordFormatError(true);
     } else {
-      setPasswordError("");
+      setPasswordFormatError(false);
     }
   };
 
-  const handleSendActivationKey = async () => {
+  const handleConfirmPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newConfirmPassword = e.target.value;
+    if (!newConfirmPassword) {
+      setErrors((prevErrors) => ["Confirm password is required", ...prevErrors]);
+      setConfirmPassword(newConfirmPassword);
+      return;
+    } else {
+      setErrors((prevErrors) => prevErrors.filter((error) => error !== "Confirm password is required"));
+    }
+    if (newConfirmPassword !== password) {
+      setErrors((prevErrors) => ["Passwords do not match", ...prevErrors]);
+    } else {
+      setErrors((prevErrors) => prevErrors.filter((error) => error !== "Passwords do not match"));
+    }
+    setConfirmPassword(newConfirmPassword);
+  };
+
+  const handleSendAuthenticationCode = async () => {
     try {
+      console.log("Sending activation key to", email);
       await requestAuthCode(email);
       setEmailSent(true);
-      setError("");
+      setCooldownSeconds(60);
+      console.log("Activation key sent to", email);
+      setErrors((prevErrors) =>
+        prevErrors.filter((error) => error !== "Failed to send activation key. Please try again.")
+      );
     } catch (error) {
       console.error("Error sending activation key:", error);
-      setError("Failed to send activation key. Please try again.");
+      setErrors((prevErrors) => ["Failed to send activation key. Please try again.", ...prevErrors]);
     }
   };
 
   const handleAuthCodeChange = (value: string) => {
+    if (value.length === 0) {
+      setErrors((prevErrors) => ["Authentication code is required", ...prevErrors]);
+    } else {
+      setErrors((prevErrors) => prevErrors.filter((error) => error !== "Authentication code is required"));
+    }
     const cleanedValue = value.replace(/[\s-]/g, "").slice(0, 6);
     setAuthCode(cleanedValue);
   };
 
   return (
-    <form className="card w-fit min-w-sm lg:min-w-lg max-w-xl bg-base-100 shadow-xl" onSubmit={handleRegister}>
+    <form className="card w-fit min-w-sm lg:min-w-lg max-w-xl bg-base-100 shadow-xl" onSubmit={handleForgotPassword}>
       <div className="card-body gap-4">
-        <h1 className="card-title text-center text-4xl pt-12">Forgot Password</h1>
+        <div
+          role="alert"
+          className={`alert alert-error alert-soft ${passwordFormatError || errors.length ? "" : "invisible"}`}
+        >
+          <FontAwesomeIcon icon={faTriangleExclamation} className="text-2xl text-error" />
+          {passwordFormatError ? (
+            <p>
+              Password must be at least 8 characters, with <br /> At least one alphabet (a~z, A~Z)
+              <br /> At least one numerical character (0~9)
+            </p>
+          ) : (
+            <p>{errors[0]}</p>
+          )}
+        </div>
+
+        <h1 className="card-title text-center text-4xl ">Forgot Password</h1>
 
         <div className="form-control">
           <label className="label">
@@ -160,8 +232,7 @@ export default function ForgotPasswordPage() {
             onChange={handleEmailChange}
             className="input input-bordered w-full my-1"
           />
-
-          {emailError && <p className="text-error">{emailError}</p>}
+          {email && emailAvailable && <p className="text-info">√ This Email is available</p>}
         </div>
 
         <div className="form-control">
@@ -169,27 +240,23 @@ export default function ForgotPasswordPage() {
             type="button"
             onClick={() => {
               if (!email) {
-                setError("Email is required to send activation key");
-                return;
+                setErrors((prevErrors) => ["Email is required", ...prevErrors]);
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              } else if (emailAvailable && cooldownSeconds === 0) {
+                handleSendAuthenticationCode();
+              } else {
+                window.scrollTo({ top: 0, behavior: "smooth" });
               }
-              const emailFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-              if (!emailFormat.test(email)) {
-                setError("Invalid email format");
-                return;
-              }
-              if (!emailAvailable) {
-                setError("This Email is unregistered");
-                return;
-              }
-              handleSendActivationKey();
             }}
             className="btn btn-secondary w-fit bg-base-200 text-base-content border-none"
+            disabled={cooldownSeconds > 0}
           >
             Send Authentication Code
           </button>
-          {email && emailAvailable && emailSent && !emailError && (
+          {email && emailSent && emailAvailable && cooldownSeconds > 0 && (
             <p className="text-info">
-              √ An email containing authentication code has been sent to your registered email
+              √ An email containing authentication code has been sent to your registered email, you may resend in{" "}
+              {cooldownSeconds}s
             </p>
           )}
         </div>
@@ -198,7 +265,6 @@ export default function ForgotPasswordPage() {
           <label className="label">
             <span className="label-text text-base-content">Authentication Code</span>
           </label>
-
           <div className="border border-base-300 rounded-xl w-full max-w-xs my-1">
             <OTPInput
               value={AuthCode}
@@ -227,6 +293,7 @@ export default function ForgotPasswordPage() {
             />
           </div>
         </div>
+
         <div className="form-control">
           <label className="label">
             <span className="label-text text-base-content">Password</span>
@@ -237,9 +304,7 @@ export default function ForgotPasswordPage() {
             className="input input-bordered w-full my-1"
             value={password}
             onChange={handlePasswordChange}
-            minLength={8}
           />
-          {passwordError && <p className="text-error whitespace-pre-line">{passwordError}</p>}
         </div>
 
         <div className="form-control">
@@ -251,47 +316,53 @@ export default function ForgotPasswordPage() {
             placeholder="Confirm Password"
             className="input input-bordered w-full my-1"
             value={confirmPassword}
-            onChange={(e) => {
-              setConfirmPassword(e.target.value);
-            }}
+            onChange={handleConfirmPasswordChange}
           />
         </div>
 
-        {confirmPassword && password !== confirmPassword && <p className="text-error">Passwords do not match</p>}
-
-        <div className="form-control mt-4">
+        <div className="form-control">
           <button
             type="submit"
-            className={`btn btn-primary text-primary-content w-full ${loading ? "loading" : ""}`}
-            disabled={loading}
+            className={`btn btn-primary text-primary-content w-full `}
             onClick={(e) => {
+              if (errors.length) {
+                e.preventDefault();
+                window.scrollTo({ top: 0, behavior: "smooth" });
+                return;
+              }
               if (!email) {
                 e.preventDefault();
-                setError("Email is required.");
+                setErrors((prevErrors) => ["Email is required", ...prevErrors]);
+                window.scrollTo({ top: 0, behavior: "smooth" });
                 return;
               }
               if (!password) {
                 e.preventDefault();
-                setError("Password is required.");
+                setErrors((prevErrors) => ["Password is required", ...prevErrors]);
+                window.scrollTo({ top: 0, behavior: "smooth" });
                 return;
               }
               if (!confirmPassword) {
                 e.preventDefault();
-                setError("Confirm Password is required.");
+                setErrors((prevErrors) => ["Confirm password is required", ...prevErrors]);
+                window.scrollTo({ top: 0, behavior: "smooth" });
+                return;
+              }
+              if (password !== confirmPassword) {
+                e.preventDefault();
+                setErrors((prevErrors) => ["Passwords do not match", ...prevErrors]);
+                window.scrollTo({ top: 0, behavior: "smooth" });
                 return;
               }
               if (!AuthCode) {
                 e.preventDefault();
-                setError("Authentication Code is required.");
-                return;
-              }
-              if (emailError || passwordError || password !== confirmPassword) {
-                e.preventDefault();
+                setErrors((prevErrors) => ["Authentication code is required", ...prevErrors]);
+                window.scrollTo({ top: 0, behavior: "smooth" });
                 return;
               }
             }}
           >
-            {loading ? "Reseting Password..." : "Reset Password"}
+            {loading ? "Resetting Password " : failure ? "Retry" : "Reset Password"}
           </button>
         </div>
 

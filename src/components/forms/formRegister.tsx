@@ -241,7 +241,7 @@ export default function RegisterForm() {
           <FontAwesomeIcon icon={faTriangleExclamation} className="text-2xl text-error" />
           {passwordFormatError ? (
             <p>
-              The password must be at least 8 characters long, including <br /> At least one alphabet (a~z, A~Z)
+              Password must be at least 8 characters, with <br /> At least one alphabet (a~z, A~Z)
               <br /> At least one numerical character (0~9)
             </p>
           ) : (
@@ -277,32 +277,33 @@ export default function RegisterForm() {
           />
           {email && emailAvailable && <p className="text-info">√ This Email is available</p>}
         </div>
+
         <div className="form-control">
           <button
             type="button"
             onClick={() => {
               if (!email) {
                 setErrors((prevErrors) => ["Email is required", ...prevErrors]);
-                setEmailSent(false);
-                return;
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              } else if (emailAvailable && cooldownSeconds === 0) {
+                handleSendActivationKey();
+              } else {
+                window.scrollTo({ top: 0, behavior: "smooth" });
               }
-              const emailFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-              if (!emailFormat.test(email)) {
-                setErrors((prevErrors) => ["Invalid email format", ...prevErrors]);
-                setEmailSent(false);
-                return;
-              }
-              handleSendActivationKey();
             }}
             className="btn btn-secondary w-fit bg-base-200 text-base-content border-none"
             disabled={cooldownSeconds > 0}
           >
-            {cooldownSeconds > 0 ? `Resend in ${cooldownSeconds}s` : "Send Activation Key"}
+            Send Activation Key
           </button>
-          {email && emailSent && emailAvailable && (
-            <p className="text-info">√ An email containing activation key has been sent to your registered email</p>
+          {email && emailSent && emailAvailable && cooldownSeconds > 0 && (
+            <p className="text-info">
+              √ An email containing activation key has been sent to your registered email, you may resend in{" "}
+              {cooldownSeconds}s
+            </p>
           )}
         </div>
+
         <div className="form-control">
           <label className="label">
             <span className="label-text text-base-content">Activation Key</span>
@@ -351,6 +352,7 @@ export default function RegisterForm() {
             />
           </div>
         </div>
+
         <div className="form-control">
           <label className="label">
             <span className="label-text text-base-content">Password</span>
@@ -364,6 +366,7 @@ export default function RegisterForm() {
           />
           {/* {passwordFormatError && <p className="text-error">{passwordFormatError}</p>} */}
         </div>
+
         <div className="form-control">
           <label className="label">
             <span className="label-text text-base-content">Confirm Password</span>
@@ -376,6 +379,7 @@ export default function RegisterForm() {
             onChange={handleConfirmPasswordChange}
           />
         </div>
+
         <div className="form-control">
           <button
             type="submit"
