@@ -45,6 +45,12 @@ public class ForumService {
             // Comment
             postOrComment = addPostOrCommentToDatabase(userId, null, content, attachTo);
             forumRepository.addCommentCountByOne(Integer.parseInt(attachTo));
+            PostModel parent = forumRepository.findById(Integer.parseInt(attachTo)).get();
+            while (parent.getAttachTo() != 0) {
+                forumRepository.addCommentCountByOne(parent.getAttachTo());
+                parent = forumRepository.findById(parent.getAttachTo()).get();
+            }
+
         }
         if (image != null) {
             int imageId = imageService.saveImage(image);
