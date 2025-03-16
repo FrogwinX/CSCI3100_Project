@@ -1,4 +1,4 @@
-package project.flowchat.backend.Model;
+package project.flowchat.backend.DTO;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 
 @Data
 @Component
-public class ResponseBody {
+public class ResponseBodyDTO {
     private String message;
     private Object data;
 }

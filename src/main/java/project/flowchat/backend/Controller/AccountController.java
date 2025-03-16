@@ -3,7 +3,7 @@ package project.flowchat.backend.Controller;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import project.flowchat.backend.Model.ResponseBody;
+import project.flowchat.backend.DTO.ResponseBodyDTO;
 import project.flowchat.backend.Model.UserAccountModel;
 import project.flowchat.backend.Service.AccountService;
 import project.flowchat.backend.Service.ExceptionService;
@@ -19,60 +19,60 @@ public class AccountController {
 
     @Autowired
     private final AccountService accountService;
-    private ResponseBody responseBody;
+    private ResponseBodyDTO responseBodyDTO;
 
     @GetMapping("isUsernameUnique")
-    private ResponseBody isUsernameUnique(@RequestParam String username) {
+    private ResponseBodyDTO isUsernameUnique(@RequestParam String username) {
         try {
             Map<String, Object> data = new HashMap<>();
             Boolean isUsernameUnique = accountService.isUsernameUnique(username);
             data.put("isUsernameUnique", isUsernameUnique);
             if (isUsernameUnique) {
-                responseBody.setMessage("The username is unique");
+                responseBodyDTO.setMessage("The username is unique");
             }
             else {
-                responseBody.setMessage("The username is not unique");
+                responseBodyDTO.setMessage("The username is not unique");
             }
-            responseBody.setData(data);
+            responseBodyDTO.setData(data);
         } catch (ExceptionService e) {
-            responseBody.setMessage(e.getMessage());
+            responseBodyDTO.setMessage(e.getMessage());
             Map<String, Object> data = new HashMap<>();
             data.put("isUsernameUnique", false);
-            responseBody.setData(data);
+            responseBodyDTO.setData(data);
         } catch (Exception e) {
-            responseBody.setMessage("Fail: " + e);
-            responseBody.setData(null);
+            responseBodyDTO.setMessage("Fail: " + e);
+            responseBodyDTO.setData(null);
         }
-        return responseBody;
+        return responseBodyDTO;
     }
 
     @GetMapping("isEmailUnique")
-    private ResponseBody isEmailUnique(@RequestParam String email) {
+    private ResponseBodyDTO isEmailUnique(@RequestParam String email) {
         try {
             Map<String, Object> data = new HashMap<>();
             Boolean isEmailUnique = accountService.isEmailUnique(email);
             data.put("isEmailUnique", isEmailUnique);
             if (isEmailUnique) {
-                responseBody.setMessage("The email is unique");
+                responseBodyDTO.setMessage("The email is unique");
             }
             else {
-                responseBody.setMessage("The email is not unique");
+                responseBodyDTO.setMessage("The email is not unique");
             }
-            responseBody.setData(data);
+            responseBodyDTO.setData(data);
         } catch (ExceptionService e) {
-            responseBody.setMessage(e.getMessage());
+            responseBodyDTO.setMessage(e.getMessage());
             Map<String, Object> data = new HashMap<>();
             data.put("isEmailUnique", false);
-            responseBody.setData(data);
+            responseBodyDTO.setData(data);
         } catch (Exception e) {
-            responseBody.setMessage("Fail: " + e);
-            responseBody.setData(null);
+            responseBodyDTO.setMessage("Fail: " + e);
+            responseBodyDTO.setData(null);
         }
-        return responseBody;
+        return responseBodyDTO;
     }
 
     @PostMapping("registerAccount")
-    private ResponseBody registerAccount(@RequestBody Map<String, String> requestBody) {
+    private ResponseBodyDTO registerAccount(@RequestBody Map<String, String> requestBody) {
         try {
             Map<String, Object> data = new HashMap<>();
             UserAccountModel account = accountService.registerAccount(  requestBody.get("username"),
@@ -85,63 +85,63 @@ public class AccountController {
             user.put("username", account.getUsername());
             user.put("role", accountService.getRoleById(account.getRoleId()));
             data.put("user", user);
-            responseBody.setMessage("A new account is created");
-            responseBody.setData(data);
+            responseBodyDTO.setMessage("A new account is created");
+            responseBodyDTO.setData(data);
         } catch (ExceptionService e) {
-            responseBody.setMessage(e.getMessage());
+            responseBodyDTO.setMessage(e.getMessage());
             Map<String, Object> data = new HashMap<>();
             data.put("isSuccess", false);
             data.put("user", null);
-            responseBody.setData(data);
+            responseBodyDTO.setData(data);
         } catch (Exception e) {
-            responseBody.setMessage("Fail: " + e);
-            responseBody.setData(null);
+            responseBodyDTO.setMessage("Fail: " + e);
+            responseBodyDTO.setData(null);
         }
-        return responseBody;
+        return responseBodyDTO;
     }
 
     @PostMapping("requestLicenseKey")
-    private ResponseBody requestLicenseKey(@RequestBody Map<String, String> requestBody) {
+    private ResponseBodyDTO requestLicenseKey(@RequestBody Map<String, String> requestBody) {
         try {
             Map<String, Object> data = new HashMap<>();
             accountService.requestLicenseKey(requestBody.get("email"));
             data.put("isSuccess", true);
-            responseBody.setMessage("A new license key is generated and sent");
-            responseBody.setData(data);
+            responseBodyDTO.setMessage("A new license key is generated and sent");
+            responseBodyDTO.setData(data);
         } catch (ExceptionService e) {
-            responseBody.setMessage(e.getMessage());
+            responseBodyDTO.setMessage(e.getMessage());
             Map<String, Object> data = new HashMap<>();
             data.put("isSuccess", false);
-            responseBody.setData(data);
+            responseBodyDTO.setData(data);
         } catch (Exception e) {
-            responseBody.setMessage("Fail: " + e);
-            responseBody.setData(null);
+            responseBodyDTO.setMessage("Fail: " + e);
+            responseBodyDTO.setData(null);
         }
-        return responseBody;
+        return responseBodyDTO;
     }
 
     @PostMapping("requestAuthenticationCode")
-    private ResponseBody requestAuthenticationCode(@RequestBody Map<String, String> requestBody) {
+    private ResponseBodyDTO requestAuthenticationCode(@RequestBody Map<String, String> requestBody) {
         try {
             Map<String, Object> data = new HashMap<>();
             accountService.requestAuthenticationCode(requestBody.get("email"));
             data.put("isSuccess", true);
-            responseBody.setMessage("A new authentication code is generated and sent");
-            responseBody.setData(data);
+            responseBodyDTO.setMessage("A new authentication code is generated and sent");
+            responseBodyDTO.setData(data);
         } catch (ExceptionService e) {
-            responseBody.setMessage(e.getMessage());
+            responseBodyDTO.setMessage(e.getMessage());
             Map<String, Object> data = new HashMap<>();
             data.put("isSuccess", false);
-            responseBody.setData(data);
+            responseBodyDTO.setData(data);
         } catch (Exception e) {
-            responseBody.setMessage("Fail: " + e);
-            responseBody.setData(null);
+            responseBodyDTO.setMessage("Fail: " + e);
+            responseBodyDTO.setData(null);
         }
-        return responseBody;
+        return responseBodyDTO;
     }
 
     @PostMapping("login")
-    private ResponseBody login(@RequestBody Map<String, String> requestBody) {
+    private ResponseBodyDTO login(@RequestBody Map<String, String> requestBody) {
         String username = requestBody.get("username");
         String email = requestBody.get("email");
         String password = requestBody.get("password");
@@ -151,10 +151,10 @@ public class AccountController {
             info.put("isAccountActive", true);
             info.put("isPasswordCorrect", true);
             info.put("user", userLoginInfo);
-            responseBody.setMessage("Account is active and password is correct");
-            responseBody.setData(info);
+            responseBodyDTO.setMessage("Account is active and password is correct");
+            responseBodyDTO.setData(info);
         } catch (ExceptionService e) {
-            responseBody.setMessage(e.getMessage());
+            responseBodyDTO.setMessage(e.getMessage());
             Map<String, Object> data = new HashMap<>();
             if (e.getMessage().equals("Account is not active")) {
                 data.put("isAccountActive", false);
@@ -165,17 +165,17 @@ public class AccountController {
                 data.put("isPasswordCorrect", false);
             }
             data.put("user", null);
-            responseBody.setData(data);
+            responseBodyDTO.setData(data);
         }
         catch (Exception e) {
-            responseBody.setMessage("Fail: " + e);
-            responseBody.setData(null);
+            responseBodyDTO.setMessage("Fail: " + e);
+            responseBodyDTO.setData(null);
         }
-        return responseBody;
+        return responseBodyDTO;
     }
 
     @PutMapping("resetPasswordByEmail")
-    private ResponseBody resetPasswordByEmail(@RequestBody Map<String, String> requestBody) {
+    private ResponseBodyDTO resetPasswordByEmail(@RequestBody Map<String, String> requestBody) {
         String email = requestBody.get("email");
         String password = requestBody.get("password");
         String authenticationCode = requestBody.get("authenticationCode");
@@ -185,23 +185,23 @@ public class AccountController {
             accountService.resetPassword(email, password, authenticationCode);
             data.put("isSuccess", true);
             data.put("username", accountService.getNameFromEmail(email));
-            responseBody.setMessage("Password is reset");
-            responseBody.setData(data);
+            responseBodyDTO.setMessage("Password is reset");
+            responseBodyDTO.setData(data);
         } catch (ExceptionService e) {
-            responseBody.setMessage(e.getMessage());
+            responseBodyDTO.setMessage(e.getMessage());
             Map<String, Object> data = new HashMap<>();
             data.put("isSuccess", false);
             data.put("username", null);
-            responseBody.setData(data);
+            responseBodyDTO.setData(data);
         } catch (Exception e) {
-            responseBody.setMessage("Fail: " + e);
-            responseBody.setData(null);
+            responseBodyDTO.setMessage("Fail: " + e);
+            responseBodyDTO.setData(null);
         }
-        return responseBody;
+        return responseBodyDTO;
     }
 
     @PutMapping("deleteAccount")
-    private ResponseBody deleteAccount(@RequestBody Map<String, String> requestBody) {
+    private ResponseBodyDTO deleteAccount(@RequestBody Map<String, String> requestBody) {
         try {
             Map<String, Object> data = new HashMap<>();
             String username = requestBody.get("username");
@@ -209,18 +209,18 @@ public class AccountController {
             String password = requestBody.get("password");
             accountService.deleteAccount(username, email, password);
             data.put("isSuccess", true);
-            responseBody.setMessage("Account is deleted");
-            responseBody.setData(data);
+            responseBodyDTO.setMessage("Account is deleted");
+            responseBodyDTO.setData(data);
         } catch (ExceptionService e) {
             Map<String, Object> data = new HashMap<>();
             data.put("isSuccess", false);
-            responseBody.setMessage(e.getMessage());
-            responseBody.setData(data);
+            responseBodyDTO.setMessage(e.getMessage());
+            responseBodyDTO.setData(data);
         }
         catch (Exception e) {
-            responseBody.setMessage("Fail: " + e);
-            responseBody.setData(null);
+            responseBodyDTO.setMessage("Fail: " + e);
+            responseBodyDTO.setData(null);
         }
-        return responseBody;
+        return responseBodyDTO;
     }
 }

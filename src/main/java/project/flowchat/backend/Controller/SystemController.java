@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.web.bind.annotation.*;
-import project.flowchat.backend.Model.ResponseBody;
+import project.flowchat.backend.DTO.ResponseBodyDTO;
 import project.flowchat.backend.Model.SystemModel;
 import project.flowchat.backend.Service.SystemService;
 
@@ -23,42 +23,42 @@ public class SystemController {
     private final ResourceLoader resourceLoader;
 
     @GetMapping("getAllInfo")
-    private ResponseBody getAllInfo() {
-        ResponseBody responseBody = new ResponseBody();
+    private ResponseBodyDTO getAllInfo() {
+        ResponseBodyDTO responseBodyDTO = new ResponseBodyDTO();
         try {
             List<SystemModel> data = systemService.getAllInfo();
-            responseBody.setMessage("Success");
-            responseBody.setData(data);
+            responseBodyDTO.setMessage("Success");
+            responseBodyDTO.setData(data);
         }
         catch (Exception e) {
-            responseBody.setMessage("Fail: " + e);
-            responseBody.setData(null);
+            responseBodyDTO.setMessage("Fail: " + e);
+            responseBodyDTO.setData(null);
         }
-        return responseBody;
+        return responseBodyDTO;
     }
 
     @GetMapping("getInfoByVersion")
-    private ResponseBody getInfoByVersion(@RequestParam String version) {
-        ResponseBody responseBody = new ResponseBody();
+    private ResponseBodyDTO getInfoByVersion(@RequestParam String version) {
+        ResponseBodyDTO responseBodyDTO = new ResponseBodyDTO();
         try {
             SystemModel data = systemService.getInfoByVersion(version);
             if (data != null) {
-                responseBody.setMessage("Success");
+                responseBodyDTO.setMessage("Success");
                 Map<String, Object> info = new HashMap<>();
                 info.put("version", data.getVersion());
                 info.put("feature", data.getFeature());
                 info.put("description", data.getDescription());
-                responseBody.setData(info);
+                responseBodyDTO.setData(info);
             }
             else {
-                responseBody.setMessage("Version is incorrect");
-                responseBody.setData(null);
+                responseBodyDTO.setMessage("Version is incorrect");
+                responseBodyDTO.setData(null);
             }
         }
         catch (Exception e) {
-            responseBody.setMessage("Fail: " + e);
-            responseBody.setData(null);
+            responseBodyDTO.setMessage("Fail: " + e);
+            responseBodyDTO.setData(null);
         }
-        return responseBody;
+        return responseBodyDTO;
     }
 }

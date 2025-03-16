@@ -38,7 +38,7 @@ public class AccountService {
      * @return false if there are invalid characters, else true
      */
     private Boolean isUsernameFormatCorrect(String username) {
-        if (username == null || username.isEmpty() || username.contains(";")) {
+        if (username == null || username.isEmpty() || username.contains(";") || username.contains("@")) {
             return false;
         }
         return true;

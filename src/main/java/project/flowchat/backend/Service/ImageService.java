@@ -21,6 +21,8 @@ public class ImageService {
     @Autowired
     private final ImageRepository imageRepository;
 
+    public final String deploymentGetImageAPI = "https://flowchatbackend.azurewebsites.net/api/Image/getImageByImageId?imageId=";
+    public final String localhostGetImageAPI = "http://localhost:8080/api/Image/getImageByImageId?imageId=";
     private static final long MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
 
     private static byte[] compressImage(MultipartFile file) throws Exception {
