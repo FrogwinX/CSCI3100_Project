@@ -83,11 +83,11 @@ public class ForumService {
      * Update post or comment title, content, tag or image
      * @param postId post id of the post or comment that need to update
      * @param userId user id of the user that creates the post or comment
-     * @param title new title of the post, null if user does need to update
-     * @param content new content of the post or comment, null if user does not need update
+     * @param title new title of the post, null if user does not need to update
+     * @param content new content of the post or comment, null if user does not need to update
      * @param tag new tag of the post, null if user does need to update, empty string if user wants to delete tag
      * @param image new image of the post or comment, null if user does not need update, empty image if user wants to delete image
-     * @param attachTo 0 if it is a post, post id if it is a comment, can only change from non-zero to non-zero
+     * @param attachTo post id if it is a comment, can only change from non-zero to non-zero, null if user does not need to update
      * @throws Exception
      */
     @Transactional
@@ -111,31 +111,31 @@ public class ForumService {
                 addTag(Integer.parseInt(postId), tag);
             }
         }
-        else {
+        else if (attachTo != null && Integer.parseInt(attachTo) != 0) {
             // comment
-            if (Integer.parseInt(attachTo) != 0) {
-                int removeCommentCount = postModel.getCommentCount() + 1;
-                forumRepository.removeCommentCountByNum(postModel.getAttachTo(), removeCommentCount);
+            int removeCommentCount = postModel.getCommentCount() + 1;
+            forumRepository.removeCommentCountByNum(postModel.getAttachTo(), removeCommentCount);
 
-                PostModel parent = forumRepository.findById(postModel.getAttachTo()).get();
-                while (parent.getAttachTo() != 0) {
-                    forumRepository.removeCommentCountByNum(parent.getAttachTo(), removeCommentCount);
-                    parent = forumRepository.findById(parent.getAttachTo()).get();
-                }
-
-                postModel.setAttachTo(Integer.parseInt(attachTo));
-                forumRepository.addCommentCountByNum(Integer.parseInt(attachTo), removeCommentCount);
-
-                parent = forumRepository.findById(Integer.parseInt(attachTo)).get();
-                while (parent.getAttachTo() != 0) {
-                    forumRepository.addCommentCountByNum(parent.getAttachTo(), removeCommentCount);
-                    parent = forumRepository.findById(parent.getAttachTo()).get();
-                }
+            PostModel parent = forumRepository.findById(postModel.getAttachTo()).get();
+            while (parent.getAttachTo() != 0) {
+                forumRepository.removeCommentCountByNum(parent.getAttachTo(), removeCommentCount);
+                parent = forumRepository.findById(parent.getAttachTo()).get();
             }
-            else {
-                throw new ExceptionService("Cannot make a comment become a post");
+
+            postModel.setAttachTo(Integer.parseInt(attachTo));
+            forumRepository.addCommentCountByNum(Integer.parseInt(attachTo), removeCommentCount);
+
+            parent = forumRepository.findById(Integer.parseInt(attachTo)).get();
+            while (parent.getAttachTo() != 0) {
+                forumRepository.addCommentCountByNum(parent.getAttachTo(), removeCommentCount);
+                parent = forumRepository.findById(parent.getAttachTo()).get();
+                
             }
         }
+        else if (attachTo != null && Integer.parseInt(attachTo) == 0){
+            throw new ExceptionService("Cannot make a comment become a post");
+        }
+        
 
         if (image != null) {
             if (image.isEmpty()) {
