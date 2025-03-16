@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +34,7 @@ public class ForumService {
      * @param attachTo 0 if it is a post, post id if it is a comment
      * @throws Exception
      */
-    public void createPostOrComment(int userId, String title, String content, String tag, MultipartFile image, int attachTo) throws Exception {
+    public void createPostOrComment(int userId, String title, String content, List<String> tag, MultipartFile image, int attachTo) throws Exception {
         if ((int) securityService.getClaims().get("id") != userId
         && ((String) securityService.getClaims().get("role")).equals("user")) {
             throw new ExceptionService("User id not match in JWT");
@@ -89,18 +90,18 @@ public class ForumService {
     }
 
     /**
-     * Update post or comment title, content, tag or image
+     * Update post or comment title, content, tag or image, set value to null if user does not need to update that value
      * @param postId post id of the post or comment that need to update
      * @param userId user id of the user that creates the post or comment
-     * @param title new title of the post, null if user does not need to update
-     * @param content new content of the post or comment, null if user does not need to update
-     * @param tag new tag of the post, null if user does need to update, empty string if user wants to delete tag
-     * @param image new image of the post or comment, null if user does not need update, empty image if user wants to delete image
-     * @param attachTo new post id if it is a comment, can only change from non-zero to non-zero, null if user does not need to update
+     * @param title new title of the post
+     * @param content new content of the post or comment
+     * @param tag new tag of the post, empty list if user wants to delete tag
+     * @param image new image of the post or comment, empty image if user wants to delete image
+     * @param attachTo new post id if it is a comment, can only change from non-zero to non-zero
      * @throws Exception
      */
     @Transactional
-    public void updatePostOrComment(int postId, int userId, String title, String content, String tag, MultipartFile image, Integer attachTo) throws Exception {
+    public void updatePostOrComment(int postId, int userId, String title, String content, List<String> tag, MultipartFile image, Integer attachTo) throws Exception {
         if ((int) securityService.getClaims().get("id") != userId
         && ((String) securityService.getClaims().get("role")).equals("user")) {
             throw new ExceptionService("User id not match in JWT");
@@ -143,7 +144,6 @@ public class ForumService {
             while (parent.getAttachTo() != 0) {
                 forumRepository.addCommentCountByNum(parent.getAttachTo(), removeCommentCount);
                 parent = forumRepository.findById(parent.getAttachTo()).get();
-                
             }
         }
         else if (attachTo != null && attachTo == 0){
@@ -175,12 +175,15 @@ public class ForumService {
     /**
      * Add tag for post with given post id
      * @param postId postId int
-     * @param tag tag string
+     * @param tag tag list of string
      */
-    private void addTag(int postId, String tag) {
-        Integer tagId = forumRepository.getTagIdFromTagName(tag);
-        if (tagId != null) {
-            forumRepository.connectPostWithTag(postId, tagId);
+    private void addTag(int postId, List<String> tag) {
+        Integer tagId;
+        for (String oneTag: tag) {
+            tagId = forumRepository.getTagIdFromTagName(oneTag);
+            if (tagId != null) {
+                forumRepository.connectPostWithTag(postId, tagId);
+            }
         }
     }
 
@@ -231,7 +234,7 @@ public class ForumService {
     
     /**
      * Delete data in Post_Image and Image_Data
-     * @param postId
+     * @param postId postId int
      */
     private void deleteImage(int postId) {
         Integer imageId = forumRepository.findImageId(postId);

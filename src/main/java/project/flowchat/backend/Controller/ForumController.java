@@ -11,6 +11,7 @@ import project.flowchat.backend.Service.ExceptionService;
 import project.flowchat.backend.Service.ForumService;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @AllArgsConstructor
@@ -37,6 +38,7 @@ public class ForumController {
         return responseBody;
     }
 
+    @SuppressWarnings("unchecked")
     @PostMapping(value = "createPost", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     private ResponseBody createPost(@RequestPart Map<String, Object> requestBody,
                                     @RequestPart(required = false) MultipartFile file) {
@@ -45,7 +47,7 @@ public class ForumController {
             forumService.createPostOrComment(   (int) requestBody.get("userId"),
                                                 (String) requestBody.get("title"),
                                                 (String) requestBody.get("content"),
-                                                (String) requestBody.get("tag"),
+                                                (List<String>) requestBody.get("tag"),
                                                 (MultipartFile) file,
                                                 (int) requestBody.get("attachTo"));
 
@@ -65,6 +67,7 @@ public class ForumController {
         return responseBody;
     }
 
+    @SuppressWarnings("unchecked")
     @PutMapping(value = "updatePost", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     private ResponseBody updatePost(@RequestPart Map<String, Object> requestBody,
                                     @RequestPart(required = false) MultipartFile file) {
@@ -74,7 +77,7 @@ public class ForumController {
                                                 (int) requestBody.get("userId"),
                                                 (String) requestBody.get("title"),
                                                 (String) requestBody.get("content"),
-                                                (String) requestBody.get("tag"),
+                                                (List<String>) requestBody.get("tag"),
                                                 (MultipartFile) file,
                                                 (Integer) requestBody.get("attachTo"));
 
