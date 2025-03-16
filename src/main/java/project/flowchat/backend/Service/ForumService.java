@@ -37,7 +37,7 @@ public class ForumService {
     public void createPostOrComment(int userId, String title, String content, List<String> tag, MultipartFile image, int attachTo) throws Exception {
         if ((int) securityService.getClaims().get("id") != userId
         && ((String) securityService.getClaims().get("role")).equals("user")) {
-            throw new ExceptionService("User id not match in JWT");
+            throw new ExceptionService("User id does not match in JWT");
         }
         Integer imageId = null;
         if (image != null) {
@@ -109,12 +109,13 @@ public class ForumService {
 
         Optional<PostModel> postModelOptional = forumRepository.findById(postId);
         PostModel postModel = postModelOptional.get();
-        if (userId != postModel.getUserId()) {
-            throw new ExceptionService("The post or comment is not created by that user");
+        if (userId != postModel.getUserId()
+        && ((String) securityService.getClaims().get("role")).equals("user")) {
+            throw new ExceptionService("The post/comment is not created by that user");
         }
 
         if (!postModel.getIsActive()) {
-            throw new ExceptionService("The post or comment is not active");
+            throw new ExceptionService("The post/comment is not active");
         }
 
         if (content != null) postModel.setContent(content);
@@ -202,12 +203,13 @@ public class ForumService {
             throw new ExceptionService("User id not match in JWT");
         }
         
-        if (userId != postModel.getUserId()) {
-            throw new ExceptionService("The post or comment is not created by that user");
+        if (userId != postModel.getUserId()
+        && ((String) securityService.getClaims().get("role")).equals("user")) {
+            throw new ExceptionService("The post/comment is not created by that user");
         }
 
         if (!postModel.getIsActive()) {
-            throw new ExceptionService("The post or comment is not active");
+            throw new ExceptionService("The post/comment is not active");
         }
 
         postModel.setIsActive(false);
