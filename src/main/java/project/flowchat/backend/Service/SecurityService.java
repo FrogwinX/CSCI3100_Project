@@ -1,8 +1,9 @@
 package project.flowchat.backend.Service;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
 import project.flowchat.backend.Model.LicenseModel;
 import project.flowchat.backend.Model.UserAccountModel;
@@ -19,6 +20,8 @@ import javax.crypto.SecretKey;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 @AllArgsConstructor
 @Service
@@ -27,6 +30,9 @@ public class SecurityService {
     @Autowired
     private final UserAccountRepository userAccountRepository;
     private final LicenseRepository licenseRepository;
+
+    private final int EXPIRATION_TIME = 7 * 24 * 60 * 60 * 1000; // 7 days
+    private static Key key = null;
 
     protected enum KeyType {
         LICENSE,
@@ -39,11 +45,12 @@ public class SecurityService {
      * @return key for signing JWT
      */
     protected Key getTokenKey() throws Exception {
-        KeyGenerator gen = KeyGenerator.getInstance("HmacSHA256");
-        SecretKey k = gen.generateKey();
-        String tokenKey = Base64.getEncoder().encodeToString(k.getEncoded());
-        byte[] keyBytes = Decoders.BASE64.decode(tokenKey);
-        return Keys.hmacShaKeyFor(keyBytes);
+        if (key == null) {
+            KeyGenerator gen = KeyGenerator.getInstance("HmacSHA256");
+            SecretKey k = gen.generateKey();
+            key = Keys.hmacShaKeyFor(k.getEncoded());
+        }
+        return key;
     }
 
     /**
@@ -61,8 +68,56 @@ public class SecurityService {
                 .add(claims)
                 .and()
                 .subject(user.getUsername())
+                .issuedAt(new Date(System.currentTimeMillis()))
+                .expiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
                 .signWith(getTokenKey())
                 .compact();
+    }
+
+    /**
+     * check if the token is valid
+     * @param token JWT stored in the header
+     * @return claims if the token is valid
+     * @throws Exception if the token is not valid
+     */
+    public Claims validateToken(String token) throws Exception {
+        try {
+            Claims claims = Jwts.parser()
+                                .verifyWith((SecretKey) key)
+                                .build()
+                                .parseSignedClaims(token)
+                                .getPayload();
+            return claims;
+        } 
+        catch (io.jsonwebtoken.security.SignatureException e) {
+            throw new Exception("Invalid JWT signature");
+        } 
+        catch (io.jsonwebtoken.MalformedJwtException e) {
+            throw new Exception("Invalid JWT token");
+        } 
+        catch (io.jsonwebtoken.ExpiredJwtException e) {
+            throw new Exception("JWT token is expired");
+        } 
+        catch (io.jsonwebtoken.UnsupportedJwtException e) {
+            throw new Exception("Unsupported JWT token");
+        } 
+        catch (IllegalArgumentException e) {
+            throw new Exception("JWT claims string is empty");
+        }
+    }
+
+    /**
+     * Get JWT claims from the request attribute
+     * @return JWT claims of that request
+     * @throws Exception
+     */
+    public Claims getClaims() throws Exception{
+        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        if (attributes == null) {
+            throw new ExceptionService("No request available");
+        }
+        HttpServletRequest request = attributes.getRequest();
+        return (Claims) request.getAttribute("claims");
     }
 
     /**

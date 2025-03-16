@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+
+import jakarta.transaction.Transactional;
 import project.flowchat.backend.Model.ImageModel;
 import project.flowchat.backend.Repository.ImageRepository;
 
@@ -66,5 +68,27 @@ public class ImageService {
         return imageRepository.findById(imageId);
     }
 
+    /**
+     * Change the binary of image in the database of the given image id
+     * @param file new file of the image
+     * @param imageId image id of the record
+     * @throws Exception
+     */
+    @Transactional
+    public void changeImage(MultipartFile file, int imageId) throws Exception {
+        if (file.getContentType() == null || !file.getContentType().startsWith("image/")) {
+            throw new ExceptionService("The file is not an image");
+        }
+        ImageModel imageModel = getImage(imageId).get();
 
+        if (file.getSize() > MAX_IMAGE_SIZE) {
+            imageModel.setImageData(compressImage(file));
+        }
+        else {
+            imageModel.setImageData(file.getBytes());
+        }
+        imageModel.setImageName(file.getOriginalFilename());
+        imageModel.setImageFormat(file.getContentType());
+        imageRepository.save(imageModel);        
+    }
 }
