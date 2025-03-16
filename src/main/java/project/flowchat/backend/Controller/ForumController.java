@@ -38,19 +38,19 @@ public class ForumController {
     }
 
     @PostMapping(value = "createPost", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    private ResponseBody createPost(@RequestPart Map<String, String> requestBody,
+    private ResponseBody createPost(@RequestPart Map<String, Object> requestBody,
                                     @RequestPart(required = false) MultipartFile file) {
         try {
             Map<String, Object> data = new HashMap<>();
-            forumService.createPostOrComment(   requestBody.get("userId"),
-                                                requestBody.get("title"),
-                                                requestBody.get("content"),
-                                                requestBody.get("tag"),
-                                                file,
-                                                requestBody.get("attachTo"));
+            forumService.createPostOrComment(   (int) requestBody.get("userId"),
+                                                (String) requestBody.get("title"),
+                                                (String) requestBody.get("content"),
+                                                (String) requestBody.get("tag"),
+                                                (MultipartFile) file,
+                                                (int) requestBody.get("attachTo"));
 
             responseBody.setMessage("A new post/comment is created");
-            data.put("isSucess", true);
+            data.put("isSuccess", true);
             responseBody.setData(data);
 
         } catch (ExceptionService e) {
@@ -66,20 +66,20 @@ public class ForumController {
     }
 
     @PutMapping(value = "updatePost", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    private ResponseBody updatePost(@RequestPart Map<String, String> requestBody,
+    private ResponseBody updatePost(@RequestPart Map<String, Object> requestBody,
                                     @RequestPart(required = false) MultipartFile file) {
         try {
             Map<String, Object> data = new HashMap<>();
-            forumService.updatePostOrComment(   requestBody.get("postId"),
-                                                requestBody.get("userId"),
-                                                requestBody.get("title"),
-                                                requestBody.get("content"),
-                                                requestBody.get("tag"),
-                                                file,
-                                                requestBody.get("attachTo"));
+            forumService.updatePostOrComment(   (int) requestBody.get("postId"),
+                                                (int) requestBody.get("userId"),
+                                                (String) requestBody.get("title"),
+                                                (String) requestBody.get("content"),
+                                                (String) requestBody.get("tag"),
+                                                (MultipartFile) file,
+                                                (Integer) requestBody.get("attachTo"));
 
             responseBody.setMessage("A new post/comment is updated");
-            data.put("isSucess", true);
+            data.put("isSuccess", true);
             responseBody.setData(data);
         } catch (ExceptionService e) {
             responseBody.setMessage(e.getMessage());
@@ -94,12 +94,13 @@ public class ForumController {
     }
 
     @PutMapping("deletePost")
-    private ResponseBody deletePost(@RequestParam Map<String, String> requestBody) {
+    private ResponseBody deletePost(@RequestBody Map<String, Object> requestBody) {
         try {
             Map<String, Object> data = new HashMap<>();
-            forumService.deletePostOrComment(requestBody.get("postId"), requestBody.get("userId"));
+            forumService.deletePostOrComment((int) requestBody.get("postId"), (int) requestBody.get("userId"));
             responseBody.setMessage("The post/comment is deleted");
-            data.put("isSucess", true);
+            data.put("isSuccess", true);
+            responseBody.setData(data);
         } catch (ExceptionService e) {
             responseBody.setMessage(e.getMessage());
             Map<String, Object> data = new HashMap<>();

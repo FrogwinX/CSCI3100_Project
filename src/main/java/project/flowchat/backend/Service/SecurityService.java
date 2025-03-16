@@ -2,8 +2,8 @@ package project.flowchat.backend.Service;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
 import project.flowchat.backend.Model.LicenseModel;
 import project.flowchat.backend.Model.UserAccountModel;
@@ -20,6 +20,8 @@ import javax.crypto.SecretKey;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 @AllArgsConstructor
 @Service
@@ -102,6 +104,20 @@ public class SecurityService {
         catch (IllegalArgumentException e) {
             throw new Exception("JWT claims string is empty");
         }
+    }
+
+    /**
+     * Get JWT claims from the request attribute
+     * @return JWT claims of that request
+     * @throws Exception
+     */
+    public Claims getClaims() throws Exception{
+        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        if (attributes == null) {
+            throw new ExceptionService("No request available");
+        }
+        HttpServletRequest request = attributes.getRequest();
+        return (Claims) request.getAttribute("claims");
     }
 
     /**

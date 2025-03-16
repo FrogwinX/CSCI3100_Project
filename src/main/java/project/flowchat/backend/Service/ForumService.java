@@ -21,6 +21,7 @@ public class ForumService {
     @Autowired
     private final ForumRepository forumRepository;
     private final ImageService imageService;
+    private final SecurityService securityService;
 
     /**
      * Save a post or a comment to the database
@@ -32,9 +33,18 @@ public class ForumService {
      * @param attachTo 0 if it is a post, post id if it is a comment
      * @throws Exception
      */
-    public void createPostOrComment(String userId, String title, String content, String tag, MultipartFile image, String attachTo) throws Exception {
+    public void createPostOrComment(int userId, String title, String content, String tag, MultipartFile image, int attachTo) throws Exception {
+        if ((int) securityService.getClaims().get("id") != userId
+        && ((String) securityService.getClaims().get("role")).equals("user")) {
+            throw new ExceptionService("User id not match in JWT");
+        }
+        Integer imageId = null;
+        if (image != null) {
+            imageId = imageService.saveImage(image);
+        }
+
         PostModel postOrComment;
-        if (Integer.parseInt(attachTo) == 0) {
+        if (attachTo == 0) {
             // Post
             postOrComment = addPostOrCommentToDatabase(userId, title, content, attachTo);
             addTag(postOrComment.getPostId(), tag);
@@ -42,37 +52,36 @@ public class ForumService {
         else {
             // Comment
             postOrComment = addPostOrCommentToDatabase(userId, null, content, attachTo);
-            forumRepository.addCommentCountByOne(Integer.parseInt(attachTo));
-            PostModel parent = forumRepository.findById(Integer.parseInt(attachTo)).get();
+            forumRepository.addCommentCountByOne(attachTo);
+            PostModel parent = forumRepository.findById(attachTo).get();
             while (parent.getAttachTo() != 0) {
                 forumRepository.addCommentCountByOne(parent.getAttachTo());
                 parent = forumRepository.findById(parent.getAttachTo()).get();
             }
-
         }
-        if (image != null) {
-            int imageId = imageService.saveImage(image);
+        if (imageId != null) {
             forumRepository.connectPostWithImage(postOrComment.getPostId(), imageId);
         }
+
     }
 
     /**
      * add a new record to FORUM.Post
-     * @param userId userId string
+     * @param userId userId int
      * @param title title string
      * @param content content string
-     * @param attachTo attachTo string
+     * @param attachTo attachTo int
      * @return the corresponding record in the database
      */
-    private PostModel addPostOrCommentToDatabase(String userId, String title, String content, String attachTo) {
+    private PostModel addPostOrCommentToDatabase(int userId, String title, String content, int attachTo) {
         PostModel postModel = new PostModel();
-        postModel.setUserId(Integer.parseInt(userId));
+        postModel.setUserId(userId);
         postModel.setTitle(title);
         postModel.setContent(content);
         postModel.setLikeCount(0);
         postModel.setDislikeCount(0);
         postModel.setCommentCount(0);
-        postModel.setAttachTo(Integer.parseInt(attachTo));
+        postModel.setAttachTo(attachTo);
         postModel.setIsActive(true);
         postModel.setCreatedAt(ZonedDateTime.now(ZoneId.of("Asia/Hong_Kong")));
         postModel.setUpdatedAt(ZonedDateTime.now(ZoneId.of("Asia/Hong_Kong")));
@@ -87,14 +96,19 @@ public class ForumService {
      * @param content new content of the post or comment, null if user does not need to update
      * @param tag new tag of the post, null if user does need to update, empty string if user wants to delete tag
      * @param image new image of the post or comment, null if user does not need update, empty image if user wants to delete image
-     * @param attachTo post id if it is a comment, can only change from non-zero to non-zero, null if user does not need to update
+     * @param attachTo new post id if it is a comment, can only change from non-zero to non-zero, null if user does not need to update
      * @throws Exception
      */
     @Transactional
-    public void updatePostOrComment(String postId, String userId, String title, String content, String tag, MultipartFile image, String attachTo) throws Exception {
-        Optional<PostModel> postModelOptional = forumRepository.findById(Integer.parseInt(postId));
+    public void updatePostOrComment(int postId, int userId, String title, String content, String tag, MultipartFile image, Integer attachTo) throws Exception {
+        if ((int) securityService.getClaims().get("id") != userId
+        && ((String) securityService.getClaims().get("role")).equals("user")) {
+            throw new ExceptionService("User id not match in JWT");
+        }
+
+        Optional<PostModel> postModelOptional = forumRepository.findById(postId);
         PostModel postModel = postModelOptional.get();
-        if (Integer.parseInt(userId) != postModel.getUserId()) {
+        if (userId != postModel.getUserId()) {
             throw new ExceptionService("The post or comment is not created by that user");
         }
 
@@ -107,11 +121,11 @@ public class ForumService {
             // post
             if (title != null) postModel.setTitle(title);
             if (tag != null) {
-                forumRepository.deleteTagInPost(Integer.parseInt(postId));
-                addTag(Integer.parseInt(postId), tag);
+                forumRepository.deleteTagInPost(postId);
+                addTag(postId, tag);
             }
         }
-        else if (attachTo != null && Integer.parseInt(attachTo) != 0) {
+        else if (attachTo != null && attachTo != 0) {
             // comment
             int removeCommentCount = postModel.getCommentCount() + 1;
             forumRepository.removeCommentCountByNum(postModel.getAttachTo(), removeCommentCount);
@@ -122,31 +136,31 @@ public class ForumService {
                 parent = forumRepository.findById(parent.getAttachTo()).get();
             }
 
-            postModel.setAttachTo(Integer.parseInt(attachTo));
-            forumRepository.addCommentCountByNum(Integer.parseInt(attachTo), removeCommentCount);
+            postModel.setAttachTo(attachTo);
+            forumRepository.addCommentCountByNum(attachTo, removeCommentCount);
 
-            parent = forumRepository.findById(Integer.parseInt(attachTo)).get();
+            parent = forumRepository.findById(attachTo).get();
             while (parent.getAttachTo() != 0) {
                 forumRepository.addCommentCountByNum(parent.getAttachTo(), removeCommentCount);
                 parent = forumRepository.findById(parent.getAttachTo()).get();
                 
             }
         }
-        else if (attachTo != null && Integer.parseInt(attachTo) == 0){
+        else if (attachTo != null && attachTo == 0){
             throw new ExceptionService("Cannot make a comment become a post");
         }
         
 
         if (image != null) {
             if (image.isEmpty()) {
-                deleteImage(Integer.parseInt(postId));
+                deleteImage(postId);
             }
             else {
-                Integer imageId = forumRepository.findImageId(Integer.parseInt(postId));
+                Integer imageId = forumRepository.findImageId(postId);
                 if (imageId == null) {
                     // Add new image
                     imageId = imageService.saveImage(image);
-                    forumRepository.connectPostWithImage(Integer.parseInt(postId), imageId);
+                    forumRepository.connectPostWithImage(postId, imageId);
                 }
                 else {
                     // Change image
@@ -177,10 +191,15 @@ public class ForumService {
      * @throws Exception
      */
     @Transactional
-    public void deletePostOrComment(String postId, String userId) throws Exception {
-        Optional<PostModel> postModelOptional = forumRepository.findById(Integer.parseInt(postId));
+    public void deletePostOrComment(int postId, int userId) throws Exception {
+        Optional<PostModel> postModelOptional = forumRepository.findById(postId);
         PostModel postModel = postModelOptional.get();
-        if (Integer.parseInt(userId) != postModel.getUserId()) {
+        if ((int) securityService.getClaims().get("id") != userId
+        && ((String) securityService.getClaims().get("role")).equals("user")) {
+            throw new ExceptionService("User id not match in JWT");
+        }
+        
+        if (userId != postModel.getUserId()) {
             throw new ExceptionService("The post or comment is not created by that user");
         }
 
@@ -189,11 +208,11 @@ public class ForumService {
         }
 
         postModel.setIsActive(false);
-        deleteImage(Integer.parseInt(postId));
+        deleteImage(postId);
 
         if (postModel.getAttachTo() == 0) {
             // Post
-            forumRepository.deleteTagInPost(Integer.parseInt(postId));
+            forumRepository.deleteTagInPost(postId);
         }
         else {
             // Comment
