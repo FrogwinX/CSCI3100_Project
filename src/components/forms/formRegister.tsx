@@ -33,6 +33,7 @@ function FakeDash() {
 }
 
 export default function RegisterForm() {
+  const [serverErrorMessage, setServerErrorMessage] = useState<string>("");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -76,6 +77,7 @@ export default function RegisterForm() {
         setLoading(false);
         router.push("/login");
       } else {
+        setServerErrorMessage(result.message);
         setErrors((prevErrors) => [result.message, ...prevErrors]);
         window.scrollTo({ top: 0, behavior: "smooth" });
         setLoading(false);
@@ -84,7 +86,15 @@ export default function RegisterForm() {
     } catch {}
   };
 
+  const clearServerError = () => {
+    if (serverErrorMessage) {
+      setErrors((prevErrors) => prevErrors.filter((error) => error !== serverErrorMessage));
+      setServerErrorMessage("");
+    }
+  };
+
   const handleUsernameChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    clearServerError();
     const newUsername = e.target.value;
     if (newUsername.length > 50) {
       setErrors((prevErrors) => ["Username cannot exceed 50 characters", ...prevErrors]);
@@ -123,6 +133,7 @@ export default function RegisterForm() {
   };
 
   const handleEmailChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    clearServerError();
     const newEmail = e.target.value;
     if (newEmail) {
       setErrors((prevErrors) => prevErrors.filter((error) => error !== "Email is required"));
@@ -162,6 +173,7 @@ export default function RegisterForm() {
     }
   };
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    clearServerError();
     const newPassword = e.target.value;
     if (!newPassword) {
       setErrors((prevErrors) => ["Password is required", ...prevErrors]);
@@ -189,6 +201,7 @@ export default function RegisterForm() {
   };
 
   const handleConfirmPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    clearServerError();
     const newConfirmPassword = e.target.value;
     if (!newConfirmPassword) {
       setErrors((prevErrors) => ["Confirm password is required", ...prevErrors]);
@@ -222,6 +235,7 @@ export default function RegisterForm() {
   };
 
   const handleLicenseKeyChange = (value: string) => {
+    clearServerError();
     if (value.length === 0) {
       setErrors((prevErrors) => ["Licence key is required", ...prevErrors]);
     } else {

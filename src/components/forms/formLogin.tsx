@@ -8,6 +8,7 @@ import { faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 export default function Login() {
+  const [serverErrorMessage, setServerErrorMessage] = useState<string>("");
   const [UsernameOrEmail, setUserInput] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<string[]>([]);
@@ -41,14 +42,22 @@ export default function Login() {
       if (result.data.isPasswordCorrect && result.data.isAccountActive && result.data.user) {
         router.push("/forum");
       } else {
+        setServerErrorMessage(result.message);
         setErrors((prevErrors) => [result.message, ...prevErrors]);
+        window.scrollTo({ top: 0, behavior: "smooth" });
       }
-    } catch {
-      setErrors((prevErrors) => ["Login failed. Please try again.", ...prevErrors]);
+    } catch {}
+  };
+
+  const clearServerError = () => {
+    if (serverErrorMessage) {
+      setErrors((prevErrors) => prevErrors.filter((error) => error !== serverErrorMessage));
+      setServerErrorMessage("");
     }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    clearServerError();
     setUserInput(e.target.value);
     if (e.target.value) {
       setErrors((prevErrors) => prevErrors.filter((error) => error !== "Username or email is required."));
@@ -58,6 +67,7 @@ export default function Login() {
   };
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    clearServerError();
     setPassword(e.target.value);
     if (e.target.value) {
       setErrors((prevErrors) => prevErrors.filter((error) => error !== "Password is required."));
