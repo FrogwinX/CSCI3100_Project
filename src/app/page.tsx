@@ -22,7 +22,7 @@ export default function Home() {
   }, [user, router]);
 
   return (
-    <div className="place-items-center">
+    <div className="flex flex-grow items-center justify-center">
       <span className="loading loading-spinner loading-xl bg-primary"></span>
     </div>
   );
