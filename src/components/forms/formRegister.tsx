@@ -312,7 +312,7 @@ export default function RegisterForm() {
           </button>
           {email && emailSent && emailAvailable && cooldownSeconds > 0 && (
             <p className="text-info">
-              √ An email containing activation key has been sent to your registered email, you may resend in{" "}
+              √ An email containing activation key has been sent to your provided email, you may resend in{" "}
               {cooldownSeconds}s
             </p>
           )}

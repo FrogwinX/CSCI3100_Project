@@ -76,7 +76,7 @@ export default function ForgotPasswordPage() {
     setFailure(false);
     setLoading(true);
     try {
-      const result = await resetPasswordByEmail(email, AuthCode, password);
+      const result = await resetPasswordByEmail(email, password, AuthCode);
       if (result.data.username && result.data.isSuccess) {
         setFailure(false);
         setLoading(false);
