@@ -1,21 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faBars,
-  faMagnifyingGlass,
-  faXmark,
-  faUser,
-  faCog,
-} from "@fortawesome/free-solid-svg-icons";
-import {
-  faComments,
-  faPaperPlane,
-  faBell,
-  faEnvelope,
-} from "@fortawesome/free-regular-svg-icons";
+import { faBars, faMagnifyingGlass, faXmark, faUser, faCog } from "@fortawesome/free-solid-svg-icons";
+import { faComments, faPaperPlane, faBell, faEnvelope } from "@fortawesome/free-regular-svg-icons";
 import { faGithub } from "@fortawesome/free-brands-svg-icons";
 import { useAuth } from "@/hooks/useAuth";
 import Image from "next/image";
@@ -24,6 +14,12 @@ export default function NavbarWithDrawer() {
   const [isSidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const [isSearchOpen, setSearchOpen] = useState<boolean>(false);
   const { user, logout } = useAuth();
+  const router = useRouter();
+
+  const handleLogout = () => {
+    logout();
+    router.push("/login");
+  };
 
   const toggleSidebar = (): void => {
     setSidebarOpen((prev) => !prev);
@@ -39,10 +35,7 @@ export default function NavbarWithDrawer() {
         {isSearchOpen ? (
           // Mobile Search UI - Replaces navbar content when active
           <div className="w-full flex items-center sm:hidden">
-            <button
-              onClick={toggleSearch}
-              className="btn btn-ghost btn-circle mr-2 flex-none"
-            >
+            <button onClick={toggleSearch} className="btn btn-ghost btn-circle mr-2 flex-none">
               <FontAwesomeIcon icon={faXmark} size="lg" />
             </button>
             <div className="relative flex-1 h-10">
@@ -75,9 +68,7 @@ export default function NavbarWithDrawer() {
                       className="min-w-6 min-h-6"
                     />
                   </div>
-                  <div className="hidden md:block text-2xl lg:text-3xl font-black tracking-tight">
-                    FlowChat
-                  </div>
+                  <div className="hidden md:block text-2xl lg:text-3xl font-black tracking-tight">FlowChat</div>
                 </div>
               </Link>
             </div>
@@ -97,30 +88,20 @@ export default function NavbarWithDrawer() {
 
             <div className="navbar-end">
               {/* Mobile Search Button*/}
-              <button
-                className="sm:hidden btn btn-ghost btn-circle"
-                onClick={toggleSearch}
-              >
+              <button className="sm:hidden btn btn-ghost btn-circle" onClick={toggleSearch}>
                 <FontAwesomeIcon icon={faMagnifyingGlass} size="lg" />
               </button>
 
               {/* User Avatar */}
               <div className="dropdown dropdown-end">
-                <div
-                  tabIndex={0}
-                  role="button"
-                  className="btn btn-ghost btn-circle"
-                >
+                <div tabIndex={0} role="button" className="btn btn-ghost btn-circle">
                   <div className="avatar avatar-placeholder">
                     <div className="bg-neutral text-neutral-content rounded-full w-10">
                       <FontAwesomeIcon icon={faUser} />
                     </div>
                   </div>
                 </div>
-                <ul
-                  tabIndex={0}
-                  className="dropdown-content menu bg-base-100 rounded-box shadow"
-                >
+                <ul tabIndex={0} className="dropdown-content menu bg-base-100 rounded-box shadow">
                   {user ? (
                     /* Logged in menu */
                     <>
@@ -132,9 +113,7 @@ export default function NavbarWithDrawer() {
                       </li>
                       <div className="divider my-0"></div>
                       <li>
-                        <Link href={"/login"}>
-                          <button onClick={logout}>Sign out</button>
-                        </Link>
+                        <button onClick={handleLogout}>Sign out</button>
                       </li>
                     </>
                   ) : (
@@ -219,10 +198,7 @@ export default function NavbarWithDrawer() {
               </a>
             </li>
             <li>
-              <a
-                href="mailto:contact@example.com?subject=Query%20About%20FlowChat"
-                className="flex items-center gap-4"
-              >
+              <a href="mailto:contact@example.com?subject=Query%20About%20FlowChat" className="flex items-center gap-4">
                 <FontAwesomeIcon icon={faEnvelope} size="xl" />
                 <span>Contact</span>
               </a>
