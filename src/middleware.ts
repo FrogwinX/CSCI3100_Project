@@ -9,8 +9,6 @@ export function middleware(request: NextRequest) {
   const token = request.cookies.get("user")?.value || "";
 
   // Redirect logic
-  console.log("path", path);
-  console.log("isPublicPath", isPublicPath);
   if (isPublicPath && token) {
     return NextResponse.redirect(new URL("/", request.url));
   }
