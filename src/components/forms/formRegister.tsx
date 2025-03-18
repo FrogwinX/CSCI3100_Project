@@ -250,7 +250,7 @@ export default function RegisterForm() {
   };
 
   return (
-    <form className="card w-fit min-w-sm lg:min-w-lg max-w-xl bg-base-100 shadow-xl" onSubmit={handleRegister}>
+    <form className="card w-full min-w-sm lg:min-w-lg max-w-xl bg-base-100 shadow-xl" onSubmit={handleRegister}>
       <div className="card-body gap-4">
         <div
           role="alert"

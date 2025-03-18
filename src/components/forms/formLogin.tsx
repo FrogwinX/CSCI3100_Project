@@ -77,7 +77,7 @@ export default function Login() {
   };
 
   return (
-    <form className="card w-fit min-w-sm lg:min-w-lg max-w-xl bg-base-100 shadow-xl" onSubmit={handleLogin}>
+    <form className="card w-full min-w-sm lg:min-w-lg max-w-xl bg-base-100 shadow-xl" onSubmit={handleLogin}>
       <div className="card-body gap-4">
         <div role="alert" className={`alert alert-error alert-soft ${errors.length ? "" : "invisible"}`}>
           <FontAwesomeIcon icon={faTriangleExclamation} className="text-2xl text-error" />

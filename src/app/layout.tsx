@@ -27,9 +27,7 @@ export default function RootLayout({
         <AuthProvider>
           <div className="flex flex-col bg-base-200 text-base-content min-h-screen">
             <NavbarWithDrawer />
-            <main className="flex-1 place-items-center place-content-center ">
-              {children}
-            </main>
+            {children}
           </div>
         </AuthProvider>
       </body>

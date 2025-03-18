@@ -215,7 +215,7 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <form className="card w-fit min-w-sm lg:min-w-lg max-w-xl bg-base-100 shadow-xl" onSubmit={handleForgotPassword}>
+    <form className="card w-full min-w-sm lg:min-w-lg max-w-xl bg-base-100 shadow-xl" onSubmit={handleForgotPassword}>
       <div className="card-body gap-4">
         <div
           role="alert"
