@@ -33,6 +33,8 @@ function FakeDash() {
 }
 
 export default function RegisterForm() {
+  const [success, setSuccess] = useState(false);
+  const [sercerSuccessMessage, setServerSuccessMessage] = useState<string>("");
   const [serverErrorMessage, setServerErrorMessage] = useState<string>("");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -73,10 +75,12 @@ export default function RegisterForm() {
     try {
       const result = await register(username, email, password, licenseKey);
       if (result.data.user && result.data.isSuccess) {
+        setServerSuccessMessage(result.message);
         setFailure(false);
         setLoading(false);
-        router.push("/login");
+        setSuccess(true);
       } else {
+        setSuccess(false);
         setServerErrorMessage(result.message);
         setErrors((prevErrors) => [result.message, ...prevErrors]);
         window.scrollTo({ top: 0, behavior: "smooth" });
