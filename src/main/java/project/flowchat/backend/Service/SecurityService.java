@@ -1,15 +1,16 @@
 package project.flowchat.backend.Service;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.AllArgsConstructor;
 import project.flowchat.backend.Model.LicenseModel;
 import project.flowchat.backend.Model.UserAccountModel;
 import project.flowchat.backend.Repository.LicenseRepository;
 import project.flowchat.backend.Repository.UserAccountRepository;
 
 import java.security.Key;
-import java.security.NoSuchAlgorithmException;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -19,14 +20,19 @@ import javax.crypto.SecretKey;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
+@AllArgsConstructor
 @Service
 public class SecurityService {
 
     @Autowired
     private final UserAccountRepository userAccountRepository;
     private final LicenseRepository licenseRepository;
-    private String tokenKey;
+
+    private final int EXPIRATION_TIME = 7 * 24 * 60 * 60 * 1000; // 7 days
+    private static Key key = null;
 
     protected enum KeyType {
         LICENSE,
@@ -35,27 +41,16 @@ public class SecurityService {
     }
 
     /**
-     * Generate key for validating JWT
-     */
-    protected SecurityService(UserAccountRepository userAccountRepository, LicenseRepository licenseRepository) {
-        this.userAccountRepository = userAccountRepository;
-        this.licenseRepository =  licenseRepository;
-        try {
-            KeyGenerator gen = KeyGenerator.getInstance("HmacSHA256");
-            SecretKey k = gen.generateKey();
-            tokenKey = Base64.getEncoder().encodeToString(k.getEncoded());
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
-    }
-
-    /**
      * Turn key from String to Key object
      * @return key for signing JWT
      */
-    protected Key getTokenKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(tokenKey);
-        return Keys.hmacShaKeyFor(keyBytes);
+    protected Key getTokenKey() throws Exception {
+        if (key == null) {
+            KeyGenerator gen = KeyGenerator.getInstance("HmacSHA256");
+            SecretKey k = gen.generateKey();
+            key = Keys.hmacShaKeyFor(k.getEncoded());
+        }
+        return key;
     }
 
     /**
@@ -63,7 +58,7 @@ public class SecurityService {
      * @param user UserAccountModel Object
      * @return JWT for user with that username
      */
-    protected String generateToken(UserAccountModel user) {
+    protected String generateToken(UserAccountModel user) throws Exception {
         Map<String, Object> claims = new HashMap<>();
         String role = userAccountRepository.findRoleById(user.getRoleId());
         claims.put("role", role);
@@ -73,8 +68,62 @@ public class SecurityService {
                 .add(claims)
                 .and()
                 .subject(user.getUsername())
+                .issuedAt(new Date(System.currentTimeMillis()))
+                .expiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
                 .signWith(getTokenKey())
                 .compact();
+    }
+
+    /**
+     * check if the token is valid
+     * @param token JWT stored in the header
+     * @return claims if the token is valid
+     * @throws Exception if the token is not valid
+     */
+    public Claims validateToken(String token) throws Exception {
+        try {
+            Claims claims = Jwts.parser()
+                                .verifyWith((SecretKey) key)
+                                .build()
+                                .parseSignedClaims(token)
+                                .getPayload();
+            return claims;
+        } 
+        catch (io.jsonwebtoken.security.SignatureException e) {
+            throw new Exception("Invalid JWT signature");
+        } 
+        catch (io.jsonwebtoken.MalformedJwtException e) {
+            throw new Exception("Invalid JWT token");
+        } 
+        catch (io.jsonwebtoken.ExpiredJwtException e) {
+            throw new Exception("JWT token is expired");
+        } 
+        catch (io.jsonwebtoken.UnsupportedJwtException e) {
+            throw new Exception("Unsupported JWT token");
+        } 
+        catch (IllegalArgumentException e) {
+            throw new Exception("JWT claims string is empty");
+        }
+    }
+
+    public void checkUserIdWithToken(int userId) throws Exception {
+        if ((int) getClaims().get("id") != userId && getClaims().get("role").equals("user")) {
+            throw new ExceptionService("User id does not match in JWT");
+        }
+    }
+
+    /**
+     * Get JWT claims from the request attribute
+     * @return JWT claims of that request
+     * @throws Exception
+     */
+    public Claims getClaims() throws Exception{
+        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        if (attributes == null) {
+            throw new ExceptionService("No request available");
+        }
+        HttpServletRequest request = attributes.getRequest();
+        return (Claims) request.getAttribute("claims");
     }
 
     /**

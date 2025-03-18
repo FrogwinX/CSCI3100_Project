@@ -36,6 +36,14 @@ public interface UserAccountRepository extends JpaRepository<UserAccountModel, I
     String findRoleById(Integer id);
 
     /**
+     * Find the username by user id
+     * @param id id int
+     * @return username with the given user id
+     */
+    @NativeQuery(value = "SELECT username FROM ACCOUNT.User_Account WHERE user_id = ?1")
+    String findUsernameByUserId(Integer id);
+
+    /**
      * Find the user information by the username
      * @param username username string
      * @return user information with the given username
