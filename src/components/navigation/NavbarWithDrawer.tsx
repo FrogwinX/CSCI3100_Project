@@ -18,6 +18,7 @@ import {
 } from "@fortawesome/free-regular-svg-icons";
 import { faGithub } from "@fortawesome/free-brands-svg-icons";
 import { useAuth } from "@/hooks/useAuth";
+import Image from "next/image";
 
 export default function NavbarWithDrawer() {
   const [isSidebarOpen, setSidebarOpen] = useState<boolean>(false);
@@ -64,15 +65,17 @@ export default function NavbarWithDrawer() {
                 <FontAwesomeIcon icon={faBars} size="2xl" />
               </button>
               <Link href="/">
-                <div className="flex items-center">
+                <div className="flex items-center mx-2 gap-2">
                   <div>
-                    <img
-                      src="/flowchat_logo.png"
+                    <Image
+                      src={"/flowchat_logo.png"}
                       alt="FlowChat Logo"
-                      className="max-h-10 min-h-6 min-w-6 ml-2"
+                      width={40}
+                      height={40}
+                      className="min-w-6 min-h-6"
                     />
                   </div>
-                  <div className="hidden md:block text-2xl lg:text-3xl font-black ml-2 pl-2 tracking-tight">
+                  <div className="hidden md:block text-2xl lg:text-3xl font-black tracking-tight">
                     FlowChat
                   </div>
                 </div>
@@ -129,7 +132,7 @@ export default function NavbarWithDrawer() {
                       </li>
                       <div className="divider my-0"></div>
                       <li>
-                        <button onClick={logout}>Sign out</button>
+                        <Link href={"/login"}><button onClick={logout}>Sign out</button></Link>
                       </li>
                     </>
                   ) : (
@@ -199,16 +202,24 @@ export default function NavbarWithDrawer() {
           <div className="divider m-0"></div>
           <ul className="menu bg-base-100 w-full space-y-3">
             <li>
-              <Link href="/source" className="flex items-center gap-4">
+              <a 
+                href="https://github.com/FrogwinX/CSCI3100_Project" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="flex items-center gap-4"
+              >
                 <FontAwesomeIcon icon={faGithub} size="xl" />
                 <span>Source</span>
-              </Link>
+              </a>
             </li>
             <li>
-              <Link href="/contact" className="flex items-center gap-4">
+              <a 
+                href="mailto:contact@example.com?subject=Query%20About%20FlowChat" 
+                className="flex items-center gap-4"
+              >
                 <FontAwesomeIcon icon={faEnvelope} size="xl" />
                 <span>Contact</span>
-              </Link>
+              </a>
             </li>
           </ul>
           <footer className="footer footer-center text-base-content text-xs opacity-50 mt-4">

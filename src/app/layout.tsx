@@ -2,6 +2,7 @@ import React from "react";
 import type { Metadata } from "next";
 import { AuthProvider } from "@/hooks/useAuth";
 import NavbarWithDrawer from "@/components/navigation/NavbarWithDrawer";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { config } from "@fortawesome/fontawesome-svg-core";
 import "@fortawesome/fontawesome-svg-core/styles.css";
@@ -15,6 +16,8 @@ export const metadata: Metadata = {
     icon: "/flowchat_logo.png",
   },
 };
+
+const inter = Inter({ subsets: ['latin'] })
 
 export default function RootLayout({
   children,

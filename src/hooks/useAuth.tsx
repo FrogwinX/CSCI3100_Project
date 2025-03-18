@@ -121,10 +121,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
-    // Check if user is already logged in
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
+    // Check if user is already logged in from cookies
+    const userCookie = document.cookie
+      .split("; ")
+      .find((row) => row.startsWith("user="));
+
+    if (userCookie) {
+      const userJson = userCookie.split("=")[1];
+      try {
+        setUser(JSON.parse(decodeURIComponent(userJson)));
+      } catch (e) {
+        console.error("Error parsing user cookie:", e);
+      }
     }
   }, []);
 
@@ -146,13 +154,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         result.data.isAccountActive &&
         result.data.user
       ) {
-        const userData: User = {
+        const userData = {
           id: result.data.user.id,
           name: result.data.user.username,
           roles: result.data.user.roles,
         };
+        // Set cookie that middleware can read
+        const userDataString = encodeURIComponent(JSON.stringify(userData));
+        document.cookie = `user=${userDataString}; path=/; max-age=86400; SameSite=Strict`;
         setUser(userData);
-        localStorage.setItem("user", JSON.stringify(userData));
       }
 
       return result;
@@ -265,8 +275,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
+    document.cookie = "user=; path=/; max-age=0";
     setUser(null);
-    localStorage.removeItem("user");
   };
 
   const deleteAccount = async (
