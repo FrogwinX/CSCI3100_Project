@@ -1,23 +1,15 @@
 "use client";
-import React, { FormEvent, useState } from "react";
+import React, { useEffect, FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { OTPInput, SlotProps } from "input-otp";
+import { faTriangleExclamation, faCheck } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 function Slot(props: SlotProps) {
   return (
-    <div
-      className={`relative w-4 h-10
-        flex items-center justify-center flex-auto
-        transition-all duration-300
-        focus:outline-none
-        focus:border-base-300
-        group-hover:border-primary group-focus-within:border-primary
-      `}
-    >
-      <div className="absolute bottom+0 left-0 right-0 text-center text-base-300 text-2xl">
-        _
-      </div>
+    <div className={`relative w-4 h-10 flex items-center justify-center flex-auto transition-all duration-300`}>
+      <div className="absolute bottom+0 left-0 right-0 text-center text-base-300 text-2xl">_</div>
       <div className="opacity-100">{props.char ?? ""}</div>
       {props.hasFakeCaret && <FakeCaret />}
     </div>
@@ -41,180 +33,266 @@ function FakeDash() {
 }
 
 export default function RegisterForm() {
+  const [success, setSuccess] = useState(false);
+  const [serverSuccessMessage, setServerSuccessMessage] = useState<string>("");
+  const [sendKeyLoading, setSendKeyLoading] = useState(false);
+  const [serverErrorMessage, setServerErrorMessage] = useState<string>("");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [licenseKey, setLicenseKey] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  // Using the same error implementation as formLogin.tsx
+  const [failure, setFailure] = useState(false);
+  const [passwordFormatError, setPasswordFormatError] = useState(false);
+  const [errors, setErrors] = useState<string[]>([]);
   const [emailSent, setEmailSent] = useState(false);
   const [usernameAvailable, setUsernameAvailable] = useState(false);
   const [emailAvailable, setEmailAvailable] = useState(false);
-  const [usernameError, setUsernameError] = useState("");
-  const [emailError, setEmailError] = useState("");
-  const [passwordError, setPasswordError] = useState("");
+  const [cooldownSeconds, setCooldownSeconds] = useState(0);
+
   const router = useRouter();
-  const { requestLicenseKey, register, checkUsernameUnique, checkEmailUnique } =
-    useAuth();
+  const { requestLicenseKey, register, checkUsernameUnique, checkEmailUnique } = useAuth();
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
+
+    if (cooldownSeconds > 0) {
+      timer = setInterval(() => {
+        setCooldownSeconds((prevSeconds) => prevSeconds - 1);
+      }, 1000);
+    }
+
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [cooldownSeconds]);
 
   const handleRegister = async (e: FormEvent) => {
     e.preventDefault();
-    setError("");
+    setFailure(false);
     setLoading(true);
-
     try {
-      const success = await register(username, email, password, licenseKey);
-
-      if (success) {
-        router.push("/");
+      const result = await register(username, email, password, licenseKey);
+      if (result.data.user && result.data.isSuccess) {
+        setServerSuccessMessage(result.message);
+        setFailure(false);
+        setLoading(false);
+        setSuccess(true);
+        window.scrollTo({ top: 0, behavior: "smooth" });
       } else {
-        setError("Registration failed");
+        setSuccess(false);
+        setServerErrorMessage(result.message);
+        setErrors((prevErrors) => [result.message, ...prevErrors]);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        setLoading(false);
+        setFailure(true);
       }
-    } catch (error) {
-      console.error("Registration error:", error);
-      setError("An error occurred during registration. Please try again.");
-    } finally {
-      setLoading(false);
+    } catch {}
+  };
+
+  const clearServerError = () => {
+    if (serverErrorMessage) {
+      setErrors((prevErrors) => prevErrors.filter((error) => error !== serverErrorMessage));
+      setServerErrorMessage("");
     }
   };
-  const handleUsernameChange = async (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
+
+  const handleUsernameChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    clearServerError();
     const newUsername = e.target.value;
     if (newUsername.length > 50) {
-      setUsernameError("Username cannot exceed 50 characters");
+      setErrors((prevErrors) => ["Username cannot exceed 50 characters", ...prevErrors]);
       setUsernameAvailable(false);
       return;
+    } else {
+      setErrors((prevErrors) => prevErrors.filter((error) => error !== "Username cannot exceed 50 characters"));
     }
-    if (newUsername.includes("@")) {
-      setUsernameError("Username cannot contain the symbol '@'");
+
+    if (newUsername.includes("@") || newUsername.includes(" ") || newUsername.includes(":")) {
+      setErrors((prevErrors) => ["Username cannot contain the symbol :, @ or space", ...prevErrors]);
       setUsernameAvailable(false);
       setUsername(newUsername);
       return;
+    } else {
+      setErrors((prevErrors) =>
+        prevErrors.filter((error) => error !== "Username cannot contain the symbol :, @ or space")
+      );
     }
+
     setUsername(newUsername);
     if (newUsername) {
+      setErrors((prevErrors) => prevErrors.filter((error) => error !== "Username is required"));
       const result = await checkUsernameUnique(newUsername);
       if (result.data.isUsernameUnique) {
         setUsernameAvailable(true);
-        setUsernameError("");
+        setErrors((prevErrors) => prevErrors.filter((error) => error !== "This username has been used"));
       } else {
         setUsernameAvailable(false);
-        setUsernameError("This username has been used");
+        setErrors((prevErrors) => ["This username has been used", ...prevErrors]);
       }
     } else {
       setUsernameAvailable(false);
-      setUsernameError("This field is required");
+      setErrors((prevErrors) => ["Username is required", ...prevErrors]);
     }
   };
 
-  const handleEmailChange = async (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleEmailChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    clearServerError();
     const newEmail = e.target.value;
     if (newEmail) {
+      setErrors((prevErrors) => prevErrors.filter((error) => error !== "Email is required"));
       if (newEmail.length > 100) {
-        setEmailError("Email cannot exceed 100 characters");
+        setErrors((prevErrors) => ["Email cannot exceed 100 characters", ...prevErrors]);
         setEmailAvailable(false);
+        setEmailSent(false);
         return;
+      } else {
+        setErrors((prevErrors) => prevErrors.filter((error) => error !== "Email cannot exceed 100 characters"));
       }
       setEmail(newEmail);
 
       const emailFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (newEmail && !emailFormat.test(newEmail)) {
+      if (!emailFormat.test(newEmail)) {
         setEmailAvailable(false);
-        setEmailError("Invalid email format");
+        setErrors((prevErrors) => ["Invalid email format", ...prevErrors]);
+        setEmailSent(false);
         return;
+      } else {
+        setErrors((prevErrors) => prevErrors.filter((error) => error !== "Invalid email format"));
       }
       const result = await checkEmailUnique(newEmail);
       if (result.data.isEmailUnique) {
         setEmailAvailable(true);
-        setEmailError("");
+        setErrors((prevErrors) => prevErrors.filter((error) => error !== "This Email has been used"));
       } else {
         setEmailAvailable(false);
-        setEmailError("This Email has been used");
+        setErrors((prevErrors) => ["This Email has been used", ...prevErrors]);
+        setEmailSent(false);
       }
     } else {
       setEmailAvailable(false);
-      setEmailError("This field is required");
+      setErrors((prevErrors) => ["Email is required", ...prevErrors]);
+      setEmailSent(false);
       setEmail(newEmail);
     }
   };
-
-  const handlePasswordChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    clearServerError();
     const newPassword = e.target.value;
     if (!newPassword) {
-      setPasswordError("This field is required");
+      setErrors((prevErrors) => ["Password is required", ...prevErrors]);
       setPassword(newPassword);
       return;
+    } else {
+      setErrors((prevErrors) => prevErrors.filter((error) => error !== "Password is required"));
     }
+
     if (newPassword.length > 50) {
-      setPasswordError("Password cannot exceed 50 characters");
+      setErrors((prevErrors) => ["Password cannot exceed 50 characters", ...prevErrors]);
       return;
+    } else {
+      setErrors((prevErrors) => prevErrors.filter((error) => error !== "Password cannot exceed 50 characters"));
     }
+
     setPassword(newPassword);
 
-    const passwordCriteria = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
+    const passwordCriteria = /^(?=.*[A-Za-z])(?=.*\d)(?!.*\s).{8,}$/;
     if (!passwordCriteria.test(newPassword)) {
-      setPasswordError(
-        "Must be at least 8 characters long, including\nAt least one alphabet (a~z, A~Z)\nAt least one numerical character (0~9)"
-      );
+      setPasswordFormatError(true);
     } else {
-      setPasswordError("");
+      setPasswordFormatError(false);
     }
+  };
+
+  const handleConfirmPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    clearServerError();
+    const newConfirmPassword = e.target.value;
+    if (!newConfirmPassword) {
+      setErrors((prevErrors) => ["Confirm password is required", ...prevErrors]);
+      setConfirmPassword(newConfirmPassword);
+      return;
+    } else {
+      setErrors((prevErrors) => prevErrors.filter((error) => error !== "Confirm password is required"));
+    }
+    if (newConfirmPassword !== password) {
+      setErrors((prevErrors) => ["Passwords do not match", ...prevErrors]);
+    } else {
+      setErrors((prevErrors) => prevErrors.filter((error) => error !== "Passwords do not match"));
+    }
+    setConfirmPassword(newConfirmPassword);
   };
 
   const handleSendActivationKey = async () => {
     try {
+      console.log("Sending activation key to", email);
+      setSendKeyLoading(true);
       await requestLicenseKey(email);
+      setSendKeyLoading(false);
       setEmailSent(true);
-      setError("");
+      setCooldownSeconds(60);
+      console.log("Activation key sent to", email);
+      setErrors((prevErrors) =>
+        prevErrors.filter((error) => error !== "Failed to send activation key. Please try again.")
+      );
     } catch (error) {
       console.error("Error sending activation key:", error);
-      setError("Failed to send activation key. Please try again.");
+      setErrors((prevErrors) => ["Failed to send activation key. Please try again.", ...prevErrors]);
     }
   };
 
   const handleLicenseKeyChange = (value: string) => {
+    clearServerError();
+    if (value.length === 0) {
+      setErrors((prevErrors) => ["Licence key is required", ...prevErrors]);
+    } else {
+      setErrors((prevErrors) => prevErrors.filter((error) => error !== "Licence key is required"));
+    }
     const cleanedValue = value.replace(/[\s-]/g, "").slice(0, 16);
     setLicenseKey(cleanedValue);
   };
 
   return (
-    <form
-      className="card w-fit min-w-sm lg:min-w-lg max-w-xl bg-base-100 shadow-xl"
-      onSubmit={handleRegister}
-    >
+    <form className="card w-full min-w-sm lg:min-w-lg max-w-xl bg-base-100 shadow-xl" onSubmit={handleRegister}>
       <div className="card-body gap-4">
-        <h1 className="card-title text-center text-4xl pt-12">Register</h1>
-        {error && (
-          <div className="alert alert-error">
-            <span>{error}</span>
+        {success && !errors.length ? (
+          <div role="alert" className="alert alert-success alert-soft">
+            <FontAwesomeIcon icon={faCheck} className="text-2xl text-success" />
+            <p>{serverSuccessMessage}</p>
+          </div>
+        ) : (
+          <div
+            role="alert"
+            className={`alert alert-error alert-soft ${passwordFormatError || errors.length ? "" : "invisible"}`}
+          >
+            <FontAwesomeIcon icon={faTriangleExclamation} className="text-2xl text-error" />
+            {passwordFormatError ? (
+              <p>
+                Password must be at least 8 characters, with <br /> At least one alphabet (a~z, A~Z)
+                <br /> At least one numerical character (0~9)
+              </p>
+            ) : (
+              <p>{errors[0]}</p>
+            )}
           </div>
         )}
+
+        <h1 className="card-title text-center text-4xl ">Register</h1>
+
         <div className="form-control">
           <label className="label">
-            <span className="label-text text-base-content ">Username</span>
+            <span className="label-text text-base-content">Username</span>
           </label>
           <input
             type="text"
             placeholder="Username"
             value={username}
             onChange={handleUsernameChange}
-            className="input input-bordered w-full border focus:outline-none focus:border-base-300"
+            className="input input-bordered w-full my-1"
           />
-
-          {username && usernameAvailable && (
-            <p className="text-info mt-2">√ This Username is available</p>
-          )}
-          {!usernameAvailable && usernameError && (
-            <p className="text-error mt-2">{usernameError}</p>
-          )}
+          {username && usernameAvailable && <p className="text-info">√ This Username is available</p>}
         </div>
-
         <div className="form-control">
           <label className="label">
             <span className="label-text text-base-content">Email Address</span>
@@ -224,14 +302,9 @@ export default function RegisterForm() {
             placeholder="Email Address"
             value={email}
             onChange={handleEmailChange}
-            className="input input-bordered w-full border focus:outline-none focus:border-base-300"
+            className="input input-bordered w-full my-1"
           />
-          {emailAvailable && (
-            <p className="text-info mt-2">√ This Email is available</p>
-          )}
-          {!emailAvailable && emailError && (
-            <p className="text-error mt-2">{emailError}</p>
-          )}
+          {email && emailAvailable && <p className="text-info">√ This Email is available</p>}
         </div>
 
         <div className="form-control">
@@ -239,24 +312,27 @@ export default function RegisterForm() {
             type="button"
             onClick={() => {
               if (!email) {
-                setEmailError("Email is required to send activation key");
-                return;
+                setErrors((prevErrors) => ["Email is required", ...prevErrors]);
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              } else if (emailAvailable && cooldownSeconds === 0) {
+                handleSendActivationKey();
+              } else {
+                window.scrollTo({ top: 0, behavior: "smooth" });
               }
-              const emailFormat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-              if (!emailFormat.test(email)) {
-                setEmailError("Invalid email format");
-                return;
-              }
-              handleSendActivationKey();
             }}
             className="btn btn-secondary w-fit bg-base-200 text-base-content border-none"
+            disabled={cooldownSeconds > 0}
           >
-            Send Activation Key
+            {sendKeyLoading ? (
+              <span className="loading loading-dots loading-md bg-base-content"></span>
+            ) : (
+              "Send Activation Key"
+            )}
           </button>
-          {email && emailSent && !emailError && (
-            <p className="text-info mt-2">
-              √ An email containing activation key has been sent to your
-              registered email
+          {email && emailSent && emailAvailable && cooldownSeconds > 0 && (
+            <p className="text-info">
+              √ An email containing activation key has been sent to your provided email, you may resend in{" "}
+              {cooldownSeconds}s
             </p>
           )}
         </div>
@@ -265,7 +341,7 @@ export default function RegisterForm() {
           <label className="label">
             <span className="label-text text-base-content">Activation Key</span>
           </label>
-          <div className="border border-base-300 rounded-xl w-full px-2">
+          <div className="border border-base-300 rounded-xl w-full px-2 my-1">
             <OTPInput
               value={licenseKey}
               onChange={handleLicenseKeyChange}
@@ -317,80 +393,86 @@ export default function RegisterForm() {
           <input
             type="password"
             placeholder="Password"
-            className="input input-bordered w-full border focus:outline-none focus:border-base-300"
+            className="input input-bordered w-full my-1"
             value={password}
             onChange={handlePasswordChange}
           />
-          {passwordError && (
-            <p className="text-error mt-2 whitespace-pre-line">
-              {passwordError}
-            </p>
-          )}
         </div>
 
         <div className="form-control">
           <label className="label">
-            <span className="label-text text-base-content">
-              Confirm Password
-            </span>
+            <span className="label-text text-base-content">Confirm Password</span>
           </label>
           <input
             type="password"
             placeholder="Confirm Password"
-            className="input input-bordered w-full border focus:outline-none focus:border-base-300"
+            className="input input-bordered w-full my-1"
             value={confirmPassword}
-            onChange={(e) => {
-              setConfirmPassword(e.target.value);
-              if (password && e.target.value !== password) {
-                <p className="text-error">Passwords do not match</p>;
-              }
-            }}
+            onChange={handleConfirmPasswordChange}
           />
         </div>
-        {password !== confirmPassword && (
-          <p className="text-error">Passwords do not match</p>
-        )}
 
-        <div className="form-control mt-4">
+        <div className="form-control">
           <button
             type="submit"
-            className={`btn btn-primary text-primary-content w-full ${
-              loading ? "loading" : ""
-            }`}
-            disabled={loading}
+            className={`btn btn-primary text-primary-content w-full `}
             onClick={(e) => {
-              if (
-                !username ||
-                !email ||
-                !password ||
-                !confirmPassword ||
-                !licenseKey
-              ) {
+              if (errors.length) {
                 e.preventDefault();
-                setUsernameError("Username is required.");
-                setEmailError("Email is required.");
-                setPasswordError("Password is required.");
+                window.scrollTo({ top: 0, behavior: "smooth" });
                 return;
               }
-              if (
-                usernameError ||
-                emailError ||
-                passwordError ||
-                password !== confirmPassword
-              ) {
+              if (!username) {
                 e.preventDefault();
+                setErrors((prevErrors) => ["Username is required", ...prevErrors]);
+                window.scrollTo({ top: 0, behavior: "smooth" });
+                return;
+              }
+              if (!email) {
+                e.preventDefault();
+                setErrors((prevErrors) => ["Email is required", ...prevErrors]);
+                window.scrollTo({ top: 0, behavior: "smooth" });
+                return;
+              }
+              if (!password) {
+                e.preventDefault();
+                setErrors((prevErrors) => ["Password is required", ...prevErrors]);
+                window.scrollTo({ top: 0, behavior: "smooth" });
+                return;
+              }
+              if (!confirmPassword) {
+                e.preventDefault();
+                setErrors((prevErrors) => ["Confirm password is required", ...prevErrors]);
+                window.scrollTo({ top: 0, behavior: "smooth" });
+                return;
+              }
+              if (password !== confirmPassword) {
+                e.preventDefault();
+                setErrors((prevErrors) => ["Passwords do not match", ...prevErrors]);
+                window.scrollTo({ top: 0, behavior: "smooth" });
+                return;
+              }
+              if (!licenseKey) {
+                e.preventDefault();
+                setErrors((prevErrors) => ["Licence key is required", ...prevErrors]);
+                window.scrollTo({ top: 0, behavior: "smooth" });
                 return;
               }
             }}
           >
-            {loading ? "Creating Account..." : "Create Account"}
+            {loading ? (
+              <span className="loading loading-dots loading-md bg-base-content"></span>
+            ) : failure ? (
+              "Retry"
+            ) : (
+              "Create Account"
+            )}
           </button>
         </div>
-
-        <div className="form-control mt-2">
+        <div className="form-control">
           <button
             type="button"
-            onClick={() => (window.location.href = "/login")}
+            onClick={() => router.back()}
             className="btn btn-secondary w-full bg-base-200 text-base-content border-none"
           >
             Back

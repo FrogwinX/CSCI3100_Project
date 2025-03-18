@@ -4,8 +4,8 @@ import RegisterForm from "@/components/forms/formRegister";
 
 export default function RegisterPage() {
   return (
-  <div className="flex items-center justify-center h-screen">
-    <RegisterForm />
-  </div>
+    <div className="flex-grow place-items-center p-8">
+      <RegisterForm />
+    </div>
   );
 }
