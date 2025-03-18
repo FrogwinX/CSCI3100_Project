@@ -2,15 +2,13 @@ package project.flowchat.backend.Service;
 
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import project.flowchat.backend.DTO.PostContentDTO;
 import project.flowchat.backend.Model.PostModel;
 import project.flowchat.backend.DTO.PostDTO;
 import project.flowchat.backend.DTO.PostPreviewDTO;
-import org.springframework.web.multipart.MultipartFile;
-
-import jakarta.transaction.Transactional;
-import project.flowchat.backend.Model.PostModel;
 import project.flowchat.backend.Repository.ForumRepository;
 import project.flowchat.backend.Repository.UserAccountRepository;
 
@@ -30,9 +28,17 @@ public class ForumService {
     private final ImageService imageService;
     private final SecurityService securityService;
 
+    /* This hashPostSet is used to avoid any repeated post preview in get post preview list */
     private HashSet<Integer> hashPostSet;
 
-    private PostDTO setPostModel(PostModel post, Integer viewUserId, PostDTO postDTO) {
+    /**
+     * Map data from PostModel (Database) to PostDTO (API Response Body)
+     * @param post any unbanned post
+     * @param viewUserId viewUserId
+     * @param postDTO any subclass of PostDTO for type up-casting
+     * @return a parent type PostDTO object for type down-casting
+     */
+    private PostDTO setPostDTO(PostModel post, Integer viewUserId, PostDTO postDTO) {
         Integer postId = post.getPostId();
 
         postDTO.setPostId(postId);
@@ -82,10 +88,7 @@ public class ForumService {
      * @throws Exception
      */
     public void createPostOrComment(int userId, String title, String content, List<String> tag, MultipartFile image, int attachTo) throws Exception {
-        if ((int) securityService.getClaims().get("id") != userId
-        && ((String) securityService.getClaims().get("role")).equals("user")) {
-            throw new ExceptionService("User id does not match in JWT");
-        }
+        securityService.checkUserIdWithToken(userId);
         Integer imageId = null;
         if (image != null) {
             imageId = imageService.saveImage(image);
@@ -149,10 +152,7 @@ public class ForumService {
      */
     @Transactional
     public void updatePostOrComment(int postId, int userId, String title, String content, List<String> tag, MultipartFile image, Integer attachTo) throws Exception {
-        if ((int) securityService.getClaims().get("id") != userId
-        && ((String) securityService.getClaims().get("role")).equals("user")) {
-            throw new ExceptionService("User id not match in JWT");
-        }
+        securityService.checkUserIdWithToken(userId);
 
         Optional<PostModel> postModelOptional = forumRepository.findById(postId);
         PostModel postModel = postModelOptional.get();
@@ -243,12 +243,9 @@ public class ForumService {
      */
     @Transactional
     public void deletePostOrComment(int postId, int userId) throws Exception {
+        securityService.checkUserIdWithToken(userId);
         Optional<PostModel> postModelOptional = forumRepository.findById(postId);
         PostModel postModel = postModelOptional.get();
-        if ((int) securityService.getClaims().get("id") != userId
-        && ((String) securityService.getClaims().get("role")).equals("user")) {
-            throw new ExceptionService("User id not match in JWT");
-        }
 
         if (userId != postModel.getUserId()
         && ((String) securityService.getClaims().get("role")).equals("user")) {
@@ -283,11 +280,12 @@ public class ForumService {
     }
 
     public List<PostPreviewDTO> getLatestPostPreviewList(Integer userId, Integer postNumOffset, Integer postNum) throws Exception {
+        securityService.checkUserIdWithToken(userId);
         List<PostModel> postModelList = forumRepository.findLatestActivePostByRange(postNumOffset, postNum);
         List<PostPreviewDTO> postPreviewModelList = new ArrayList<>();
         for (PostModel postData : postModelList) {
             if (forumRepository.countBlockByUserIdAndPostId(postData.getPostId(), userId) == 0) {
-                PostPreviewDTO postPreview = (PostPreviewDTO) setPostModel(postData, userId, new PostPreviewDTO());
+                PostPreviewDTO postPreview = (PostPreviewDTO) setPostDTO(postData, userId, new PostPreviewDTO());
                 postPreview.setDescription(postData.getContent().substring(0, min(postData.getContent().length(), 50)));
                 postPreviewModelList.add(postPreview);
             }
@@ -307,7 +305,7 @@ public class ForumService {
         for (PostModel postData : tagPostList) {
             Integer postId = postData.getPostId();
             if (!hashPostSet.contains(postId)) {
-                PostPreviewDTO postPreview = (PostPreviewDTO) setPostModel(postData, userId, new PostPreviewDTO());
+                PostPreviewDTO postPreview = (PostPreviewDTO) setPostDTO(postData, userId, new PostPreviewDTO());
                 postPreview.setDescription(postData.getContent().substring(0, min(postData.getContent().length(), 50)));
                 postPreviewModelList.add(postPreview);
                 hashPostSet.add(postId);
@@ -321,6 +319,7 @@ public class ForumService {
     }
 
     public List<PostPreviewDTO> getRecommendedPostPreviewList(Integer userId, Integer postNum) throws Exception {
+        securityService.checkUserIdWithToken(userId);
         hashPostSet.clear();
         List<PostPreviewDTO> postPreviewModelList = new ArrayList<>();
         List<Integer> topTwoTagId = forumRepository.findRecommendedTagByHighestScore();
@@ -361,8 +360,9 @@ public class ForumService {
     }
 
     public PostContentDTO getPostContent(Integer postId, Integer userId) throws Exception {
+        securityService.checkUserIdWithToken(userId);
         PostModel postModel = forumRepository.findActivePostCommentByPostId(postId);
-        PostContentDTO post = (PostContentDTO) setPostModel(postModel, userId, new PostContentDTO());
+        PostContentDTO post = (PostContentDTO) setPostDTO(postModel, userId, new PostContentDTO());
         post.setContent(postModel.getContent());
 
         List<PostModel> commentModelList = forumRepository.findActivePostCommentByAttachTo(postId);
@@ -370,7 +370,7 @@ public class ForumService {
         if (!commentModelList.isEmpty()) {
             for (PostModel commentData : commentModelList) {
                 if (forumRepository.countBlockByUserIdAndPostId(commentData.getPostId(), userId) == 0) {
-                    PostContentDTO comment = (PostContentDTO) setPostModel(commentData, userId, new PostContentDTO());
+                    PostContentDTO comment = (PostContentDTO) setPostDTO(commentData, userId, new PostContentDTO());
                     comment.setContent(commentData.getContent());
 
                     Integer commentId = commentData.getPostId();
@@ -379,7 +379,7 @@ public class ForumService {
                     if (!subCommentModelList.isEmpty()) {
                         for (PostModel subCommentData : subCommentModelList) {
                             if (forumRepository.countBlockByUserIdAndPostId(subCommentData.getPostId(), userId) == 0) {
-                                PostContentDTO subComment = (PostContentDTO) setPostModel(subCommentData, userId, new PostContentDTO());
+                                PostContentDTO subComment = (PostContentDTO) setPostDTO(subCommentData, userId, new PostContentDTO());
                                 subComment.setContent(subCommentData.getContent());
                                 subComment.setCommentList(null);
                                 subCommentList.add(subComment);

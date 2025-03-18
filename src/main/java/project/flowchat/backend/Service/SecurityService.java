@@ -106,6 +106,12 @@ public class SecurityService {
         }
     }
 
+    public void checkUserIdWithToken(int userId) throws Exception {
+        if ((int) getClaims().get("id") != userId && getClaims().get("role").equals("user")) {
+            throw new ExceptionService("User id does not match in JWT");
+        }
+    }
+
     /**
      * Get JWT claims from the request attribute
      * @return JWT claims of that request
