@@ -1,29 +1,29 @@
 "use client";
-import React from "react";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function Home() {
   const { user } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    // Redirect to register page if not logged in
-    if (!user) {
-      router.push("/register");
-    }
+    // Short timeout to allow for middleware to process first
+    const redirectTimer = setTimeout(() => {
+      if (user) {
+        router.push("/forum"); // Redirect to forum if logged in
+      } else {
+        router.push("/login"); // Redirect to login if not logged in
+      }
+    }, 100);
+
+    return () => clearTimeout(redirectTimer);
   }, [user, router]);
 
-  // Show loading state or nothing while checking auth
-  if (!user) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <span className="loading loading-spinner loading-lg text-primary"></span>
-      </div>
-    );
-  }
-
-  return <div className="skeleton size-full"></div>;
+  return (
+    <div className="flex flex-grow items-center justify-center">
+      <span className="loading loading-spinner loading-xl bg-primary"></span>
+    </div>
+  );
 }

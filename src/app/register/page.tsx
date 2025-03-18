@@ -1,11 +1,10 @@
 "use client";
-import React from "react";
 import RegisterForm from "@/components/forms/formRegister";
 
 export default function RegisterPage() {
   return (
-  <div className="flex items-center justify-center h-screen">
-    <RegisterForm />
-  </div>
+    <div className="flex flex-grow items-center justify-center p-8">
+      <RegisterForm />
+    </div>
   );
 }

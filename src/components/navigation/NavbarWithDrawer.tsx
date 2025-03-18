@@ -1,195 +1,238 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { FC, useState } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faBars, faMagnifyingGlass, faUser, faCog } from '@fortawesome/free-solid-svg-icons'
-import { faComment, faPaperPlane, faBell, faEnvelope } from '@fortawesome/free-regular-svg-icons'
-import { faGithub } from '@fortawesome/free-brands-svg-icons'
+import Link from "next/link";
+import { useState } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faBars,
+  faMagnifyingGlass,
+  faXmark,
+  faUser,
+  faCog,
+} from "@fortawesome/free-solid-svg-icons";
+import {
+  faComments,
+  faPaperPlane,
+  faBell,
+  faEnvelope,
+} from "@fortawesome/free-regular-svg-icons";
+import { faGithub } from "@fortawesome/free-brands-svg-icons";
+import { useAuth } from "@/hooks/useAuth";
+import Image from "next/image";
 
-interface NavbarProps {
-  isSidebarOpen?: boolean;
-  toggleSidebar?: () => void;
-}
-
-const NavbarWithDrawer: FC<NavbarProps> = () => {
+export default function NavbarWithDrawer() {
   const [isSidebarOpen, setSidebarOpen] = useState<boolean>(false);
-  const [isForumOpen, setForumOpen] = useState<boolean>(false);
+  const [isSearchOpen, setSearchOpen] = useState<boolean>(false);
+  const { user, logout } = useAuth();
 
   const toggleSidebar = (): void => {
     setSidebarOpen((prev) => !prev);
   };
 
-  const toggleForum = () => {
-    setForumOpen((prev) => !prev);
+  const toggleSearch = (): void => {
+    setSearchOpen((prev) => !prev);
   };
 
   return (
     <>
-      <div className="navbar bg-base-100 shadow-md h-16 flex items-center top-0 left-0 right-0 z-50">
-        <div className="navbar-start">
-          <button
-            onClick={toggleSidebar}
-            className="btn btn-square btn-ghost z-50 flex items-center justify-center"
-            style={{ marginLeft: '20px' }}
-          >
-            <FontAwesomeIcon icon={faBars} />
-          </button>
-          <div className="ml-2 flex items-center">
-            <img
-              src="/flowchat_logo2.png"
-              alt="FlowChat Logo"
-              className="h-full w-auto max-h-16 ml-2"
-            />
-          </div>
-        </div>
-
-        <div className="navbar-center">
-          <div className="form-control relative" style={{ width: '634px', height: '48px' }}>
-            <input
-              type="text"
-              placeholder="Search FlowChat"
-              className="w-full h-full rounded-full pl-12 pr-4 border-base-300 focus:outline-none focus:ring-2 focus:ring-primary"
-              style={{ backgroundColor: '#E5E7EB' }}
-            />
+      <div className="navbar bg-base-100 shadow-md px-4 z-50 fixed top-0">
+        {isSearchOpen ? (
+          // Mobile Search UI - Replaces navbar content when active
+          <div className="w-full flex items-center sm:hidden">
             <button
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 z-30 p-2 bg-transparent border-none outline-none cursor-pointer flex items-center justify-center"
-              onClick={() => console.log('Search button clicked')}
+              onClick={toggleSearch}
+              className="btn btn-ghost btn-circle mr-2 flex-none"
             >
-              <FontAwesomeIcon icon={faMagnifyingGlass} />
+              <FontAwesomeIcon icon={faXmark} size="lg" />
             </button>
-          </div>
-        </div>
-
-        <div className="navbar-end mr-4">
-          <div className="dropdown dropdown-end">
-            <label tabIndex={0} className="btn btn-ghost btn-circle avatar">
-              <div className="w-10 rounded-full flex items-center justify-center content-center bg-base-200">
-                <FontAwesomeIcon icon={faUser} />
+            <div className="relative flex-1 h-10">
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/60">
+                <FontAwesomeIcon icon={faMagnifyingGlass} />
               </div>
-            </label>
-            <ul tabIndex={0} className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
-              <li>
-                <a href="/logout">Logout</a>
-              </li>
-            </ul>
+              <input
+                type="text"
+                placeholder="Search FlowChat"
+                className="w-full h-full rounded-full bg-base-200 pl-10 pr-4 border-base-300"
+                autoFocus
+              />
+            </div>
           </div>
-        </div>
+        ) : (
+          // Regular Navbar Content
+          <>
+            <div className="navbar-start">
+              <button onClick={toggleSidebar} className="btn btn-ghost">
+                <FontAwesomeIcon icon={faBars} size="2xl" />
+              </button>
+              <Link href="/">
+                <div className="flex items-center mx-2 gap-2">
+                  <div>
+                    <Image
+                      src={"/flowchat_logo.png"}
+                      alt="FlowChat Logo"
+                      width={40}
+                      height={40}
+                      className="min-w-6 min-h-6"
+                    />
+                  </div>
+                  <div className="hidden md:block text-2xl lg:text-3xl font-black tracking-tight">
+                    FlowChat
+                  </div>
+                </div>
+              </Link>
+            </div>
+
+            <div className="navbar-center">
+              <div className="relative hidden sm:block w-full max-w-sm min-w-sm lg:min-w-lg h-10">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/60">
+                  <FontAwesomeIcon icon={faMagnifyingGlass} />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Search FlowChat"
+                  className="bg-base-300 w-full h-full rounded-full text-sm pl-10"
+                />
+              </div>
+            </div>
+
+            <div className="navbar-end">
+              {/* Mobile Search Button*/}
+              <button
+                className="sm:hidden btn btn-ghost btn-circle"
+                onClick={toggleSearch}
+              >
+                <FontAwesomeIcon icon={faMagnifyingGlass} size="lg" />
+              </button>
+
+              {/* User Avatar */}
+              <div className="dropdown dropdown-end">
+                <div
+                  tabIndex={0}
+                  role="button"
+                  className="btn btn-ghost btn-circle"
+                >
+                  <div className="avatar avatar-placeholder">
+                    <div className="bg-neutral text-neutral-content rounded-full w-10">
+                      <FontAwesomeIcon icon={faUser} />
+                    </div>
+                  </div>
+                </div>
+                <ul
+                  tabIndex={0}
+                  className="dropdown-content menu bg-base-100 rounded-box shadow"
+                >
+                  {user ? (
+                    /* Logged in menu */
+                    <>
+                      <li>
+                        <Link href="/profile">
+                          <FontAwesomeIcon icon={faUser} />
+                          Profile
+                        </Link>
+                      </li>
+                      <div className="divider my-0"></div>
+                      <li>
+                        <Link href={"/login"}>
+                          <button onClick={logout}>Sign out</button>
+                        </Link>
+                      </li>
+                    </>
+                  ) : (
+                    /* Not logged in menu */
+                    <>
+                      <li>
+                        <Link href="/login">Login</Link>
+                      </li>
+                      <li>
+                        <Link href="/register">Register</Link>
+                      </li>
+                    </>
+                  )}
+                </ul>
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
+      {/* Add a spacer div to prevent content from hiding under the navbar */}
+      <div className="h-16"></div>
+
       <aside
-        className={`w-64 bg-base-100 p-4 fixed top-16 left-0 z-40 transition-transform duration-300 flex flex-col justify-between ${
-          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        className={`h-[calc(100vh-4rem)] shadow bg-base-100 fixed top-16 z-40 transition-transform duration-300 flex flex-col p-4 w-[85vw] sm:w-80 ${
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
-        style={{ height: 'calc(100vh - 64px)' }}
       >
-        <div>
-
-          <nav>
-            <ul className="menu space-y-2">
-              <li>
-                <button
-                  onClick={toggleForum}
-                  className="flex items-center w-full p-2 rounded-lg hover:bg-base-200 transition-colors"
-                >
-                  <FontAwesomeIcon icon={faComment}/>
-                  Forum
-                  <i
-                    className={`fa-solid fa-chevron-right h-5 w-5 ml-auto transition-transform duration-200 ${
-                      isForumOpen ? 'rotate-90' : ''
-                    }`}
-                    style={{ color: '#000' }}
-                  ></i>
-                </button>
-                {isForumOpen && (
-                  <ul className="pl-8 space-y-2 mt-2">
-                    <li>
-                      <Link
-                        href="/latest"
-                        className="flex items-center p-2 rounded-lg hover:bg-base-200 transition-colors"
-                      >
-                        Latest
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        href="/popular"
-                        className="flex items-center p-2 rounded-lg hover:bg-base-200 transition-colors"
-                      >
-                        Popular
-                      </Link>
-                    </li>
-                    <li>
-                      <Link
-                        href="/following"
-                        className="flex items-center p-2 rounded-lg hover:bg-base-200 transition-colors"
-                      >
-                        Following
-                      </Link>
-                    </li>
-                  </ul>
-                )}
-              </li>
-
-              <li>
-                <Link
-                  href="/direct-messages"
-                  className="flex items-center p-2 rounded-lg hover:bg-base-200 transition-colors"
-                >
-                  <FontAwesomeIcon icon={faPaperPlane}/>
-                  Direct Messages
-                </Link>
-              </li>
-
-              <li>
-                <Link
-                  href="/notifications"
-                  className="flex items-center p-2 rounded-lg hover:bg-base-200 transition-colors"
-                >
-                  <FontAwesomeIcon icon={faBell}/>
-                  Notifications
-                </Link>
-              </li>
-
-              <li>
-                <Link
-                  href="/settings"
-                  className="flex items-center p-2 rounded-lg hover:bg-base-200 transition-colors"
-                >
-                  <FontAwesomeIcon icon={faCog}/>
-                  Settings
-                </Link>
-              </li>
-            </ul>
-          </nav>
-        </div>
-
-        <div className="text-sm text-base-content">
-          <ul className="menu space-y-2 mb-4">
+        <div className="flex-grow overflow-y-auto">
+          <ul className="menu bg-base-100 w-full space-y-3">
             <li>
-              <Link
-                href="/source"
-                className="flex items-center p-2 rounded-lg hover:bg-base-200 transition-colors"
-              >
-                <FontAwesomeIcon icon={faGithub}/>
-                Source
+              <details open>
+                <summary className="flex gap-4">
+                  <FontAwesomeIcon icon={faComments} size="xl" />
+                  <span>Forum</span>
+                </summary>
+                <ul className="ml-2 mt-2 space-y-2">
+                  <li>
+                    <Link href="/latest">Latest</Link>
+                  </li>
+                  <li>
+                    <Link href="/recommended">Recommended</Link>
+                  </li>
+                  <li>
+                    <Link href="/following">Following</Link>
+                  </li>
+                </ul>
+              </details>
+            </li>
+            <li>
+              <Link href="/direct-messages" className="flex items-center gap-4">
+                <FontAwesomeIcon icon={faPaperPlane} size="xl" />
+                <span>Direct Messages</span>
               </Link>
             </li>
             <li>
-              <Link
-                href="/contact"
-                className="flex items-center p-2 rounded-lg hover:bg-base-200 transition-colors"
-              >
-                <FontAwesomeIcon icon={faEnvelope}/>
-                Contact
+              <Link href="/notifications" className="flex items-center gap-4">
+                <FontAwesomeIcon icon={faBell} size="xl" />
+                <span>Notifications</span>
+              </Link>
+            </li>
+            <li>
+              <Link href="/settings" className="flex items-center gap-4">
+                <FontAwesomeIcon icon={faCog} size="xl" />
+                <span>Settings</span>
               </Link>
             </li>
           </ul>
-          <p className="text-xs text-base-content/70">Copyright © 2025 All Rights Reserved</p>
+        </div>
+        <div className="mt-auto pt-4">
+          <div className="divider m-0"></div>
+          <ul className="menu bg-base-100 w-full space-y-3">
+            <li>
+              <a
+                href="https://github.com/FrogwinX/CSCI3100_Project"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-4"
+              >
+                <FontAwesomeIcon icon={faGithub} size="xl" />
+                <span>Source</span>
+              </a>
+            </li>
+            <li>
+              <a
+                href="mailto:contact@example.com?subject=Query%20About%20FlowChat"
+                className="flex items-center gap-4"
+              >
+                <FontAwesomeIcon icon={faEnvelope} size="xl" />
+                <span>Contact</span>
+              </a>
+            </li>
+          </ul>
+          <footer className="footer footer-center text-base-content text-xs opacity-50 mt-4">
+            <p>Copyright © {new Date().getFullYear()} - All right reserved</p>
+          </footer>
         </div>
       </aside>
     </>
   );
-};
-
-export default NavbarWithDrawer;
+}
