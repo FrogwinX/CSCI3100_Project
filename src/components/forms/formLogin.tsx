@@ -8,6 +8,7 @@ import { faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 export default function Login() {
+  const [loading, setLoading] = useState<boolean>(false);
   const [serverErrorMessage, setServerErrorMessage] = useState<string>("");
   const [UsernameOrEmail, setUserInput] = useState("");
   const [password, setPassword] = useState("");
@@ -16,6 +17,7 @@ export default function Login() {
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
+    setLoading(true);
     e.preventDefault();
 
     let username = null;
@@ -39,6 +41,7 @@ export default function Login() {
 
     try {
       const result = await login(username, email, password);
+      setLoading(false);
       if (result.data.isPasswordCorrect && result.data.isAccountActive && result.data.user) {
         router.push("/forum");
       } else {
@@ -77,7 +80,7 @@ export default function Login() {
   };
 
   return (
-    <form className="card w-full min-w-sm lg:min-w-lg max-w-xl bg-base-100 shadow-xl" onSubmit={handleLogin}>
+    <form className="card w-fit min-w-sm lg:min-w-lg max-w-xl bg-base-100 shadow-xl" onSubmit={handleLogin}>
       <div className="card-body gap-4">
         <div role="alert" className={`alert alert-error alert-soft ${errors.length ? "" : "invisible"}`}>
           <FontAwesomeIcon icon={faTriangleExclamation} className="text-2xl text-error" />
@@ -138,7 +141,7 @@ export default function Login() {
               }
             }}
           >
-            Login
+            {loading ? <span className="loading loading-dots loading-md bg-base-content"></span> : "Login"}
           </button>
         </div>
         <div className="form-control mt-2">

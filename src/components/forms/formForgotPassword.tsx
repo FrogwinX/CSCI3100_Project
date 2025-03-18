@@ -3,7 +3,7 @@ import React, { FormEvent, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { OTPInput, SlotProps } from "input-otp";
-import { faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
+import { faTriangleExclamation, faCheck } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 function Slot(props: SlotProps) {
@@ -40,6 +40,9 @@ function FakeDash() {
 }
 
 export default function ForgotPasswordPage() {
+  const [success, setSuccess] = useState(false);
+  const [serverSuccessMessage, setServerSuccessMessage] = useState<string>("");
+  const [sendKeyLoading, setSendKeyLoading] = useState(false);
   const [serverErrorMessage, setServerErrorMessage] = useState<string>("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -80,7 +83,9 @@ export default function ForgotPasswordPage() {
       if (result.data.username && result.data.isSuccess) {
         setFailure(false);
         setLoading(false);
-        router.push("/login");
+        setSuccess(true);
+        setServerSuccessMessage(result.message);
+        window.scrollTo({ top: 0, behavior: "smooth" });
       } else {
         setServerErrorMessage(result.message);
         setErrors((prevErrors) => [result.message, ...prevErrors]);
@@ -190,7 +195,9 @@ export default function ForgotPasswordPage() {
   const handleSendAuthenticationCode = async () => {
     try {
       console.log("Sending activation key to", email);
+      setSendKeyLoading(true);
       await requestAuthCode(email);
+      setSendKeyLoading(false);
       setEmailSent(true);
       setCooldownSeconds(60);
       console.log("Activation key sent to", email);
@@ -217,21 +224,27 @@ export default function ForgotPasswordPage() {
   return (
     <form className="card w-full min-w-sm lg:min-w-lg max-w-xl bg-base-100 shadow-xl" onSubmit={handleForgotPassword}>
       <div className="card-body gap-4">
-        <div
-          role="alert"
-          className={`alert alert-error alert-soft ${passwordFormatError || errors.length ? "" : "invisible"}`}
-        >
-          <FontAwesomeIcon icon={faTriangleExclamation} className="text-2xl text-error" />
-          {passwordFormatError ? (
-            <p>
-              Password must be at least 8 characters, with <br /> At least one alphabet (a~z, A~Z)
-              <br /> At least one numerical character (0~9)
-            </p>
-          ) : (
-            <p>{errors[0]}</p>
-          )}
-        </div>
-
+        {success && !errors.length ? (
+          <div role="alert" className="alert alert-success alert-soft">
+            <FontAwesomeIcon icon={faCheck} className="text-2xl text-success" />
+            <p>{serverSuccessMessage}</p>
+          </div>
+        ) : (
+          <div
+            role="alert"
+            className={`alert alert-error alert-soft ${passwordFormatError || errors.length ? "" : "invisible"}`}
+          >
+            <FontAwesomeIcon icon={faTriangleExclamation} className="text-2xl text-error" />
+            {passwordFormatError ? (
+              <p>
+                Password must be at least 8 characters, with <br /> At least one alphabet (a~z, A~Z)
+                <br /> At least one numerical character (0~9)
+              </p>
+            ) : (
+              <p>{errors[0]}</p>
+            )}
+          </div>
+        )}
         <h1 className="card-title text-center text-4xl ">Forgot Password</h1>
 
         <div className="form-control">
@@ -245,7 +258,6 @@ export default function ForgotPasswordPage() {
             onChange={handleEmailChange}
             className="input input-bordered w-full my-1"
           />
-          {email && emailAvailable && <p className="text-info">√ This Email is available</p>}
         </div>
 
         <div className="form-control">
@@ -264,11 +276,15 @@ export default function ForgotPasswordPage() {
             className="btn btn-secondary w-fit bg-base-200 text-base-content border-none"
             disabled={cooldownSeconds > 0}
           >
-            Send Authentication Code
+            {sendKeyLoading ? (
+              <span className="loading loading-dots loading-md bg-base-content"></span>
+            ) : (
+              " Send Authentication Code"
+            )}
           </button>
           {email && emailSent && emailAvailable && cooldownSeconds > 0 && (
             <p className="text-info">
-              √ An email containing authentication code has been sent to your registered email, you may resend in{" "}
+              √ An email containing authentication code has been sent to your provided email, you may resend in{" "}
               {cooldownSeconds}s
             </p>
           )}
@@ -375,7 +391,13 @@ export default function ForgotPasswordPage() {
               }
             }}
           >
-            {loading ? "Resetting Password " : failure ? "Retry" : "Reset Password"}
+            {loading ? (
+              <span className="loading loading-dots loading-md bg-base-content"></span>
+            ) : failure ? (
+              "Retry"
+            ) : (
+              "Reset Password"
+            )}
           </button>
         </div>
 

@@ -3,7 +3,7 @@ import React, { useEffect, FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { OTPInput, SlotProps } from "input-otp";
-import { faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
+import { faTriangleExclamation, faCheck } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 function Slot(props: SlotProps) {
@@ -34,7 +34,8 @@ function FakeDash() {
 
 export default function RegisterForm() {
   const [success, setSuccess] = useState(false);
-  const [sercerSuccessMessage, setServerSuccessMessage] = useState<string>("");
+  const [serverSuccessMessage, setServerSuccessMessage] = useState<string>("");
+  const [sendKeyLoading, setSendKeyLoading] = useState(false);
   const [serverErrorMessage, setServerErrorMessage] = useState<string>("");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -79,6 +80,7 @@ export default function RegisterForm() {
         setFailure(false);
         setLoading(false);
         setSuccess(true);
+        window.scrollTo({ top: 0, behavior: "smooth" });
       } else {
         setSuccess(false);
         setServerErrorMessage(result.message);
@@ -225,7 +227,9 @@ export default function RegisterForm() {
   const handleSendActivationKey = async () => {
     try {
       console.log("Sending activation key to", email);
+      setSendKeyLoading(true);
       await requestLicenseKey(email);
+      setSendKeyLoading(false);
       setEmailSent(true);
       setCooldownSeconds(60);
       console.log("Activation key sent to", email);
@@ -252,20 +256,27 @@ export default function RegisterForm() {
   return (
     <form className="card w-full min-w-sm lg:min-w-lg max-w-xl bg-base-100 shadow-xl" onSubmit={handleRegister}>
       <div className="card-body gap-4">
-        <div
-          role="alert"
-          className={`alert alert-error alert-soft ${passwordFormatError || errors.length ? "" : "invisible"}`}
-        >
-          <FontAwesomeIcon icon={faTriangleExclamation} className="text-2xl text-error" />
-          {passwordFormatError ? (
-            <p>
-              Password must be at least 8 characters, with <br /> At least one alphabet (a~z, A~Z)
-              <br /> At least one numerical character (0~9)
-            </p>
-          ) : (
-            <p>{errors[0]}</p>
-          )}
-        </div>
+        {success && !errors.length ? (
+          <div role="alert" className="alert alert-success alert-soft">
+            <FontAwesomeIcon icon={faCheck} className="text-2xl text-success" />
+            <p>{serverSuccessMessage}</p>
+          </div>
+        ) : (
+          <div
+            role="alert"
+            className={`alert alert-error alert-soft ${passwordFormatError || errors.length ? "" : "invisible"}`}
+          >
+            <FontAwesomeIcon icon={faTriangleExclamation} className="text-2xl text-error" />
+            {passwordFormatError ? (
+              <p>
+                Password must be at least 8 characters, with <br /> At least one alphabet (a~z, A~Z)
+                <br /> At least one numerical character (0~9)
+              </p>
+            ) : (
+              <p>{errors[0]}</p>
+            )}
+          </div>
+        )}
 
         <h1 className="card-title text-center text-4xl ">Register</h1>
 
@@ -312,7 +323,11 @@ export default function RegisterForm() {
             className="btn btn-secondary w-fit bg-base-200 text-base-content border-none"
             disabled={cooldownSeconds > 0}
           >
-            Send Activation Key
+            {sendKeyLoading ? (
+              <span className="loading loading-dots loading-md bg-base-content"></span>
+            ) : (
+              "Send Activation Key"
+            )}
           </button>
           {email && emailSent && emailAvailable && cooldownSeconds > 0 && (
             <p className="text-info">
@@ -382,7 +397,6 @@ export default function RegisterForm() {
             value={password}
             onChange={handlePasswordChange}
           />
-          {/* {passwordFormatError && <p className="text-error">{passwordFormatError}</p>} */}
         </div>
 
         <div className="form-control">
@@ -446,7 +460,13 @@ export default function RegisterForm() {
               }
             }}
           >
-            {loading ? "Creating Account" : failure ? "Retry" : "Create Account"}
+            {loading ? (
+              <span className="loading loading-dots loading-md bg-base-content"></span>
+            ) : failure ? (
+              "Retry"
+            ) : (
+              "Create Account"
+            )}
           </button>
         </div>
         <div className="form-control">
