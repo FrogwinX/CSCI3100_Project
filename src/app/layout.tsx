@@ -17,7 +17,10 @@ export const metadata: Metadata = {
   },
 };
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({
+  subsets: ["latin"],
+  display: "swap",
+});
 
 export default function RootLayout({
   children,
@@ -25,8 +28,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className="font-['Inter'] font-semibold">
+    <html lang="en" className={inter.className}>
+      <body className="font-semibold">
         <AuthProvider>
           <div className="flex flex-col bg-base-200 text-base-content min-h-screen">
             <NavbarWithDrawer />
