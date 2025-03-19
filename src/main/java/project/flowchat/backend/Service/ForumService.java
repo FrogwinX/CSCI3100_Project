@@ -415,5 +415,22 @@ public class ForumService {
 
     public void likeOrDislike(int postId, int userId, String action) throws Exception{
         securityService.checkUserIdWithToken(userId);
+        if (forumRepository.isLikeClick(postId, userId) != null) {
+            throw new ExceptionService("User has liked that post/comment before");
+        }
+        if (forumRepository.isDislikeClick(postId, userId) != null) {
+            throw new ExceptionService("User has disliked that post/comment before");
+        }
+        if (action.equals("like")) {
+            forumRepository.addLikeRelationship(postId, userId);
+            forumRepository.addLikeCount(postId);
+        }
+        else if (action.equals("dislike")) {
+            forumRepository.addDislikeRelationship(postId, userId);
+            forumRepository.addDislikeCount(postId);
+        }
+        else {
+            throw new ExceptionService("Action not available: " + action);
+        }
     }
 }

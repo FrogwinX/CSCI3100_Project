@@ -177,4 +177,60 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
     @Transactional
     @NativeQuery("UPDATE FORUM.Post SET comment_count = comment_count - 1 WHERE post_id = ?1")
     void minusCommentCountByOne(int postId);
+
+    /**
+     * Find if user liked that post or comment before
+     * @param postId postId int
+     * @param userId userId int
+     * @return post id if user liked that post or comment before, null if user did not like that post or comment
+     */
+    @NativeQuery("SELECT post_id FROM FORUM.[Like] WHERE post_id = ?1 AND user_id = ?2")
+    Integer isLikeClick(int postId, int userId);
+
+    /**
+     * Add a record in Like table
+     * @param postId postId int
+     * @param userId userId int
+     */
+    @Modifying
+    @Transactional
+    @NativeQuery("INSERT INTO FORUM.[Like] VALUES (?1, ?2)")
+    void addLikeRelationship(int postId, int userId);
+
+    /**
+     * Add 1 to like count in Post table
+     * @param postId postId int
+     */
+    @Modifying
+    @Transactional
+    @NativeQuery("UPDATE FORUM.Post SET like_count = like_count + 1 WHERE post_id = ?1")
+    void addLikeCount(int postId);
+
+    /**
+     * Find if user disliked that post or comment before
+     * @param postId postId int
+     * @param userId userId int
+     * @return post id if user disliked that post or comment before, null if user did not dislike that post or comment
+     */
+    @NativeQuery("SELECT post_id FROM FORUM.Dislike WHERE post_id = ?1 AND user_id = ?2")
+    Integer isDislikeClick(int postId, int userId);
+
+    /**
+     * Add a record in Dislike table
+     * @param postId postId int
+     * @param userId userId int
+     */
+    @Modifying
+    @Transactional
+    @NativeQuery("INSERT INTO FORUM.Dislike VALUES (?1, ?2)")
+    void addDislikeRelationship(int postId, int userId);
+
+    /**
+     * Add 1 to dislike count in Post table
+     * @param postId postId int
+     */
+    @Modifying
+    @Transactional
+    @NativeQuery("UPDATE FORUM.Post SET dislike_count = dislike_count + 1 WHERE post_id = ?1")
+    void addDislikeCount(int postId);
 }
