@@ -233,4 +233,42 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
     @Transactional
     @NativeQuery("UPDATE FORUM.Post SET dislike_count = dislike_count + 1 WHERE post_id = ?1")
     void addDislikeCount(int postId);
+
+    /**
+     * Remove a record from Like table with the corresponding post id and user id
+     * @param postId postId int
+     * @param userId userId int
+     */
+    @Modifying
+    @Transactional
+    @NativeQuery("DELETE FROM FORUM.[Like] WHERE post_id = ?1 AND user_id = ?2")
+    void removeLikeRelationship(int postId, int userId);
+
+    /**
+     * Minus like count of a post or comment with the given postId by one in Post table
+     * @param postId postId int
+     */
+    @Modifying
+    @Transactional
+    @NativeQuery("UPDATE FORUM.Post SET like_count = like_count - 1 WHERE post_id = ?1")
+    void minusLikeCount(int postId);
+
+    /**
+     * Remove a record from Dislike table with the corresponding post id and user id
+     * @param postId postId int
+     * @param userId userId int
+     */
+    @Modifying
+    @Transactional
+    @NativeQuery("DELETE FROM FORUM.Dislike WHERE post_id = ?1 AND user_id = ?2")
+    void removeDislikeRelationship(int postId, int userId);
+
+    /**
+     * Minus dislike count of a post or comment with the given postId by one in Post table
+     * @param postId postId int
+     */
+    @Modifying
+    @Transactional
+    @NativeQuery("UPDATE FORUM.Post SET dislike_count = dislike_count - 1 WHERE post_id = ?1")
+    void minusDislikeCount(int postId);
 }

@@ -449,6 +449,23 @@ public class ForumService {
      * @throws Exception
      */
     public void unlikeOrUndislike(int postId, int userId, String action) throws Exception{
-
+        securityService.checkUserIdWithToken(userId);
+        if (action.equals("unlike")) {
+            if (forumRepository.isLikeClick(postId, userId) == null) {
+                throw new ExceptionService("User has not liked that post/comment before");
+            }
+            forumRepository.removeLikeRelationship(postId, userId);
+            forumRepository.minusLikeCount(postId);
+        }
+        else if (action.equals("undislike")) {
+            if (forumRepository.isDislikeClick(postId, userId) == null) {
+                throw new ExceptionService("User has not disliked that post/comment before");
+            }
+            forumRepository.removeDislikeRelationship(postId, userId);
+            forumRepository.minusDislikeCount(postId);
+        }
+        else {
+            throw new ExceptionService("Action not available: " + action);
+        }
     }
 }
