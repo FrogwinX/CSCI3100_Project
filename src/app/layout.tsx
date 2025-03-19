@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   description:
     "A discussion forum designed to provide an engaging and user-friendly platform for individuals to connect, communicate, and share ideas.",
   icons: {
-    icon: "/flowchat_logo.png",
+    icon: "/favicon.ico",
   },
 };
 

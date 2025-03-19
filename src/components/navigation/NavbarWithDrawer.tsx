@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBars, faMagnifyingGlass, faXmark, faUser, faCog } from "@fortawesome/free-solid-svg-icons";
@@ -15,6 +15,10 @@ export default function NavbarWithDrawer() {
   const [isSearchOpen, setSearchOpen] = useState<boolean>(false);
   const { user, logout } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
+
+  // Check if a path is active
+  const isActive = (path: string) => pathname === path;
 
   const handleLogout = () => {
     logout();
@@ -61,7 +65,7 @@ export default function NavbarWithDrawer() {
                 <div className="flex items-center mx-2 gap-2">
                   <div>
                     <Image
-                      src={"/flowchat_logo.png"}
+                      src={"/favicon.ico"}
                       alt="FlowChat Logo"
                       width={40}
                       height={40}
@@ -138,7 +142,7 @@ export default function NavbarWithDrawer() {
       <div className="h-16"></div>
 
       <aside
-        className={`h-[calc(100vh-4rem)] shadow bg-base-100 fixed top-16 z-40 transition-transform duration-300 flex flex-col p-4 w-[85vw] sm:w-80 ${
+        className={`h-[calc(100vh-4rem)] shadow bg-base-100 fixed top-16 z-40 transition-transform duration-300 flex flex-col p-4 w-[85vw] sm:w-70 ${
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -152,31 +156,54 @@ export default function NavbarWithDrawer() {
                 </summary>
                 <ul className="ml-2 mt-2 space-y-2">
                   <li>
-                    <Link href="/latest">Latest</Link>
+                    <Link href="/forum/latest" className={isActive("/forum/latest") ? "bg-base-300 font-bold" : ""}>
+                      Latest
+                    </Link>
                   </li>
                   <li>
-                    <Link href="/recommended">Recommended</Link>
+                    <Link
+                      href="/forum/recommended"
+                      className={isActive("/forum/recommended") ? "bg-base-300 font-bold" : ""}
+                    >
+                      Recommended
+                    </Link>
                   </li>
                   <li>
-                    <Link href="/following">Following</Link>
+                    <Link
+                      href="/forum/following"
+                      className={isActive("/forum/following") ? "bg-base-300 font-bold" : ""}
+                    >
+                      Following
+                    </Link>
                   </li>
                 </ul>
               </details>
             </li>
             <li>
-              <Link href="/direct-messages" className="flex items-center gap-4">
+              <Link
+                href="/direct-messages"
+                className={`flex items-center gap-4 ${isActive("/direct-messages") ? "bg-base-300 font-bold" : ""}`}
+              >
                 <FontAwesomeIcon icon={faPaperPlane} size="xl" />
                 <span>Direct Messages</span>
               </Link>
             </li>
+
             <li>
-              <Link href="/notifications" className="flex items-center gap-4">
+              <Link
+                href="/notifications"
+                className={`flex items-center gap-4 ${isActive("/notifications") ? "bg-base-300 font-bold" : ""}`}
+              >
                 <FontAwesomeIcon icon={faBell} size="xl" />
                 <span>Notifications</span>
               </Link>
             </li>
+
             <li>
-              <Link href="/settings" className="flex items-center gap-4">
+              <Link
+                href="/settings"
+                className={`flex items-center gap-4 ${isActive("/settings") ? "bg-base-300 font-bold" : ""}`}
+              >
                 <FontAwesomeIcon icon={faCog} size="xl" />
                 <span>Settings</span>
               </Link>
