@@ -171,4 +171,26 @@ public class ForumController {
         return responseBodyDTO;
     }
 
+    @PostMapping("likePost")
+    private ResponseBodyDTO likePost(@RequestBody Map<String, Object> requestBody) {
+        try {
+            Map<String, Object> data = new HashMap<>();
+            forumService.likeOrDislike((int) requestBody.get("postId"),
+                                        (int) requestBody.get("userId"), 
+                                        (String) requestBody.get("action"));
+            data.put("isSuccess", true);
+            responseBodyDTO.setMessage("The post/comment is liked/disliked");
+            responseBodyDTO.setData(data);
+        } catch (ExceptionService e) {
+            Map<String, Object> data = new HashMap<>();
+            data.put("isSuccess", false);
+            responseBodyDTO.setMessage(e.getMessage());
+            responseBodyDTO.setData(data);
+        } catch (Exception e) {
+            responseBodyDTO.setMessage("Fail: " + e);
+            responseBodyDTO.setData(null);
+        }
+        return responseBodyDTO;
+    }
+
 }

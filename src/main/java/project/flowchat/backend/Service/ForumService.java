@@ -412,4 +412,8 @@ public class ForumService {
             forumRepository.deleteInImageData(imageId);
         }
     }
+
+    public void likeOrDislike(int postId, int userId, String action) throws Exception{
+        securityService.checkUserIdWithToken(userId);
+    }
 }
