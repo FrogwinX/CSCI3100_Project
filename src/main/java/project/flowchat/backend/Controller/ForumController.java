@@ -193,4 +193,26 @@ public class ForumController {
         return responseBodyDTO;
     }
 
+    @DeleteMapping("unlikePost")
+    private ResponseBodyDTO unlikePost(@RequestBody Map<String, Object> requestBody) {
+        try {
+            Map<String, Object> data = new HashMap<>();
+            forumService.unlikeOrUndislike((int) requestBody.get("postId"),
+                                        (int) requestBody.get("userId"), 
+                                        (String) requestBody.get("action"));
+            data.put("isSuccess", true);
+            responseBodyDTO.setMessage("The post/comment is un-liked/un-disliked");
+            responseBodyDTO.setData(data);
+        } catch (ExceptionService e) {
+            Map<String, Object> data = new HashMap<>();
+            data.put("isSuccess", false);
+            responseBodyDTO.setMessage(e.getMessage());
+            responseBodyDTO.setData(data);
+        } catch (Exception e) {
+            responseBodyDTO.setMessage("Fail: " + e);
+            responseBodyDTO.setData(null);
+        }
+        return responseBodyDTO;
+    }
+
 }

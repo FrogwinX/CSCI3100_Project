@@ -413,6 +413,13 @@ public class ForumService {
         }
     }
 
+    /**
+     * Check if user can like or dislike that post or comment. If yes, like or dislike that post or comment. If no, throw an exception
+     * @param postId post id of the post or comment that user want to like or dislike
+     * @param userId user id of the user
+     * @param action like or dislike
+     * @throws Exception
+     */
     public void likeOrDislike(int postId, int userId, String action) throws Exception{
         securityService.checkUserIdWithToken(userId);
         if (forumRepository.isLikeClick(postId, userId) != null) {
@@ -432,5 +439,16 @@ public class ForumService {
         else {
             throw new ExceptionService("Action not available: " + action);
         }
+    }
+
+    /**
+     * Check if user can unlike or undislike that post or comment. If yes, unlike or undislike that post or comment. If no, throw an exception
+     * @param postId post id of the post or comment that user want to unlike or undislike
+     * @param userId user id of the user
+     * @param action unlike or undislike
+     * @throws Exception
+     */
+    public void unlikeOrUndislike(int postId, int userId, String action) throws Exception{
+
     }
 }
