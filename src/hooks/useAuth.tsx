@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { setAuthCookies, clearAuthCookies } from "@/app/actions";
 
 // API Endpoints
 const API_BASE_URL = "https://flowchatbackend.azurewebsites.net/api";
@@ -54,9 +55,10 @@ interface ResetPasswordData {
 
 // User Type
 interface User {
-  id: number;
-  name: string;
   roles: string;
+  id: number;
+  token: string;
+  username: string;
 }
 
 interface AuthContextType {
@@ -107,9 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // Check if user is already logged in from cookies
-    const userCookie = document.cookie
-      .split("; ")
-      .find((row) => row.startsWith("user="));
+    const userCookie = document.cookie.split("; ").find((row) => row.startsWith("user="));
 
     if (userCookie) {
       const userJson = userCookie.split("=")[1];
@@ -134,20 +134,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       // Successful login
-      if (
-        result.data.isPasswordCorrect &&
-        result.data.isAccountActive &&
-        result.data.user
-      ) {
-        const userData = {
-          id: result.data.user.id,
-          name: result.data.user.username,
+      if (result.data.isPasswordCorrect && result.data.isAccountActive && result.data.user) {
+        // Set cookies via server action
+        await setAuthCookies(result.data.user);
+
+        // Set client-side state with non-sensitive data
+        setUser({
           roles: result.data.user.roles,
-        };
-        // Set cookie that middleware can read
-        const userDataString = encodeURIComponent(JSON.stringify(userData));
-        document.cookie = `user=${userDataString}; path=/; max-age=86400; SameSite=Strict`;
-        setUser(userData);
+          id: result.data.user.id,
+          token: result.data.user.token,
+          username: result.data.user.username,
+        });
       }
 
       return result;
@@ -244,8 +241,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const logout = () => {
-    document.cookie = "user=; path=/; max-age=0";
+  const logout = async () => {
+    // Clear cookies via server action
+    await clearAuthCookies();
     setUser(null);
   };
 

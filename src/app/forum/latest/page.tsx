@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function LatestPostsPage() {
-  const posts = await getPosts({ sort: "latest" });
+  const posts = await getPosts({ filter: "latest" });
 
   return (
     <div>

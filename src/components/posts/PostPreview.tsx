@@ -1,65 +1,62 @@
 import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faComment, faHeart } from "@fortawesome/free-solid-svg-icons";
-import { formatDistanceToNow } from "date-fns";
+import { faUser, faEllipsis, faComment, faHeart } from "@fortawesome/free-solid-svg-icons";
+import moment from "moment";
 
 export interface Post {
-  id: string;
+  postId: string;
+  username: string;
   title: string;
-  content: string;
-  author: {
-    id: string;
-    username: string;
-    avatarUrl?: string;
-  };
-  createdAt: Date;
-  commentCount: number;
+  description: string;
+  image: string | null;
+  tag: string;
   likeCount: number;
-  tags?: string[];
+  dislikeCount: number;
+  commentCount: number;
+  updatedAt: string;
+  comments: Post[] | null;
 }
 
 export default function PostPreview({ post }: { post: Post }) {
-  // Truncate content for preview
-  const previewContent =
-    post.content.length > 150
-      ? post.content.substring(0, 150) + "..."
-      : post.content;
-
   return (
-    <Link href={`/forum/post/${post.id}`}>
-      <div className="card card-bordered border-base-200 hover:border-primary transition-colors duration-200 bg-base-100 w-full cursor-pointer">
-        <div className="card-body p-4">
-          <div className="flex justify-between items-center mb-2">
+    <Link href={`/forum/post/${post.postId}`}>
+      <div className="card card-side cursor-pointer hover:bg-base-200 px-2">
+        <div className="card-body p-0">
+          {/** Header */}
+          <div className="flex justify-between items-center my-1">
             <div className="flex items-center gap-2">
-              <div className="avatar">
-                <div className="w-8 h-8 rounded-full bg-neutral text-neutral-content flex items-center justify-center">
-                  {post.author.avatarUrl ? (
-                    <img
-                      src={post.author.avatarUrl}
-                      alt={post.author.username}
-                    />
-                  ) : (
-                    post.author.username.charAt(0).toUpperCase()
-                  )}
+              <div className="avatar avatar-placeholder">
+                <div className="bg-neutral text-neutral-content w-8 rounded-full">
+                  <FontAwesomeIcon icon={faUser} />
                 </div>
               </div>
-              <span className="text-sm font-medium">
-                {post.author.username}
-              </span>
+
+              <div className="flex items-center gap-0.5">
+                <span className="text-sm font-medium">{post.username}</span>
+                <span className="text-xs font-thin">•</span>
+                <span className="text-xs font-light">{moment(post.updatedAt).fromNow()}</span>
+              </div>
             </div>
-            <span className="text-xs opacity-60">
-              {formatDistanceToNow(post.createdAt, { addSuffix: true })}
-            </span>
+            <div className="flex gap-1">
+              <button className="btn btn-primary btn-sm">
+                <span className="font-bold">Follow</span>
+              </button>
+              <button className="btn btn-ghost btn-circle btn-sm">
+                <FontAwesomeIcon icon={faEllipsis} size="lg" />
+              </button>
+            </div>
           </div>
 
-          <h3 className="card-title text-lg font-bold">{post.title}</h3>
-          <p className="text-base-content/70 text-sm">{previewContent}</p>
+          <h3 className="card-title text-lg font-bold line-clamp-2">{post.title}</h3>
 
-          {post.tags && post.tags.length > 0 && (
+          {/* Use line-clamp for dimension-based truncation */}
+          <p className="text-base-content/70 text-sm line-clamp-3 overflow-hidden">{post.description}</p>
+
+          {post.tag && (
             <div className="flex flex-wrap gap-1 mt-2">
-              {post.tags.map((tag) => (
-                <span key={tag} className="badge badge-sm">
-                  {tag}
+              {post.tag.split(",").map((tag, index) => (
+                <span key={index} className="badge badge-sm">
+                  {tag.trim()}
                 </span>
               ))}
             </div>
@@ -67,17 +64,11 @@ export default function PostPreview({ post }: { post: Post }) {
 
           <div className="flex gap-3 mt-3">
             <span className="flex items-center gap-1 text-xs">
-              <FontAwesomeIcon
-                icon={faComment}
-                className="text-base-content/60"
-              />
+              <FontAwesomeIcon icon={faComment} className="text-base-content/60" />
               {post.commentCount}
             </span>
             <span className="flex items-center gap-1 text-xs">
-              <FontAwesomeIcon
-                icon={faHeart}
-                className="text-base-content/60"
-              />
+              <FontAwesomeIcon icon={faHeart} className="text-base-content/60" />
               {post.likeCount}
             </span>
           </div>
