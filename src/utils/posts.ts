@@ -29,6 +29,61 @@ interface PostContentResponse {
   };
 }
 
+// TO BE DELETED, FOR DEVELOPMENT PURPOSES ONLY
+const descriptionSamples = [
+  // Very short
+  "",
+  "Quick question about homework assignment #3.",
+
+  // Short
+  "I've been working on this project for a few weeks now. The progress has been slow but steady.",
+  "Discovered this interesting algorithm today. It's supposed to improve performance by 30%.",
+
+  // Medium
+  "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed non risus. Suspendisse lectus tortor, dignissim sit amet, adipiscing nec, ultricies sed, dolor. Cras elementum ultrices diam. Maecenas ligula massa, varius a, semper congue, euismod non, mi.",
+  "I'm really interested in how we can apply machine learning to optimize energy consumption in smart buildings. Has anyone here worked on similar projects? Would love to hear about your experiences and challenges.",
+
+  // Long
+  "Mauris accumsan nulla vel diam. Sed in felis eu justo cursus adipiscing. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim. Donec pede justo, fringilla vel, aliquet nec, vulputate eget, arcu.",
+
+  // Very long
+  "Curabitur at lacus ac velit ornare lobortis. Curabitur a felis in nunc fringilla tristique. Praesent congue erat at massa. Sed cursus turpis vitae tortor. Donec posuere vulputate arcu. Phasellus accumsan cursus velit. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Sed aliquam, nisi quis porttitor congue, elit erat euismod orci, ac placerat dolor lectus quis orci. Phasellus consectetuer vestibulum elit. Aenean tellus metus, bibendum sed, posuere ac, mattis non, nunc. Vestibulum fringilla pede sit amet augue. In turpis. Pellentesque posuere. Praesent turpis. Aenean posuere, tortor sed cursus feugiat, nunc augue blandit nunc, eu sollicitudin urna dolor sagittis lacus.",
+];
+
+// TO BE DELETED, FOR DEVELOPMENT PURPOSES ONLY
+const tagPool = {
+  tech: ["programming", "ai", "web", "mobile", "cloud", "database", "security", "coding"],
+  academics: ["research", "project", "thesis", "homework", "assignment", "study", "course"],
+  university: ["campus", "semester", "dorm", "student", "professor", "class", "lecture"],
+  lifestyle: ["fitness", "food", "travel", "music", "movies", "books", "gaming"],
+  misc: ["discussion", "question", "help", "advice", "announcement", "mock", "tutorial"],
+};
+
+// TO BE DELETED, FOR DEVELOPMENT PURPOSES ONLY
+const getRandomTags = () => {
+  const numberOfTags = Math.floor(Math.random() * 3) + 1; // 1-3 tags per post
+  const allCategories = Object.keys(tagPool) as (keyof typeof tagPool)[];
+  const selectedTags = [];
+
+  // Select at least one tag from a random category
+  const primaryCategory = allCategories[Math.floor(Math.random() * allCategories.length)];
+  const primaryTags = tagPool[primaryCategory];
+  selectedTags.push(primaryTags[Math.floor(Math.random() * primaryTags.length)]);
+
+  // Add additional tags if needed
+  while (selectedTags.length < numberOfTags) {
+    const category = allCategories[Math.floor(Math.random() * allCategories.length)];
+    const tags = tagPool[category];
+    const tag = tags[Math.floor(Math.random() * tags.length)];
+    // Avoid duplicates
+    if (!selectedTags.includes(tag)) {
+      selectedTags.push(tag);
+    }
+  }
+
+  return selectedTags.join(",");
+};
+
 export async function getUserAuthFromCookies(): Promise<UserAuth> {
   try {
     // Get user info from client-accessible cookie
@@ -57,15 +112,14 @@ export async function getUserAuthFromCookies(): Promise<UserAuth> {
 
 // TO BE DELETED, FOR DEVELOPMENT PURPOSES ONLY
 function getMockPosts(options: PostsOptions = {}): Post[] {
-  // Create an array of mock posts
   const mockPosts: Post[] = Array.from({ length: 10 }, (_, i) => ({
     postId: `mock-post-${i + 1}`,
     username: `user${i + 1}`,
     title: `Mock Post #${i + 1}: This is a sample post title for development`,
-    description: `This is a mock post description for development purposes. It contains enough text to demonstrate how the post will look in the UI. This post was generated as a fallback when the API is unavailable. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam euismod, nisl eget aliquam ultricies, nisl nisl ultricies nisl.`,
+    description: descriptionSamples[Math.floor(Math.random() * descriptionSamples.length)],
     image: i % 3 === 0 ? "https://picsum.photos/400/300?random=" + i : null,
-    tag: `mock,development,tag${i}`,
-    likeCount: Math.floor(Math.random() * 100),
+    tag: getRandomTags(),
+    likeCount: Math.floor(Math.random() * 10000),
     dislikeCount: Math.floor(Math.random() * 20),
     commentCount: Math.floor(Math.random() * 50),
     updatedAt: new Date(Date.now() - Math.floor(Math.random() * 12 * 60 * 60 * 1000)).toISOString(),
@@ -149,45 +203,33 @@ export async function getPosts(options: PostsOptions = {}): Promise<Post[]> {
 // TO BE DELETED, FOR DEVELOPMENT PURPOSES ONLY
 function getMockPostById(postId: string): Post | null {
   // Generate a single mock post
+  const numComments = Math.floor(Math.random() * 5) + 1; // Generate between 1 and 5 comments
+  const mockComments: Post[] = Array.from({ length: numComments }, (_, idx) => ({
+    postId: `${postId}-comment-${idx + 1}`,
+    username: idx % 2 === 0 ? "Alice" : "Bob",
+    title: `Comment ${idx + 1}`,
+    description: descriptionSamples[Math.floor(Math.random() * descriptionSamples.length)],
+    image: null,
+    tag: "",
+    likeCount: Math.floor(Math.random() * 20),
+    dislikeCount: Math.floor(Math.random() * 5),
+    commentCount: 0,
+    updatedAt: new Date(Date.now() - Math.floor(Math.random() * 12 * 60 * 60 * 1000)).toISOString(),
+    comments: [],
+  }));
+
   const mockPost: Post = {
     postId: postId,
     username: "John Doe",
     title: `Mock Post #${postId}: Detailed View`,
-    description: `This is a detailed mock post for development. It contains a longer description to simulate a real post's content. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam euismod, nisl eget aliquam ultricies, nisl nisl ultricies nisl. Suspendisse potenti. Sed vel est eget nisi bibendum commodo. Donec auctor, nunc id ultricies ultricies, nunc nisl ultricies nunc, id ultricies nunc nisl id nunc.\n\nParagraph 2: More detailed content goes here with formatting and structure to test the UI rendering.`,
+    description: descriptionSamples[Math.floor(Math.random() * descriptionSamples.length)],
     image: "https://picsum.photos/800/600?random=" + postId,
-    tag: "mock,development,detailed",
+    tag: getRandomTags(),
     likeCount: Math.floor(Math.random() * 100),
     dislikeCount: Math.floor(Math.random() * 20),
-    commentCount: 3,
+    commentCount: mockComments.length,
     updatedAt: new Date(Date.now() - Math.floor(Math.random() * 10 * 24 * 60 * 60 * 1000)).toISOString(),
-    comments: [
-      {
-        postId: `${postId}-comment-1`,
-        username: "Alice",
-        title: "First Comment",
-        description: "This is the first mock comment.",
-        image: null,
-        tag: "comment,development",
-        likeCount: Math.floor(Math.random() * 20),
-        dislikeCount: Math.floor(Math.random() * 5),
-        commentCount: 0,
-        updatedAt: new Date(Date.now() - Math.floor(Math.random() * 12 * 60 * 60 * 1000)).toISOString(),
-        comments: [],
-      },
-      {
-        postId: `${postId}-comment-2`,
-        username: "Bob",
-        title: "Second Comment",
-        description: "This is the second mock comment with more details.",
-        image: null,
-        tag: "comment,development",
-        likeCount: Math.floor(Math.random() * 20),
-        dislikeCount: Math.floor(Math.random() * 5),
-        commentCount: 0,
-        updatedAt: new Date(Date.now() - Math.floor(Math.random() * 60 * 60 * 1000)).toISOString(),
-        comments: [],
-      },
-    ],
+    comments: mockComments,
   };
 
   return mockPost;

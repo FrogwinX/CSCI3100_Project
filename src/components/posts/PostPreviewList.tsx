@@ -20,7 +20,7 @@ export default function PostList({ posts }: { posts: Post[] }) {
           </div>
         </>
       ) : (
-        <div className="text-center text-lg text-base-content/50">No posts available</div>
+        <div className="text-center text-lg text-base-content/50 my-4">No posts available</div>
       )}
     </div>
   );

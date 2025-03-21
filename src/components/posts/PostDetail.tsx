@@ -67,7 +67,9 @@ function Comment({ comment, depth = 0 }: { comment: any; depth?: number }) {
 }
 
 export default async function PostDetail({ params }: { params: { postId: string } }) {
-  const post = await getPostById(params.postId);
+  const { postId } = params;
+
+  const post = await getPostById(postId);
 
   if (!post) {
     notFound();

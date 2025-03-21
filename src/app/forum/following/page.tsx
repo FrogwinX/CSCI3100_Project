@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function FollowingPostsPage() {
-  const posts = await getPosts({ following: "userID" });
+  const posts = await getPosts({ filter: "following" });
 
   return (
     <div>
