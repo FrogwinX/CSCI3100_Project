@@ -4,8 +4,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
-import project.flowchat.backend.DTO.PostContentDTO;
-import project.flowchat.backend.DTO.PostPreviewDTO;
+import project.flowchat.backend.DTO.PostDTO;
 import project.flowchat.backend.DTO.ResponseBodyDTO;
 import org.springframework.web.multipart.MultipartFile;
 import project.flowchat.backend.Service.ExceptionService;
@@ -26,10 +25,10 @@ public class ForumController {
     private ResponseBodyDTO responseBodyDTO;
 
     @GetMapping("getLatestPostPreviewList")
-    private ResponseBodyDTO getLatestPostPreviewList(@RequestParam Integer userId, Integer postNumOffset, Integer postNum) {
+    private ResponseBodyDTO getLatestPostPreviewList(@RequestParam Integer userId, Integer postNum) {
         try {
             Map<String, Object> data = new HashMap<>();
-            List<PostPreviewDTO> postPreviewModelList = forumService.getLatestPostPreviewList(userId, postNumOffset, postNum);
+            List<PostDTO> postPreviewModelList = forumService.getLatestPostPreviewList(userId, postNum);
             data.put("isSuccess", true);
             data.put("postPreviewList", postPreviewModelList);
             responseBodyDTO.setMessage("The latest post preview list is returned");
@@ -51,10 +50,33 @@ public class ForumController {
     private ResponseBodyDTO getRecommendedPostPreviewList(@RequestParam Integer userId, Integer postNum) {
         try {
             Map<String, Object> data = new HashMap<>();
-            List<PostPreviewDTO> postPreviewModelList = forumService.getRecommendedPostPreviewList(userId, postNum);
+            List<PostDTO> postPreviewModelList = forumService.getRecommendedPostPreviewList(userId, postNum);
             data.put("isSuccess", true);
             data.put("postPreviewList", postPreviewModelList);
             responseBodyDTO.setMessage("The recommended post preview list is returned");
+            responseBodyDTO.setData(data);
+        } catch (ExceptionService e) {
+            Map<String, Object> data = new HashMap<>();
+            data.put("isSuccess", false);
+            data.put("postPreviewList", null);
+            responseBodyDTO.setMessage(e.getMessage());
+            responseBodyDTO.setData(data);
+
+        } catch (Exception e) {
+            responseBodyDTO.setMessage("Fail: " + e);
+            responseBodyDTO.setData(null);
+        }
+        return responseBodyDTO;
+    }
+
+    @GetMapping("getFollowingPostPreviewList")
+    private ResponseBodyDTO getFollowingPostPreviewList(@RequestParam Integer userId, Integer postNum) {
+        try {
+            Map<String, Object> data = new HashMap<>();
+            List<PostDTO> postPreviewModelList = forumService.getFollowingPostPreviewList(userId, postNum);
+            data.put("isSuccess", true);
+            data.put("postPreviewList", postPreviewModelList);
+            responseBodyDTO.setMessage("The following post preview list is returned");
             responseBodyDTO.setData(data);
         } catch (ExceptionService e) {
             Map<String, Object> data = new HashMap<>();
@@ -153,7 +175,7 @@ public class ForumController {
     private ResponseBodyDTO getPostContent(@RequestParam Integer postId, Integer userId) {
         try {
             Map<String, Object> data = new HashMap<>();
-            PostContentDTO postContentDTO = forumService.getPostContent(postId, userId);
+            PostDTO postContentDTO = forumService.getPostContentByPostId(postId, userId);
             data.put("isSuccess", true);
             data.put("post", postContentDTO);
             responseBodyDTO.setMessage("The post content is returned");
@@ -162,6 +184,72 @@ public class ForumController {
             Map<String, Object> data = new HashMap<>();
             data.put("isSuccess", false);
             data.put("post", null);
+            responseBodyDTO.setMessage(e.getMessage());
+            responseBodyDTO.setData(data);
+        } catch (Exception e) {
+            responseBodyDTO.setMessage("Fail: " + e);
+            responseBodyDTO.setData(null);
+        }
+        return responseBodyDTO;
+    }
+
+    @GetMapping("getCommentList")
+    private ResponseBodyDTO getCommentList(@RequestParam Integer postId, Integer userId) {
+        try {
+            Map<String, Object> data = new HashMap<>();
+            List<PostDTO> commentDTO = forumService.getCommentByPostId(postId, userId);
+            data.put("isSuccess", true);
+            data.put("commentList", commentDTO);
+            responseBodyDTO.setMessage("The comment list is returned");
+            responseBodyDTO.setData(data);
+        } catch (ExceptionService e) {
+            Map<String, Object> data = new HashMap<>();
+            data.put("isSuccess", false);
+            data.put("post", null);
+            responseBodyDTO.setMessage(e.getMessage());
+            responseBodyDTO.setData(data);
+        } catch (Exception e) {
+            responseBodyDTO.setMessage("Fail: " + e);
+            responseBodyDTO.setData(null);
+        }
+        return responseBodyDTO;
+    }
+
+    @PostMapping("likePost")
+    private ResponseBodyDTO likePost(@RequestBody Map<String, Object> requestBody) {
+        try {
+            Map<String, Object> data = new HashMap<>();
+            forumService.likeOrDislike((int) requestBody.get("postId"),
+                                        (int) requestBody.get("userId"), 
+                                        (String) requestBody.get("action"));
+            data.put("isSuccess", true);
+            responseBodyDTO.setMessage("The post/comment is liked/disliked");
+            responseBodyDTO.setData(data);
+        } catch (ExceptionService e) {
+            Map<String, Object> data = new HashMap<>();
+            data.put("isSuccess", false);
+            responseBodyDTO.setMessage(e.getMessage());
+            responseBodyDTO.setData(data);
+        } catch (Exception e) {
+            responseBodyDTO.setMessage("Fail: " + e);
+            responseBodyDTO.setData(null);
+        }
+        return responseBodyDTO;
+    }
+
+    @DeleteMapping("unlikePost")
+    private ResponseBodyDTO unlikePost(@RequestBody Map<String, Object> requestBody) {
+        try {
+            Map<String, Object> data = new HashMap<>();
+            forumService.unlikeOrUndislike((int) requestBody.get("postId"),
+                                        (int) requestBody.get("userId"), 
+                                        (String) requestBody.get("action"));
+            data.put("isSuccess", true);
+            responseBodyDTO.setMessage("The post/comment is un-liked/un-disliked");
+            responseBodyDTO.setData(data);
+        } catch (ExceptionService e) {
+            Map<String, Object> data = new HashMap<>();
+            data.put("isSuccess", false);
             responseBodyDTO.setMessage(e.getMessage());
             responseBodyDTO.setData(data);
         } catch (Exception e) {

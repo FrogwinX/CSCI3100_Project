@@ -5,18 +5,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import project.flowchat.backend.DTO.PostContentDTO;
 import project.flowchat.backend.Model.PostModel;
 import project.flowchat.backend.DTO.PostDTO;
-import project.flowchat.backend.DTO.PostPreviewDTO;
 import project.flowchat.backend.Repository.ForumRepository;
 import project.flowchat.backend.Repository.UserAccountRepository;
 
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-
-import static java.lang.Integer.min;
 
 @AllArgsConstructor
 @Service
@@ -28,24 +24,25 @@ public class ForumService {
     private final ImageService imageService;
     private final SecurityService securityService;
 
-    /* This hashPostSet is used to avoid any repeated post preview in get post preview list */
-    private HashSet<Integer> hashPostSet;
-
     /**
-     * Map data from PostModel (Database) to PostDTO (API Response Body)
-     * @param post any unbanned post
-     * @param viewUserId viewUserId
-     * @param postDTO any subclass of PostDTO for type up-casting
-     * @return a parent type PostDTO object for type down-casting
+     * Convert post data from database (PostModel) to Java Object (PostDTO)
+     * @param post post data from database (PostModel)
+     * @param viewUserId the user who is viewing the post
+     * @return post data Java Object (PostDTO)
      */
-    private PostDTO setPostDTO(PostModel post, Integer viewUserId, PostDTO postDTO) {
+    private PostDTO createPostDTO(PostModel post, Integer viewUserId) {
+        if (post == null) {
+            return null;
+        }
+        PostDTO postDTO = new PostDTO();
         Integer postId = post.getPostId();
 
         postDTO.setPostId(postId);
         postDTO.setUsername(userAccountRepository.findUsernameByUserId(post.getUserId()));
         postDTO.setTitle(post.getTitle());
+        postDTO.setContent(post.getContent());
 
-        List<Integer> imageIdList = forumRepository.findPostImageIdByPostId(postId);
+        List<Integer> imageIdList = forumRepository.findImageIdByPostId(postId);
         if (!imageIdList.isEmpty()) {
             List<String> imageAPIList = new ArrayList<>();
             for (Integer imageId : imageIdList) {
@@ -66,13 +63,14 @@ public class ForumService {
         }
 
         postDTO.setLikeCount(post.getLikeCount());
-        postDTO.setIsLiked(forumRepository.countLikeByUserIdAndPostId(postId, viewUserId) == 1);
+        postDTO.setIsLiked(forumRepository.isLikeClick(postId, viewUserId) != null);
 
         postDTO.setDislikeCount(post.getDislikeCount());
-        postDTO.setIsDisliked(forumRepository.countDislikeByUserIdAndPostId(postId, viewUserId) == 1);
+        postDTO.setIsDisliked(forumRepository.isDislikeClick(postId, viewUserId) != null);
 
         postDTO.setCommentCount(post.getCommentCount());
         postDTO.setUpdatedAt(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm").format(post.getUpdatedAt()));
+        postDTO.setCommentList(null);
 
         return postDTO;
     }
@@ -204,6 +202,7 @@ public class ForumService {
                 deleteImage(postId);
             }
             else {
+                // There may be multiple images in a post or comment, use forumRepository.findImageIdByPostId(postId);
                 Integer imageId = forumRepository.findImageId(postId);
                 if (imageId == null) {
                     // Add new image
@@ -279,36 +278,49 @@ public class ForumService {
 
     }
 
-    public List<PostPreviewDTO> getLatestPostPreviewList(Integer userId, Integer postNumOffset, Integer postNum) throws Exception {
+    /**
+     * Get a list of latest post previews for a user
+     * @param userId userId Integer
+     * @param postNum required number of post previews
+     * @return latest post preview list
+     * @throws Exception any exception
+     */
+    public List<PostDTO> getLatestPostPreviewList(Integer userId, Integer postNum) throws Exception {
         securityService.checkUserIdWithToken(userId);
-        List<PostModel> postModelList = forumRepository.findLatestActivePostByRange(postNumOffset, postNum);
-        List<PostPreviewDTO> postPreviewModelList = new ArrayList<>();
-        for (PostModel postData : postModelList) {
-            if (forumRepository.countBlockByUserIdAndPostId(postData.getPostId(), userId) == 0) {
-                PostPreviewDTO postPreview = (PostPreviewDTO) setPostDTO(postData, userId, new PostPreviewDTO());
-                postPreview.setDescription(postData.getContent().substring(0, min(postData.getContent().length(), 50)));
-                postPreviewModelList.add(postPreview);
-            }
+        List<PostModel> postModelList = forumRepository.findLatestActivePostByRange(userId, postNum);
+        List<PostDTO> postPreviewModelList = new ArrayList<>();
+        for (PostModel post : postModelList) {
+            PostDTO postPreview = createPostDTO(post, userId);
+            postPreviewModelList.add(postPreview);
         }
         return postPreviewModelList;
     }
 
-    private List<PostPreviewDTO> generatePostPreviewListByTagRecommendation(String postType, Integer userId, Integer tagId, int queryPostNum, int requiredPostNum) {
-        List<PostPreviewDTO> postPreviewModelList = new ArrayList<>();
+    /**
+     * generate post previews of different post tags and post types
+     * @param postType string : "popular" or "latest" or "random"
+     * @param userId userId Integer
+     * @param tagId tagId Integer
+     * @param queryPostNum number of queries made in the database
+     * @param requiredPostNum actual required number
+     * @param hashSet to prevent any repeated post preview
+     * @return a list of post previews
+     */
+    private List<PostDTO> generatePostPreviewListByTagRecommendation(String postType, Integer userId, Integer tagId, int queryPostNum, int requiredPostNum, HashSet<Integer> hashSet) {
+        List<PostDTO> postPreviewModelList = new ArrayList<>();
         List<PostModel> tagPostList;
         int count = 0;
         tagPostList = switch (postType) {
-            case "popular" -> forumRepository.findPopularActivePostByRangeAndTag(tagId, 0, queryPostNum);
-            case "latest" -> forumRepository.findLatestActivePostByRangeAndTag(tagId, 0, queryPostNum);
-            default -> forumRepository.findPopularActivePostByRange(0, queryPostNum);
+            case "popular" -> forumRepository.findPopularActivePostByRangeAndTag(userId, tagId, queryPostNum);
+            case "latest" -> forumRepository.findLatestActivePostByRangeAndTag(userId, tagId, queryPostNum);
+            default -> forumRepository.findPopularActivePostByRange(userId, queryPostNum);
         };
-        for (PostModel postData : tagPostList) {
-            Integer postId = postData.getPostId();
-            if (!hashPostSet.contains(postId)) {
-                PostPreviewDTO postPreview = (PostPreviewDTO) setPostDTO(postData, userId, new PostPreviewDTO());
-                postPreview.setDescription(postData.getContent().substring(0, min(postData.getContent().length(), 50)));
+        for (PostModel post : tagPostList) {
+            Integer postId = post.getPostId();
+            if (!hashSet.contains(postId)) {
+                PostDTO postPreview = createPostDTO(post, userId);
                 postPreviewModelList.add(postPreview);
-                hashPostSet.add(postId);
+                hashSet.add(postId);
                 count++;
             }
             if (count == requiredPostNum) {
@@ -318,11 +330,18 @@ public class ForumService {
         return postPreviewModelList;
     }
 
-    public List<PostPreviewDTO> getRecommendedPostPreviewList(Integer userId, Integer postNum) throws Exception {
+    /**
+     * Get a list of recommended post previews for a user
+     * @param userId userId Integer
+     * @param postNum required number of post previews
+     * @return recommended post preview list
+     * @throws Exception any exception
+     */
+    public List<PostDTO> getRecommendedPostPreviewList(Integer userId, Integer postNum) throws Exception {
         securityService.checkUserIdWithToken(userId);
-        hashPostSet.clear();
-        List<PostPreviewDTO> postPreviewModelList = new ArrayList<>();
-        List<Integer> topTwoTagId = forumRepository.findRecommendedTagByHighestScore();
+        List<PostDTO> postPreviewModelList = new ArrayList<>();
+        List<Integer> topTwoTagId = forumRepository.findRecommendedTagByHighestScore(userId);
+        HashSet<Integer> hashSet = new HashSet<>();
         if (topTwoTagId.size() == 2) {
             Integer firstTagId = topTwoTagId.get(0);
             Integer secondTagId = topTwoTagId.get(1);
@@ -330,75 +349,105 @@ public class ForumService {
             int popularFirstTagPostNum = postNum / 2 - latestFirstTagPostNum;
             int latestSecondTagPostNum = postNum * 3 / 10 / 2;
             int popularSecondTagPostNum = postNum * 3 / 10 - latestSecondTagPostNum;
-            int remainingPostNum = postNum - latestFirstTagPostNum - popularFirstTagPostNum - latestSecondTagPostNum - popularSecondTagPostNum;
 
-            List<PostPreviewDTO> popularPostPreviewModelList = new ArrayList<>();
-            popularPostPreviewModelList.addAll(generatePostPreviewListByTagRecommendation("popular", userId, firstTagId, popularFirstTagPostNum, popularFirstTagPostNum));
-            popularPostPreviewModelList.addAll(generatePostPreviewListByTagRecommendation("popular", userId, secondTagId, popularFirstTagPostNum * 2, popularSecondTagPostNum));
+            List<PostDTO> popularPostPreviewModelList = new ArrayList<>();
+            popularPostPreviewModelList.addAll(generatePostPreviewListByTagRecommendation("popular", userId, firstTagId, popularFirstTagPostNum, popularFirstTagPostNum, hashSet));
+            popularPostPreviewModelList.addAll(generatePostPreviewListByTagRecommendation("popular", userId, secondTagId, popularFirstTagPostNum * 2, popularSecondTagPostNum, hashSet));
             Collections.shuffle(popularPostPreviewModelList);
 
-            List<PostPreviewDTO> latestPostPreviewModelList = new ArrayList<>();
-            latestPostPreviewModelList.addAll(generatePostPreviewListByTagRecommendation("latest", userId, firstTagId, popularFirstTagPostNum * 3, latestFirstTagPostNum));
-            latestPostPreviewModelList.addAll(generatePostPreviewListByTagRecommendation("latest", userId, secondTagId, popularFirstTagPostNum * 4, latestSecondTagPostNum));
+            List<PostDTO> latestPostPreviewModelList = new ArrayList<>();
+            latestPostPreviewModelList.addAll(generatePostPreviewListByTagRecommendation("latest", userId, firstTagId, popularFirstTagPostNum * 3, latestFirstTagPostNum, hashSet));
+            latestPostPreviewModelList.addAll(generatePostPreviewListByTagRecommendation("latest", userId, secondTagId, popularFirstTagPostNum * 4, latestSecondTagPostNum, hashSet));
             Collections.shuffle(latestPostPreviewModelList);
 
             postPreviewModelList.addAll(popularPostPreviewModelList);
             postPreviewModelList.addAll(latestPostPreviewModelList);
 
+            int remainingPostNum = postNum - postPreviewModelList.size();
             Random random = new Random();
-            List<PostPreviewDTO> randomPopularPostPreviewModelList = generatePostPreviewListByTagRecommendation("random", userId, null, popularFirstTagPostNum * 5, remainingPostNum);
-            for (PostPreviewDTO postPreview : randomPopularPostPreviewModelList) {
+            List<PostDTO> randomPopularPostPreviewModelList = generatePostPreviewListByTagRecommendation("random", userId, null, popularFirstTagPostNum * 5, remainingPostNum, hashSet);
+            for (PostDTO postPreview : randomPopularPostPreviewModelList) {
                 postPreviewModelList.add(random.nextInt(postPreviewModelList.size() + 1), postPreview);
             }
         }
         else {
-            postPreviewModelList.addAll(generatePostPreviewListByTagRecommendation("random", userId, null, postNum, postNum));
+            postPreviewModelList.addAll(generatePostPreviewListByTagRecommendation("random", userId, null, postNum, postNum, hashSet));
             Collections.shuffle(postPreviewModelList);
         }
 
         return postPreviewModelList;
     }
 
-    public PostContentDTO getPostContent(Integer postId, Integer userId) throws Exception {
+    /**
+     * Get a list of following post previews for a user
+     * @param userId userId Integer
+     * @param postNum required number of post previews
+     * @return following post preview list
+     * @throws Exception any exception
+     */
+    public List<PostDTO> getFollowingPostPreviewList(Integer userId, Integer postNum) throws Exception {
         securityService.checkUserIdWithToken(userId);
-        PostModel postModel = forumRepository.findActivePostCommentByPostId(postId);
-        PostContentDTO post = (PostContentDTO) setPostDTO(postModel, userId, new PostContentDTO());
-        post.setContent(postModel.getContent());
+        List<PostModel> postModelList = forumRepository.findFollowingActivePostByRange(userId, postNum);
+        List<PostDTO> postPreviewModelList = new ArrayList<>();
+        for (PostModel post : postModelList) {
+            PostDTO postPreview = createPostDTO(post, userId);
+            postPreviewModelList.add(postPreview);
+        }
+        return postPreviewModelList;
+    }
 
-        List<PostModel> commentModelList = forumRepository.findActivePostCommentByAttachTo(postId);
-        List<PostContentDTO> commentList = new ArrayList<>();
+    /**
+     * Get the post data by postId
+     * @param postId postId Integer
+     * @param userId userId Integer
+     * @return a post data
+     * @throws Exception any exception
+     */
+    public PostDTO getPostContentByPostId(Integer postId, Integer userId) throws Exception {
+        securityService.checkUserIdWithToken(userId);
+        PostModel post = forumRepository.findPostByPostId(postId);
+        return createPostDTO(post, userId);
+    }
+
+    /**
+     * Get all comments of a post, the maximum comment layers is 2 (with sub-comment only)
+     * @param postId postId Integer
+     * @param userId userId Integer
+     * @return a comment list, with a sub comment list for each comment
+     * @throws Exception any exception
+     */
+    public List<PostDTO> getCommentByPostId(Integer postId, Integer userId) throws Exception {
+        securityService.checkUserIdWithToken(userId);
+
+        List<PostDTO> commentList = new ArrayList<>();
+        List<PostModel> commentModelList = forumRepository.findActivePostCommentByAttachTo(postId, userId);
         if (!commentModelList.isEmpty()) {
             for (PostModel commentData : commentModelList) {
-                if (forumRepository.countBlockByUserIdAndPostId(commentData.getPostId(), userId) == 0) {
-                    PostContentDTO comment = (PostContentDTO) setPostDTO(commentData, userId, new PostContentDTO());
-                    comment.setContent(commentData.getContent());
+                PostDTO comment = createPostDTO(commentData, userId);
+                comment.setTitle(null);
 
-                    Integer commentId = commentData.getPostId();
-                    List<PostModel> subCommentModelList = forumRepository.findActivePostCommentByAttachTo(commentId);
-                    List<PostContentDTO> subCommentList = new ArrayList<>();
-                    if (!subCommentModelList.isEmpty()) {
-                        for (PostModel subCommentData : subCommentModelList) {
-                            if (forumRepository.countBlockByUserIdAndPostId(subCommentData.getPostId(), userId) == 0) {
-                                PostContentDTO subComment = (PostContentDTO) setPostDTO(subCommentData, userId, new PostContentDTO());
-                                subComment.setContent(subCommentData.getContent());
-                                subComment.setCommentList(null);
-                                subCommentList.add(subComment);
-                            }
-                        }
+                Integer commentId = commentData.getPostId();
+                List<PostDTO> subCommentList = new ArrayList<>();
+                List<PostModel> subCommentModelList = forumRepository.findActivePostCommentByAttachTo(commentId, userId);
+                if (!subCommentModelList.isEmpty()) {
+                    for (PostModel subCommentData : subCommentModelList) {
+                        PostDTO subComment = createPostDTO(subCommentData, userId);
+                        subComment.setTitle(null);
+                        subCommentList.add(subComment);
                     }
-                    else {
-                        subCommentList = null;
-                    }
-                    comment.setCommentList(subCommentList);
-                    commentList.add(comment);
                 }
+                else {
+                    subCommentList = null;
+                }
+
+                comment.setCommentList(subCommentList);
+                commentList.add(comment);
             }
         }
         else {
             commentList = null;
         }
-        post.setCommentList(commentList);
-        return post;
+        return commentList;
     }
 
     /**
@@ -406,10 +455,67 @@ public class ForumService {
      * @param postId postId int
      */
     private void deleteImage(int postId) {
+        // There may be multiple images in a post or comment, use forumRepository.findImageIdByPostId(postId);
         Integer imageId = forumRepository.findImageId(postId);
         if (imageId != null) {
             forumRepository.deleteInPostImage(imageId);
             forumRepository.deleteInImageData(imageId);
+        }
+    }
+
+    /**
+     * Check if user can like or dislike that post or comment. If yes, like or dislike that post or comment. If no, throw an exception
+     * @param postId post id of the post or comment that user want to like or dislike
+     * @param userId user id of the user
+     * @param action like or dislike
+     * @throws Exception
+     */
+    public void likeOrDislike(int postId, int userId, String action) throws Exception{
+        securityService.checkUserIdWithToken(userId);
+        if (forumRepository.isLikeClick(postId, userId) != null) {
+            throw new ExceptionService("User has liked that post/comment before");
+        }
+        if (forumRepository.isDislikeClick(postId, userId) != null) {
+            throw new ExceptionService("User has disliked that post/comment before");
+        }
+        if (action.equals("like")) {
+            forumRepository.addLikeRelationship(postId, userId);
+            forumRepository.addLikeCount(postId);
+        }
+        else if (action.equals("dislike")) {
+            forumRepository.addDislikeRelationship(postId, userId);
+            forumRepository.addDislikeCount(postId);
+        }
+        else {
+            throw new ExceptionService("Action not available: " + action);
+        }
+    }
+
+    /**
+     * Check if user can unlike or undislike that post or comment. If yes, unlike or undislike that post or comment. If no, throw an exception
+     * @param postId post id of the post or comment that user want to unlike or undislike
+     * @param userId user id of the user
+     * @param action unlike or undislike
+     * @throws Exception
+     */
+    public void unlikeOrUndislike(int postId, int userId, String action) throws Exception{
+        securityService.checkUserIdWithToken(userId);
+        if (action.equals("unlike")) {
+            if (forumRepository.isLikeClick(postId, userId) == null) {
+                throw new ExceptionService("User has not liked that post/comment before");
+            }
+            forumRepository.removeLikeRelationship(postId, userId);
+            forumRepository.minusLikeCount(postId);
+        }
+        else if (action.equals("undislike")) {
+            if (forumRepository.isDislikeClick(postId, userId) == null) {
+                throw new ExceptionService("User has not disliked that post/comment before");
+            }
+            forumRepository.removeDislikeRelationship(postId, userId);
+            forumRepository.minusDislikeCount(postId);
+        }
+        else {
+            throw new ExceptionService("Action not available: " + action);
         }
     }
 }

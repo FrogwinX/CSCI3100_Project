@@ -30,74 +30,169 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
     @NativeQuery("INSERT INTO FORUM.Post_Tag (post_id, tag_id) VALUES (?1, ?2)")
     void connectPostWithTag(int postId, int tagId);
 
-    @NativeQuery(value = "SELECT * FROM FORUM.Post WHERE post_id = ?1 AND is_active = 1")
-    PostModel findActivePostCommentByPostId(Integer postId);
+    /**
+     * Find active comments from post id, filtered out the blocked users, ordered by the descending order of likes num
+     * @param postId postId Integer
+     * @param userId userId Integer
+     * @return a list of comments
+     */
+    @NativeQuery(value =    "SELECT * \n" +
+                            "FROM FORUM.Post \n" +
+                            "WHERE attach_to = ?1\n" +
+                            "AND is_active = 1\n" +
+                            "AND user_id NOT IN (\n" +
+                            "SELECT user_id_to\n" +
+                            "FROM PROFILE.Block\n" +
+                            "WHERE user_id_from = ?2)" +
+                            "ORDER BY like_count DESC\n")
+    List<PostModel> findActivePostCommentByAttachTo(Integer postId, Integer userId);
 
-    @NativeQuery(value = "SELECT * FROM FORUM.Post WHERE attach_to = ?1 AND is_active = 1")
-    List<PostModel> findActivePostCommentByAttachTo(Integer postId);
+    /**
+     * Find post content by postId
+     * @param postId postId Integer
+     * @return a single post
+     */
+    @NativeQuery(value = "SELECT * FROM FORUM.Post WHERE post_id = ?1")
+    PostModel findPostByPostId(Integer postId);
 
+    /**
+     * Find imageId by postId. A post may contain multiple images
+     * @param postId postId Integer
+     * @return a list of imageId
+     */
     @NativeQuery(value = "SELECT image_id FROM FORUM.Post_Image WHERE post_id = ?1")
-    List<Integer> findPostImageIdByPostId(Integer postId);
+    List<Integer> findImageIdByPostId(Integer postId);
 
+    /**
+     * Find post tag(s) by postId. A post may contain multiple tags
+     * @param postId postId Integer
+     * @return a list of tagId
+     */
     @NativeQuery(value =    "SELECT tag_name \n" +
                             "FROM FORUM.Post_Tag PT\n" +
                             "JOIN FORUM.Tag_Data TD ON PT.tag_id = TD.tag_id\n" +
                             "WHERE post_id = ?1")
     List<String> findPostTagNameByPostId(Integer postId);
 
-    @NativeQuery(value = "SELECT COUNT(*) FROM [FORUM].[Block] WHERE post_id = ?1 AND user_id = ?2")
-    Integer countBlockByUserIdAndPostId(Integer postId, Integer userId);
+    /**
+     * Find some active posts, filtered out the blocked users, ordered by the descending order of post update time
+     * @param userId userId Integer
+     * @param postNum required number of post
+     * @return a lists of posts
+     */
+    @NativeQuery(value =    "SELECT * \n" +
+                            "FROM FORUM.Post\n" +
+                            "WHERE is_active = 1 \n" +
+                            "AND attach_to = 0 \n" +
+                            "AND user_id NOT IN (\n" +
+                            "SELECT user_id_to \n" +
+                            "FROM PROFILE.Block\n" +
+                            "WHERE user_id_from = ?1)\n" +
+                            "ORDER BY updated_at DESC\n" +
+                            "OFFSET 0 ROWS\n" +
+                            "FETCH NEXT ?2 ROWS ONLY")
+    List<PostModel> findLatestActivePostByRange(Integer userId, Integer postNum);
 
-    @NativeQuery(value = "SELECT COUNT(*) FROM [FORUM].[Like] WHERE post_id = ?1 AND user_id = ?2")
-    Integer countLikeByUserIdAndPostId(Integer postId, Integer userId);
-
-    @NativeQuery(value = "SELECT COUNT(*) FROM [FORUM].[Dislike] WHERE post_id = ?1 AND user_id = ?2")
-    Integer countDislikeByUserIdAndPostId(Integer postId, Integer userId);
-
+    /**
+     * Find some active posts, filtered in the following users, ordered by random order
+     * @param userId userId Integer
+     * @param postNum required number of post
+     * @return a lists of posts
+     */
     @NativeQuery(value =    "SELECT *\n" +
                             "FROM FORUM.Post\n" +
-                            "WHERE is_active = 1 AND attach_to = 0\n" +
-                            "ORDER BY updated_at DESC\n" +
-                            "OFFSET ?1 ROWS\n" +
+                            "WHERE is_active = 1\n" +
+                            "AND attach_to = 0\n" +
+                            "AND user_id IN (\n" +
+                            "SELECT user_id_to\n" +
+                            "FROM PROFILE.Follow\n" +
+                            "WHERE user_id_from = ?1)\n" +
+                            "ORDER BY NEWID()\n" +
+                            "OFFSET 0 ROWS\n" +
                             "FETCH NEXT ?2 ROWS ONLY")
-    List<PostModel> findLatestActivePostByRange(Integer postNumOffset, Integer postNum);
+    List<PostModel> findFollowingActivePostByRange(Integer userId, Integer postNum);
 
-    @NativeQuery(value =    "SELECT *\n" +
+    /**
+     * Find some active posts, filtered out the blocked users, ordered by the descending order of likes num
+     * @param userId userId Integer
+     * @param postNum required number of post
+     * @return a lists of posts
+     */
+    @NativeQuery(value =    "SELECT * \n" +
                             "FROM FORUM.Post\n" +
-                            "WHERE is_active = 1 AND attach_to = 0\n" +
+                            "WHERE is_active = 1 \n" +
+                            "AND attach_to = 0 \n" +
+                            "AND user_id NOT IN (\n" +
+                            "SELECT user_id_to \n" +
+                            "FROM PROFILE.Block\n" +
+                            "WHERE user_id_from = ?1)\n" +
                             "ORDER BY like_count DESC\n" +
-                            "OFFSET ?1 ROWS\n" +
+                            "OFFSET 0 ROWS\n" +
                             "FETCH NEXT ?2 ROWS ONLY")
-    List<PostModel> findPopularActivePostByRange(Integer postNumOffset, Integer postNum);
+    List<PostModel> findPopularActivePostByRange(Integer userId, Integer postNum);
 
+    /**
+     * Find some active posts by a tag, filtered out the blocked users, ordered by the descending order of post update time
+     * @param userId userId Integer
+     * @param tagId tagId Integer
+     * @param postNum required number of post
+     * @return a lists of posts
+     */
     @NativeQuery(value =    "SELECT P.post_id, user_id, title, content, like_count, dislike_count, comment_count, attach_to, is_active, created_at, updated_at\n" +
                             "FROM FORUM.Post P\n" +
-                            "JOIN FORUM.Post_Tag PT ON P.post_id = PT.post_id\n" +
-                            "WHERE is_active = 1 AND attach_to = 0 AND tag_id = ?1\n" +
+                            "JOIN FORUM.Post_Tag PT \n" +
+                            "ON P.post_id = PT.post_id\n" +
+                            "WHERE is_active = 1 \n" +
+                            "AND attach_to = 0 \n" +
+                            "AND tag_id = ?2\n" +
+                            "AND user_id NOT IN (\n" +
+                            "SELECT user_id_to\n" +
+                            "FROM PROFILE.Block\n" +
+                            "WHERE user_id_from = ?1)\n" +
                             "ORDER BY updated_at DESC\n" +
-                            "OFFSET ?2 ROWS\n" +
+                            "OFFSET 0 ROWS\n" +
                             "FETCH NEXT ?3 ROWS ONLY")
-    List<PostModel> findLatestActivePostByRangeAndTag(Integer tagId, Integer postNumOffset, Integer postNum);
+    List<PostModel> findLatestActivePostByRangeAndTag(Integer userId, Integer tagId, Integer postNum);
 
+    /**
+     * Find some active posts from a tag, filtered out the blocked users, ordered by the descending order of likes num
+     * @param userId userId Integer
+     * @param tagId tagId Integer
+     * @param postNum required number of post
+     * @return a lists of posts
+     */
     @NativeQuery(value =    "SELECT P.post_id, user_id, title, content, like_count, dislike_count, comment_count, attach_to, is_active, created_at, updated_at\n" +
                             "FROM FORUM.Post P\n" +
-                            "JOIN FORUM.Post_Tag PT ON P.post_id = PT.post_id\n" +
-                            "WHERE is_active = 1 AND attach_to = 0 AND tag_id = ?1\n" +
+                            "JOIN FORUM.Post_Tag PT \n" +
+                            "ON P.post_id = PT.post_id\n" +
+                            "WHERE is_active = 1 \n" +
+                            "AND attach_to = 0 \n" +
+                            "AND tag_id = ?2\n" +
+                            "AND user_id NOT IN (\n" +
+                            "SELECT user_id_to\n" +
+                            "FROM PROFILE.Block\n" +
+                            "WHERE user_id_from = ?1)\n" +
                             "ORDER BY like_count DESC\n" +
-                            "OFFSET ?2 ROWS\n" +
+                            "OFFSET 0 ROWS\n" +
                             "FETCH NEXT ?3 ROWS ONLY")
-    List<PostModel> findPopularActivePostByRangeAndTag(Integer tagId, Integer postNumOffset, Integer postNum);
+    List<PostModel> findPopularActivePostByRangeAndTag(Integer userId, Integer tagId, Integer postNum);
 
-    @NativeQuery(value =    "SELECT tag_id \n" +
-                            "FROM FORUM.Recommendation \n" +
-                            "ORDER BY score DESC \n" +
+    /**
+     * Find the two tags with the highest interaction scores from the user
+     * @param userId userId Integer
+     * @return two or less than two tagId
+     */
+    @NativeQuery(value =    "SELECT tag_id\n" +
+                            "FROM FORUM.Recommendation\n" +
+                            "WHERE user_id = ?1\n" +
+                            "ORDER BY score DESC\n" +
                             "OFFSET 0 ROWS\n" +
                             "FETCH NEXT 2 ROWS ONLY")
-    List<Integer> findRecommendedTagByHighestScore();
+    List<Integer> findRecommendedTagByHighestScore(Integer userId);
 
     /**
      * Add the comment count by 1 of the given post id
-     * @param postId
+     * @param postId postId int
      */
     @Modifying
     @Transactional
@@ -177,4 +272,98 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
     @Transactional
     @NativeQuery("UPDATE FORUM.Post SET comment_count = comment_count - 1 WHERE post_id = ?1")
     void minusCommentCountByOne(int postId);
+
+    /**
+     * Find if user liked that post or comment before
+     * @param postId postId int
+     * @param userId userId int
+     * @return post id if user liked that post or comment before, null if user did not like that post or comment
+     */
+    @NativeQuery("SELECT post_id FROM FORUM.[Like] WHERE post_id = ?1 AND user_id = ?2")
+    Integer isLikeClick(int postId, int userId);
+
+    /**
+     * Add a record in Like table
+     * @param postId postId int
+     * @param userId userId int
+     */
+    @Modifying
+    @Transactional
+    @NativeQuery("INSERT INTO FORUM.[Like] VALUES (?1, ?2)")
+    void addLikeRelationship(int postId, int userId);
+
+    /**
+     * Add 1 to like count in Post table
+     * @param postId postId int
+     */
+    @Modifying
+    @Transactional
+    @NativeQuery("UPDATE FORUM.Post SET like_count = like_count + 1 WHERE post_id = ?1")
+    void addLikeCount(int postId);
+
+    /**
+     * Find if user disliked that post or comment before
+     * @param postId postId int
+     * @param userId userId int
+     * @return post id if user disliked that post or comment before, null if user did not dislike that post or comment
+     */
+    @NativeQuery("SELECT post_id FROM FORUM.Dislike WHERE post_id = ?1 AND user_id = ?2")
+    Integer isDislikeClick(int postId, int userId);
+
+    /**
+     * Add a record in Dislike table
+     * @param postId postId int
+     * @param userId userId int
+     */
+    @Modifying
+    @Transactional
+    @NativeQuery("INSERT INTO FORUM.Dislike VALUES (?1, ?2)")
+    void addDislikeRelationship(int postId, int userId);
+
+    /**
+     * Add 1 to dislike count in Post table
+     * @param postId postId int
+     */
+    @Modifying
+    @Transactional
+    @NativeQuery("UPDATE FORUM.Post SET dislike_count = dislike_count + 1 WHERE post_id = ?1")
+    void addDislikeCount(int postId);
+
+    /**
+     * Remove a record from Like table with the corresponding post id and user id
+     * @param postId postId int
+     * @param userId userId int
+     */
+    @Modifying
+    @Transactional
+    @NativeQuery("DELETE FROM FORUM.[Like] WHERE post_id = ?1 AND user_id = ?2")
+    void removeLikeRelationship(int postId, int userId);
+
+    /**
+     * Minus like count of a post or comment with the given postId by one in Post table
+     * @param postId postId int
+     */
+    @Modifying
+    @Transactional
+    @NativeQuery("UPDATE FORUM.Post SET like_count = like_count - 1 WHERE post_id = ?1")
+    void minusLikeCount(int postId);
+
+    /**
+     * Remove a record from Dislike table with the corresponding post id and user id
+     * @param postId postId int
+     * @param userId userId int
+     */
+    @Modifying
+    @Transactional
+    @NativeQuery("DELETE FROM FORUM.Dislike WHERE post_id = ?1 AND user_id = ?2")
+    void removeDislikeRelationship(int postId, int userId);
+
+    /**
+     * Minus dislike count of a post or comment with the given postId by one in Post table
+     * @param postId postId int
+     */
+    @Modifying
+    @Transactional
+    @NativeQuery("UPDATE FORUM.Post SET dislike_count = dislike_count - 1 WHERE post_id = ?1")
+    void minusDislikeCount(int postId);
 }

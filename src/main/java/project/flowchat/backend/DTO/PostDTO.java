@@ -16,6 +16,7 @@ public class PostDTO {
     private Integer postId;
     private String username;
     private String title;
+    private String content;
     private List<String> imageAPIList;
     private List<String> tagNameList;
     private Integer likeCount;
@@ -24,4 +25,5 @@ public class PostDTO {
     private Boolean isDisliked;
     private Integer commentCount;
     private String updatedAt;
+    private List<PostDTO> commentList;
 }
