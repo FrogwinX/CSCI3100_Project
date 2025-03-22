@@ -16,9 +16,21 @@ export default function PostLink({
 
   const handleClick = (e: MouseEvent) => {
     // Don't navigate if clicking on interactive elements
-    if (!(e.target as HTMLElement).closest(".interactive-element")) {
-      router.push(href);
+    const target = e.target as HTMLElement;
+
+    // Check if the target or its parent is an interactive element
+    if (
+      target.closest("a") ||
+      target.closest("button") ||
+      target.closest("[role='button']") ||
+      target.closest(".dropdown") ||
+      target.closest(".interactive-element")
+    ) {
+      e.stopPropagation();
+      return;
     }
+
+    router.push(href);
   };
 
   return (

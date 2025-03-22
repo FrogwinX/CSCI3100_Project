@@ -1,9 +1,6 @@
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faUser } from "@fortawesome/free-solid-svg-icons";
-import moment from "moment";
-import PostActions from "@/components/posts/PostActions";
 import PostFooter from "@/components/posts/PostFooter";
 import PostLink from "@/components/navigation/PostLink";
+import PostHeader from "@/components/posts/PostHeader";
 
 export interface Post {
   postId: string;
@@ -24,24 +21,8 @@ export default function PostPreview({ post }: { post: Post }) {
     <PostLink href={`/forum/post/${post.postId}`} className="block">
       <div className="card hover:bg-base-200/40 px-2">
         <div className="card-body p-0 gap-2">
-          {/** Header */}
-          <div className="flex justify-between items-center my-1">
-            {/** Avatar, username, time */}
-            <div className="flex items-center gap-2">
-              <div className="avatar avatar-placeholder">
-                <div className="bg-neutral text-neutral-content w-8 rounded-full">
-                  <FontAwesomeIcon icon={faUser} />
-                </div>
-              </div>
-              <div className="flex items-center gap-0.5">
-                <span className="text-sm font-medium">{post.username}</span>
-                <span className="text-xs font-thin">•</span>
-                <span className="text-xs font-light">{moment(post.updatedAt).fromNow()}</span>
-              </div>
-            </div>
-            {/** Follow, more options, client-sided */}
-            <PostActions postId={post.postId} postUsername={post.username} />
-          </div>
+          {/** Header, client-sided */}
+          <PostHeader postId={post.postId} postUsername={post.username} postUpdatedAt={post.updatedAt} />
           {/** Body */}
           <div className="flex gap-4">
             <div className="flex-1">
@@ -78,7 +59,12 @@ export default function PostPreview({ post }: { post: Post }) {
             </div>
           )}
           {/** Footer, client-sided */}
-          <PostFooter post={post} />
+          <PostFooter
+            postId={post.postId}
+            postLikeCount={post.likeCount}
+            postDislikeCount={post.dislikeCount}
+            postCommentCount={post.commentCount}
+          />
         </div>
       </div>
     </PostLink>

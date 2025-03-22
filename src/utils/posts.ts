@@ -202,22 +202,6 @@ export async function getPosts(options: PostsOptions = {}): Promise<Post[]> {
 
 // TO BE DELETED, FOR DEVELOPMENT PURPOSES ONLY
 function getMockPostById(postId: string): Post | null {
-  // Generate a single mock post
-  const numComments = Math.floor(Math.random() * 5) + 1; // Generate between 1 and 5 comments
-  const mockComments: Post[] = Array.from({ length: numComments }, (_, idx) => ({
-    postId: `${postId}-comment-${idx + 1}`,
-    username: idx % 2 === 0 ? "Alice" : "Bob",
-    title: `Comment ${idx + 1}`,
-    description: descriptionSamples[Math.floor(Math.random() * descriptionSamples.length)],
-    image: null,
-    tag: "",
-    likeCount: Math.floor(Math.random() * 20),
-    dislikeCount: Math.floor(Math.random() * 5),
-    commentCount: 0,
-    updatedAt: new Date(Date.now() - Math.floor(Math.random() * 12 * 60 * 60 * 1000)).toISOString(),
-    comments: [],
-  }));
-
   const mockPost: Post = {
     postId: postId,
     username: "John Doe",
@@ -227,9 +211,9 @@ function getMockPostById(postId: string): Post | null {
     tag: getRandomTags(),
     likeCount: Math.floor(Math.random() * 100),
     dislikeCount: Math.floor(Math.random() * 20),
-    commentCount: mockComments.length,
+    commentCount: Math.floor(Math.random() * 50),
     updatedAt: new Date(Date.now() - Math.floor(Math.random() * 10 * 24 * 60 * 60 * 1000)).toISOString(),
-    comments: mockComments,
+    comments: [],
   };
 
   return mockPost;
