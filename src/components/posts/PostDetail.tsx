@@ -1,6 +1,7 @@
 import PostHeader from "@/components/posts/PostHeader";
 import PostFooter from "@/components/posts/PostFooter";
-import { Post } from "./PostPreview";
+import { Post } from "@/components/posts/PostPreview";
+import LoadingImage from "@/components/posts/LoadingImage";
 
 export default function PostDetail({ post }: { post: Post }) {
   return (
@@ -20,7 +21,7 @@ export default function PostDetail({ post }: { post: Post }) {
         {/** Image */}
         {post.image && (
           <div className="w-full max-w-4xl mx-auto">
-            <img src={post.image} className="rounded-md object-contain w-full h-full" />
+            <LoadingImage src={post.image} alt={post.title} className="object-contain" />
           </div>
         )}
 

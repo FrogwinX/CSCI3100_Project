@@ -1,6 +1,7 @@
 import PostFooter from "@/components/posts/PostFooter";
 import PostLink from "@/components/navigation/PostLink";
 import PostHeader from "@/components/posts/PostHeader";
+import LoadingImage from "./LoadingImage";
 
 export interface Post {
   postId: string;
@@ -32,9 +33,10 @@ export default function PostPreview({ post }: { post: Post }) {
             {/* Image on the right side, conditionally rendered */}
             {post.image && post.description.trim().length >= 50 && (
               <div className="flex-none w-24 sm:w-32 md:w-40 lg:w-48 xl:w-56">
-                <img
+                <LoadingImage
                   src={post.image}
-                  className="rounded-md object-cover w-full h-full max-h-32 md:max-h-36 lg:max-h-40"
+                  alt={post.title}
+                  className="object-cover max-h-32 md:max-h-36 lg:max-h-40"
                 />
               </div>
             )}
@@ -42,9 +44,10 @@ export default function PostPreview({ post }: { post: Post }) {
           {/* Show image below title if no description */}
           {post.image && post.description.trim().length < 50 && (
             <div className="w-full max-w-xl mx-auto overflow-hidden">
-              <img
+              <LoadingImage
                 src={post.image}
-                className="rounded-md object-contain w-full h-full max-h-60 sm:max-h-72 md:max-h-80 lg:max-h-96"
+                alt={post.title}
+                className="object-contain max-h-60 sm:max-h-72 md:max-h-80 lg:max-h-96"
               />
             </div>
           )}
