@@ -5,9 +5,7 @@
 /Users/edwin/Desktop/CSCI3100_Project/src/main/java/project/flowchat/backend/Controller/ForumController.java
 /Users/edwin/Desktop/CSCI3100_Project/src/main/java/project/flowchat/backend/Controller/ImageController.java
 /Users/edwin/Desktop/CSCI3100_Project/src/main/java/project/flowchat/backend/Controller/SystemController.java
-/Users/edwin/Desktop/CSCI3100_Project/src/main/java/project/flowchat/backend/DTO/PostContentDTO.java
 /Users/edwin/Desktop/CSCI3100_Project/src/main/java/project/flowchat/backend/DTO/PostDTO.java
-/Users/edwin/Desktop/CSCI3100_Project/src/main/java/project/flowchat/backend/DTO/PostPreviewDTO.java
 /Users/edwin/Desktop/CSCI3100_Project/src/main/java/project/flowchat/backend/DTO/ResponseBodyDTO.java
 /Users/edwin/Desktop/CSCI3100_Project/src/main/java/project/flowchat/backend/Model/ImageModel.java
 /Users/edwin/Desktop/CSCI3100_Project/src/main/java/project/flowchat/backend/Model/LicenseModel.java

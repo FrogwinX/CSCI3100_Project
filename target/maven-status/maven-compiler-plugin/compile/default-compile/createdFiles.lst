@@ -3,7 +3,6 @@ project/flowchat/backend/Config/JWTFilter.class
 project/flowchat/backend/Model/LicenseModel.class
 project/flowchat/backend/Model/ImageModel.class
 project/flowchat/backend/DTO/ResponseBodyDTO.class
-project/flowchat/backend/DTO/PostContentDTO.class
 project/flowchat/backend/Service/SecurityService.class
 project/flowchat/backend/Service/SecurityService$KeyType.class
 project/flowchat/backend/Controller/ForumController.class
@@ -22,7 +21,6 @@ project/flowchat/backend/Controller/ImageController.class
 project/flowchat/backend/Model/PostModel.class
 project/flowchat/backend/Repository/ForumRepository.class
 project/flowchat/backend/Repository/UserAccountRepository.class
-project/flowchat/backend/DTO/PostPreviewDTO.class
 project/flowchat/backend/Service/ExceptionService.class
 project/flowchat/backend/DTO/PostDTO.class
 project/flowchat/backend/Config/SecurityConfig.class
