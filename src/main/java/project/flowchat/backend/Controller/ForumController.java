@@ -27,10 +27,10 @@ public class ForumController {
     private ResponseBodyDTO responseBodyDTO;
 
     @GetMapping("getLatestPostPreviewList")
-    private ResponseBodyDTO getLatestPostPreviewList(@RequestParam Integer userId, Integer postNum) {
+    private ResponseBodyDTO getLatestPostPreviewList(@RequestParam Integer userId, Integer lastPostId, Integer postNum) {
         try {
             Map<String, Object> data = new HashMap<>();
-            List<PostDTO> postPreviewModelList = forumService.getLatestPostPreviewList(userId, postNum);
+            List<PostDTO> postPreviewModelList = forumService.getLatestPostPreviewList(userId, lastPostId, postNum);
             data.put("isSuccess", true);
             data.put("postPreviewList", postPreviewModelList);
             responseBodyDTO.setMessage("The latest post preview list is returned");

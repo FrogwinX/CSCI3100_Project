@@ -197,7 +197,7 @@ public class ForumService {
                 parent = forumRepository.findById(parent.getAttachTo()).get();
             }
         }
-        else if (attachTo != null && attachTo == 0){
+        else if (attachTo != null && attachTo == 0) {
             throw new ExceptionService("Cannot make a comment become a post");
         }
 
@@ -290,9 +290,16 @@ public class ForumService {
      * @return latest post preview list
      * @throws Exception any exception
      */
-    public List<PostDTO> getLatestPostPreviewList(Integer userId, Integer postNum) throws Exception {
+    public List<PostDTO> getLatestPostPreviewList(Integer userId, Integer lastPostId, Integer postNum) throws Exception {
         securityService.checkUserIdWithToken(userId);
-        List<PostModel> postModelList = forumRepository.findLatestActivePostByRange(userId, postNum);
+        Integer offset;
+        if (lastPostId == 0) {
+            offset = 0;
+        }
+        else {
+            offset = forumRepository.findLatestActivePostOffsetByPostId(userId, lastPostId);
+        }
+        List<PostModel> postModelList = forumRepository.findLatestActivePostByRange(userId, offset, postNum);
         List<PostDTO> postPreviewModelList = new ArrayList<>();
         for (PostModel post : postModelList) {
             PostDTO postPreview = createPostDTO(post, userId);
