@@ -3,7 +3,9 @@ package project.flowchat.backend.Service;
 import jakarta.mail.internet.MimeMessage;
 import lombok.AllArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.mindrot.jbcrypt.BCrypt;
@@ -13,6 +15,8 @@ import org.springframework.core.io.Resource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import project.flowchat.backend.DTO.PostDTO;
+import project.flowchat.backend.Model.PostModel;
 import project.flowchat.backend.Model.UserAccountModel;
 import project.flowchat.backend.Repository.UserAccountRepository;
 
@@ -387,6 +391,28 @@ public class AccountService {
         } else if (username == null && email != null) {
             userAccountRepository.deleteAccountByEmail(email);
         }
+    }
+
+    /**
+     * Get a list of userId and usernames by searching the usernames and emails with keyword in database
+     * @param userId userId Integer
+     * @param keyword keyword case-insensitive String
+     * @param searchNum required number of post previews
+     * @return a list of userId and usernames
+     * @throws Exception any exception
+     */
+    public List<Map<String, Object>> searchUser(Integer userId, String keyword, Integer searchNum) throws Exception {
+        securityService.checkUserIdWithToken(userId);
+        keyword = "%" + keyword + "%";
+        List<Map<String, Object>> userList = new ArrayList<>();
+        List<List<String>> usernameAndUserIdList = userAccountRepository.findActiveUserByKeyword(userId, keyword, searchNum);
+        for (List<String> list : usernameAndUserIdList) {
+            Map<String, Object> user = new HashMap<>();
+            user.put("userId", list.get(0));
+            user.put("username", list.get(1));
+            userList.add(user);
+        }
+        return userList;
     }
 
 }

@@ -8,6 +8,8 @@ import org.springframework.stereotype.Repository;
 import jakarta.transaction.Transactional;
 import project.flowchat.backend.Model.UserAccountModel;
 
+import java.util.List;
+
 
 @Repository
 public interface UserAccountRepository extends JpaRepository<UserAccountModel, Integer> {
@@ -111,4 +113,25 @@ public interface UserAccountRepository extends JpaRepository<UserAccountModel, I
     @Transactional
     @NativeQuery(value = "UPDATE ACCOUNT.User_Account SET updated_at = DATEADD(HOUR, 8, GETDATE()) WHERE user_id = ?1")
     void updateUserAccountById(Integer userId);
+
+    /**
+     * Find a list of userId and usernames of the active users with case-insensitive keywords in usernames or emails, filtered out the blocked users, ordered randomly
+     * @param userId userId Integer
+     * @param keyword keywords case-insensitive String
+     * @param searchNum required number of queries
+     * @return a lists of userId and usernames
+     */
+    @NativeQuery(value =    "SELECT user_id, username\n" +
+                            "FROM ACCOUNT.User_Account\n" +
+                            "WHERE is_active = 1\n" +
+                            "AND (username LIKE ?2\n" +
+                            "OR email LIKE ?2)\n" +
+                            "AND user_id NOT IN (\n" +
+                            "SELECT user_id_to\n" +
+                            "FROM PROFILE.Block\n" +
+                            "WHERE user_id_from = ?1)\n" +
+                            "ORDER BY NEWID()\n" +
+                            "OFFSET 0 ROWS\n" +
+                            "FETCH NEXT ?3 ROWS ONLY\n")
+    List<List<String>> findActiveUserByKeyword(Integer userId, String keyword, Integer searchNum);
 }
