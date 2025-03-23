@@ -75,6 +75,26 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
     List<String> findPostTagNameByPostId(Integer postId);
 
     /**
+     * Find the offset of postId in the descending order list of active posts, filtered out the blocked users
+     * @param userId userId Integer
+     * @param lastPostId postId Integer
+     * @return the offset number
+     */
+    @NativeQuery(value =    "SELECT COUNT(*)\n" +
+                            "FROM FORUM.Post\n" +
+                            "WHERE is_active = 1\n" +
+                            "AND attach_to = 0\n" +
+                            "AND user_id NOT IN (\n" +
+                            "SELECT user_id_to\n" +
+                            "FROM PROFILE.Block\n" +
+                            "WHERE user_id_from = ?1)\n" +
+                            "AND updated_at >= (\n" +
+                            "SELECT updated_at \n" +
+                            "FROM FORUM.Post\n" +
+                            "WHERE post_id = ?2)")
+    Integer findLatestActivePostOffsetByPostId(Integer userId, Integer lastPostId);
+
+    /**
      * Find some active posts, filtered out the blocked users, ordered by the descending order of post update time
      * @param userId userId Integer
      * @param postNum required number of post
@@ -89,9 +109,9 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
                             "FROM PROFILE.Block\n" +
                             "WHERE user_id_from = ?1)\n" +
                             "ORDER BY updated_at DESC\n" +
-                            "OFFSET 0 ROWS\n" +
-                            "FETCH NEXT ?2 ROWS ONLY")
-    List<PostModel> findLatestActivePostByRange(Integer userId, Integer postNum);
+                            "OFFSET ?2 ROWS\n" +
+                            "FETCH NEXT ?3 ROWS ONLY")
+    List<PostModel> findLatestActivePostByRange(Integer userId, Integer offset, Integer postNum);
 
     /**
      * Find some active posts, filtered in the following users, ordered by random order
