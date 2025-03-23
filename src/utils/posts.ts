@@ -1,16 +1,7 @@
+"use server";
+
 import { Post } from "@/components/posts/PostPreview";
-import { cookies } from "next/headers";
-
-type PostsOptions = {
-  filter?: "latest" | "recommended" | "following";
-  offset?: number;
-  count?: number;
-};
-
-interface UserAuth {
-  userId?: string;
-  token?: string;
-}
+import { getSession } from "@/utils/sessions";
 
 // API response type for getPost
 interface PostPreviewResponse {
@@ -84,66 +75,65 @@ const getRandomTags = () => {
   return selectedTags.join(",");
 };
 
-export async function getUserAuthFromCookies(): Promise<UserAuth> {
-  try {
-    // Get user info from client-accessible cookie
-    const userInfoCookie = (await cookies()).get("user");
-    let userId = undefined;
-
-    if (userInfoCookie?.value) {
-      try {
-        const userInfo = JSON.parse(userInfoCookie.value);
-        userId = userInfo.id;
-      } catch (e) {
-        console.error("Error parsing user info cookie");
-      }
-    }
-
-    // Get token from HttpOnly cookie
-    const tokenCookie = (await cookies()).get("auth_token");
-    const token = tokenCookie?.value;
-
-    return { userId, token };
-  } catch (error) {
-    console.error("Error getting user auth from cookies:", error);
-    return {};
-  }
-}
-
 // TO BE DELETED, FOR DEVELOPMENT PURPOSES ONLY
-function getMockPosts(options: PostsOptions = {}): Post[] {
-  const mockPosts: Post[] = Array.from({ length: 10 }, (_, i) => ({
-    postId: `mock-post-${i + 1}`,
-    username: `user${i + 1}`,
-    title: `Mock Post #${i + 1}: This is a sample post title for development`,
-    content: contentSamples[Math.floor(Math.random() * contentSamples.length)],
-    imageAPIList: i % 3 === 0 ? [`https://picsum.photos/400/300?random=${i}`] : null,
-    tagNameList: getRandomTags().split(","),
-    likeCount: Math.floor(Math.random() * 10000),
-    isLiked: false,
-    dislikeCount: Math.floor(Math.random() * 20),
-    isDisliked: false,
-    commentCount: Math.floor(Math.random() * 50),
-    updatedAt: new Date(Date.now() - Math.floor(Math.random() * 12 * 60 * 60 * 1000)).toISOString(),
-    commentList: [],
-  }));
+function getMockPosts(
+  options: {
+    filter?: "latest" | "recommended" | "following";
+    lastPostId?: string;
+    count?: number;
+  } = {}
+): Post[] {
+  // Keep track of the base timestamp for proper time progression
+  const baseTimestamp = Date.now();
 
-  // Apply filtering based on options
-  let filteredPosts = [...mockPosts];
+  // Extract the number from lastPostId if provided
+  let lastPostNumber = 0;
+  if (options.lastPostId) {
+    // More reliable parsing with fallback
+    const match = options.lastPostId.match(/mock-post-(\d+)/);
+    lastPostNumber = match ? parseInt(match[1]) : 0;
+  }
 
-  // Sort posts by date (newest first)
-  filteredPosts.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+  // Calculate the starting index for the new batch
+  // Ensure we start ONE AFTER the lastPostId to avoid duplicates
+  const startIndex = lastPostNumber + 1;
 
-  // Apply offset and count
-  const start = options.offset || 0;
-  const end = start + (options.count || 10);
+  const mockPosts: Post[] = Array.from({ length: options.count || 10 }, (_, i) => {
+    // Calculate the current post index
+    const postIndex = startIndex + i;
 
-  return filteredPosts.slice(start, end);
+    // Calculate timestamp to ensure posts get progressively older
+    // If continuing from a lastPostId, add extra time offset to ensure
+    // the new batch is clearly older than the previous batch
+    const timeOffset = lastPostNumber > 0 ? lastPostNumber * 24 * 60 * 60 * 1000 : 0;
+    const ageInMilliseconds = timeOffset + postIndex * 3600000 + Math.random() * 1800000;
+
+    return {
+      postId: `mock-post-${postIndex}`,
+      username: `user${postIndex}`,
+      title: `Mock Post #${postIndex}: This is a sample post title for development`,
+      content: contentSamples[Math.floor(Math.random() * contentSamples.length)],
+      imageAPIList: postIndex % 3 === 0 ? [`https://picsum.photos/400/300?random=${postIndex}`] : null,
+      tagNameList: getRandomTags().split(","),
+      likeCount: Math.floor(Math.random() * 10000),
+      isLiked: false,
+      dislikeCount: Math.floor(Math.random() * 20),
+      isDisliked: false,
+      commentCount: Math.floor(Math.random() * 50),
+      updatedAt: new Date(baseTimestamp - ageInMilliseconds).toISOString(),
+      commentList: [],
+    };
+  });
+
+  // No need to apply additional filtering for mock data
+  return mockPosts.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
 }
 
-export async function getPosts(options: PostsOptions = {}): Promise<Post[]> {
+export async function getPosts(
+  options: { filter?: "latest" | "recommended" | "following"; lastPostId?: string; count?: number } = {}
+): Promise<Post[]> {
   try {
-    const { userId, token } = await getUserAuthFromCookies();
+    const session = await getSession();
     // Build the API URL based on the filter
     let apiUrl = "https://flowchatbackend.azurewebsites.net/api/Forum/";
     switch (options.filter) {
@@ -159,12 +149,13 @@ export async function getPosts(options: PostsOptions = {}): Promise<Post[]> {
     }
 
     // Add query parameters
-    apiUrl += `userId=${userId}&postNum=${options.count || 10}`;
+    apiUrl += `userId=${session.userId}&lastPostId=${options.lastPostId}&postNum=${options.count || 10}`;
 
     // Fetch data from the API
     const response = await fetch(apiUrl, {
+      method: "GET",
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${session.token}`,
       },
     });
 
@@ -222,14 +213,14 @@ function getMockPostById(postId: string): Post | null {
 
 export async function getPostById(postId: string): Promise<Post | null> {
   try {
-    const { userId, token } = await getUserAuthFromCookies();
+    const session = await getSession();
 
-    const apiUrl = `https://flowchatbackend.azurewebsites.net/api/Forum/getPostContent?userId=${userId}&postId=${postId}`;
+    const apiUrl = `https://flowchatbackend.azurewebsites.net/api/Forum/getPostContent?userId=${session.userId}&postId=${postId}`;
 
     // Fetch data from the API
     const response = await fetch(apiUrl, {
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${session.token}`,
       },
     });
 

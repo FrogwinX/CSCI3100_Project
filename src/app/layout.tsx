@@ -1,6 +1,6 @@
 import React from "react";
 import type { Metadata } from "next";
-import { AuthProvider } from "@/hooks/useAuth";
+import { SessionProvider } from "@/hooks/useSession";
 import NavbarWithDrawer from "@/components/navigation/NavbarWithDrawer";
 import { Inter } from "next/font/google";
 import "./globals.css";
@@ -30,12 +30,12 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.className}>
       <body className="font-semibold">
-        <AuthProvider>
+        <SessionProvider>
           <div className="flex flex-col bg-base-200 text-base-content min-h-screen">
             <NavbarWithDrawer />
             {children}
           </div>
-        </AuthProvider>
+        </SessionProvider>
       </body>
     </html>
   );

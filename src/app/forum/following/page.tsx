@@ -1,6 +1,5 @@
 import { Metadata } from "next";
 import PostList from "@/components/posts/PostPreviewList";
-import { getPosts } from "@/utils/posts";
 
 export const metadata: Metadata = {
   title: "Following | FlowChat",
@@ -10,11 +9,9 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function FollowingPostsPage() {
-  const posts = await getPosts({ filter: "following" });
-
   return (
     <div>
-      <PostList posts={posts} />
+      <PostList filter="following" />
     </div>
   );
 }

@@ -14,7 +14,7 @@ export default function LoadingImage({
   const [isLoading, setIsLoading] = useState(true);
 
   return (
-    <div className="relative aspect-video">
+    <div className="relative">
       {/* Skeleton */}
       {isLoading && <div className={`skeleton w-full h-full absolute inset-0 ${className}`}></div>}
 

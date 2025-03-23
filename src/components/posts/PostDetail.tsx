@@ -20,14 +20,18 @@ export default function PostDetail({ post }: { post: Post }) {
 
         {/** Image */}
         {post.imageAPIList && (
-          <div className="relative w-full overflow-hidden rounded-xl bg-base-300 aspect-video">
+          <div className="relative w-full overflow-hidden rounded-xl bg-base-300">
             {/* Blurred background image */}
             <div className="absolute inset-0 w-full h-full opacity-60">
               <img src={post.imageAPIList[0]} className="object-cover blur-xl w-full h-full" />
             </div>
             {/* Main image */}
             <div className="relative w-full h-full items-center justify-center">
-              <LoadingImage src={post.imageAPIList[0]} alt={post.title} className=" object-contain rounded-md" />
+              <LoadingImage
+                src={post.imageAPIList[0]}
+                alt={post.title}
+                className=" object-contain rounded-md aspect-video"
+              />
             </div>
           </div>
         )}
@@ -47,7 +51,9 @@ export default function PostDetail({ post }: { post: Post }) {
         <PostFooter
           postId={post.postId}
           postLikeCount={post.likeCount}
+          postIsLiked={post.isLiked}
           postDislikeCount={post.dislikeCount}
+          postIsDisliked={post.isDisliked}
           postCommentCount={post.commentCount}
         />
       </div>

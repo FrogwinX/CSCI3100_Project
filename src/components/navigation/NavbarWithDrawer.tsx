@@ -7,21 +7,25 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBars, faMagnifyingGlass, faXmark, faUser, faCog } from "@fortawesome/free-solid-svg-icons";
 import { faComments, faPaperPlane, faBell, faEnvelope } from "@fortawesome/free-regular-svg-icons";
 import { faGithub } from "@fortawesome/free-brands-svg-icons";
-import { useAuth } from "@/hooks/useAuth";
 import Image from "next/image";
+import { logout } from "@/utils/authentication";
+import { useSession } from "@/hooks/useSession";
 
 export default function NavbarWithDrawer() {
   const [isSidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const [isSearchOpen, setSearchOpen] = useState<boolean>(false);
-  const { user, logout } = useAuth();
-  const router = useRouter();
   const pathname = usePathname();
+  const { session, refresh } = useSession();
+  const router = useRouter();
 
   // Check if a path is active
   const isActive = (path: string) => pathname === path;
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
+    // Refresh session to update the UI
+    await refresh();
+    // Redirect to login page
     router.push("/login");
   };
 
@@ -106,7 +110,7 @@ export default function NavbarWithDrawer() {
                   </div>
                 </div>
                 <ul tabIndex={0} className="dropdown-content menu bg-base-100 rounded-box shadow">
-                  {user ? (
+                  {session.isLoggedIn ? (
                     /* Logged in menu */
                     <>
                       <li>

@@ -5,9 +5,9 @@ import { faEllipsis, faPenToSquare, faFlag, faUser } from "@fortawesome/free-sol
 import { faTrashAlt } from "@fortawesome/free-regular-svg-icons";
 import { MouseEvent } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/hooks/useAuth";
 import moment from "moment";
 import Link from "next/link";
+import { useSession } from "@/hooks/useSession";
 
 export default function PostHeader({
   postId,
@@ -21,10 +21,10 @@ export default function PostHeader({
   size?: "sm" | "md";
 }) {
   const router = useRouter();
-  const { user } = useAuth();
+  const { session } = useSession();
 
   // Check if the current user is the author of the post
-  const isAuthor = user?.username === postUsername;
+  const isAuthor = session.username === postUsername;
 
   const handleFollow = (e: MouseEvent) => {
     e.stopPropagation();

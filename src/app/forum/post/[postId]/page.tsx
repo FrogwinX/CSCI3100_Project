@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import PostDetail from "@/components/posts/PostDetail";
 
 export async function generateMetadata({ params }: { params: { postId: string } }) {
-  const post = await getPostById(params.postId);
+  const { postId } = await params;
+  const post = await getPostById(postId);
 
   if (!post) {
     return {

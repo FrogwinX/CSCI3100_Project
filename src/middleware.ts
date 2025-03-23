@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { readSessionFromRequest } from "@/utils/sessions";
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
   // Forum default route handling
@@ -14,8 +15,9 @@ export function middleware(request: NextRequest) {
   const isAuthPath = authPaths.includes(path);
   const isRoot = path === "/";
 
-  // Get authentication state
-  const isAuthenticated = !!request.cookies.get("user")?.value;
+  // Get session state
+  const session = await readSessionFromRequest(request);
+  const isAuthenticated = session.isLoggedIn;
 
   // Redirect logic
   if (isAuthenticated && isAuthPath) {
