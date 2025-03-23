@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import project.flowchat.backend.DTO.PostDTO;
 import project.flowchat.backend.DTO.ResponseBodyDTO;
 import org.springframework.web.multipart.MultipartFile;
+import project.flowchat.backend.Service.AccountService;
 import project.flowchat.backend.Service.ExceptionService;
 import project.flowchat.backend.Service.ForumService;
 
@@ -22,6 +23,7 @@ public class ForumController {
 
     @Autowired
     private final ForumService forumService;
+    private final AccountService accountService;
     private ResponseBodyDTO responseBodyDTO;
 
     @GetMapping("getLatestPostPreviewList")
@@ -264,7 +266,7 @@ public class ForumController {
         try {
             Map<String, Object> data = new HashMap<>();
             List<PostDTO> postPreviewList = forumService.searchPost(userId, keyword, searchNum);
-            List<PostDTO> userList = null;
+            List<Map<String, Object>> userList = accountService.searchUser(userId, keyword, searchNum);
             data.put("isSuccess", true);
             data.put("postPreviewList", postPreviewList);
             data.put("userList", userList);

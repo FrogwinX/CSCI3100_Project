@@ -519,6 +519,14 @@ public class ForumService {
         }
     }
 
+    /**
+     * Get a list of popular post previews containing the case-insensitive keywords for a user
+     * @param userId userId Integer
+     * @param keyword keyword case-insensitive String
+     * @param searchNum required number of post previews
+     * @return popular post preview list
+     * @throws Exception any exception
+     */
     public List<PostDTO> searchPost(Integer userId, String keyword, Integer searchNum) throws Exception {
         securityService.checkUserIdWithToken(userId);
         keyword = "%" + keyword + "%";
