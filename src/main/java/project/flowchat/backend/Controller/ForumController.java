@@ -93,8 +93,8 @@ public class ForumController {
     }
 
     @SuppressWarnings("unchecked")
-    @PostMapping(value = "createPost", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    private ResponseBodyDTO createPost(@RequestPart Map<String, Object> requestBody,
+    @PostMapping(value = "createPostOrComment", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    private ResponseBodyDTO createPostOrComment(@RequestPart Map<String, Object> requestBody,
                                     @RequestPart(required = false) MultipartFile file) {
         try {
             Map<String, Object> data = new HashMap<>();
@@ -122,8 +122,8 @@ public class ForumController {
     }
 
     @SuppressWarnings("unchecked")
-    @PutMapping(value = "updatePost", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    private ResponseBodyDTO updatePost(@RequestPart Map<String, Object> requestBody,
+    @PutMapping(value = "updatePostOrComment", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    private ResponseBodyDTO updatePostOrComment(@RequestPart Map<String, Object> requestBody,
                                     @RequestPart(required = false) MultipartFile file) {
         try {
             Map<String, Object> data = new HashMap<>();
@@ -150,8 +150,8 @@ public class ForumController {
         return responseBodyDTO;
     }
 
-    @PutMapping("deletePost")
-    private ResponseBodyDTO deletePost(@RequestBody Map<String, Object> requestBody) {
+    @PutMapping("deletePostOrComment")
+    private ResponseBodyDTO deletePostOrComment(@RequestBody Map<String, Object> requestBody) {
         try {
             Map<String, Object> data = new HashMap<>();
             forumService.deletePostOrComment((int) requestBody.get("postId"), (int) requestBody.get("userId"));
@@ -215,8 +215,8 @@ public class ForumController {
         return responseBodyDTO;
     }
 
-    @PostMapping("likePost")
-    private ResponseBodyDTO likePost(@RequestBody Map<String, Object> requestBody) {
+    @PostMapping("likeOrDislike")
+    private ResponseBodyDTO likeOrDislike(@RequestBody Map<String, Object> requestBody) {
         try {
             Map<String, Object> data = new HashMap<>();
             forumService.likeOrDislike((int) requestBody.get("postId"),
@@ -237,8 +237,8 @@ public class ForumController {
         return responseBodyDTO;
     }
 
-    @DeleteMapping("unlikePost")
-    private ResponseBodyDTO unlikePost(@RequestBody Map<String, Object> requestBody) {
+    @DeleteMapping("unlikeOrUndislike")
+    private ResponseBodyDTO unlikeOrUndislike(@RequestBody Map<String, Object> requestBody) {
         try {
             Map<String, Object> data = new HashMap<>();
             forumService.unlikeOrUndislike((int) requestBody.get("postId"),
@@ -250,6 +250,30 @@ public class ForumController {
         } catch (ExceptionService e) {
             Map<String, Object> data = new HashMap<>();
             data.put("isSuccess", false);
+            responseBodyDTO.setMessage(e.getMessage());
+            responseBodyDTO.setData(data);
+        } catch (Exception e) {
+            responseBodyDTO.setMessage("Fail: " + e);
+            responseBodyDTO.setData(null);
+        }
+        return responseBodyDTO;
+    }
+
+    @GetMapping("search")
+    private ResponseBodyDTO search(@RequestParam Integer userId, String keyword, Integer searchNum) {
+        try {
+            Map<String, Object> data = new HashMap<>();
+            List<PostDTO> postPreviewList = forumService.searchPost(userId, keyword, searchNum);
+            List<PostDTO> userList = null;
+            data.put("isSuccess", true);
+            data.put("postPreviewList", postPreviewList);
+            data.put("userList", userList);
+            responseBodyDTO.setMessage("The search result is returned");
+            responseBodyDTO.setData(data);
+        } catch (ExceptionService e) {
+            Map<String, Object> data = new HashMap<>();
+            data.put("isSuccess", false);
+            data.put("post", null);
             responseBodyDTO.setMessage(e.getMessage());
             responseBodyDTO.setData(data);
         } catch (Exception e) {

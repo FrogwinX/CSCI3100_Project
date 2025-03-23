@@ -518,4 +518,16 @@ public class ForumService {
             throw new ExceptionService("Action not available: " + action);
         }
     }
+
+    public List<PostDTO> searchPost(Integer userId, String keyword, Integer searchNum) throws Exception {
+        securityService.checkUserIdWithToken(userId);
+        keyword = "%" + keyword + "%";
+        List<PostModel> postModelList = forumRepository.findActivePostByRangeAndKeyword(userId, keyword, searchNum);
+        List<PostDTO> postPreviewModelList = new ArrayList<>();
+        for (PostModel post : postModelList) {
+            PostDTO postPreview = createPostDTO(post, userId);
+            postPreviewModelList.add(postPreview);
+        }
+        return postPreviewModelList;
+    }
 }

@@ -191,6 +191,28 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
     List<Integer> findRecommendedTagByHighestScore(Integer userId);
 
     /**
+     * Find some active posts by keywords, filtered out the blocked users, ordered by the descending order of likes num
+     * @param userId userId Integer
+     * @param keyword keyword case-insensitive String
+     * @param searchNum required number of queries
+     * @return a lists of posts
+     */
+    @NativeQuery(value =    "SELECT *\n" +
+                            "FROM FORUM.Post\n" +
+                            "WHERE is_active = 1\n" +
+                            "AND attach_to = 0\n" +
+                            "AND (title LIKE ?2\n" +
+                            "OR content LIKE ?2)\n" +
+                            "AND user_id NOT IN (\n" +
+                            "SELECT user_id_to\n" +
+                            "FROM PROFILE.Block\n" +
+                            "WHERE user_id_from = ?1)\n" +
+                            "ORDER BY like_count DESC\n" +
+                            "OFFSET 0 ROWS\n" +
+                            "FETCH NEXT ?3 ROWS ONLY\n")
+    List<PostModel> findActivePostByRangeAndKeyword(Integer userId, String keyword, Integer searchNum);
+
+    /**
      * Add the comment count by 1 of the given post id
      * @param postId postId int
      */
