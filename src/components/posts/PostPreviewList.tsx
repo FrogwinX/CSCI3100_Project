@@ -15,7 +15,7 @@ export default function PostList({ posts }: { posts: Post[] }) {
           ))}
 
           {/* Message at the end of the list */}
-          <div className="text-center text-base-content/50">
+          <div className="text-center text-base-content/50 my-4">
             <p className="text-sm">No more posts</p>
           </div>
         </>

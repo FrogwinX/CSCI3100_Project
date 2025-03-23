@@ -13,12 +13,12 @@ export async function generateMetadata({ params }: { params: { postId: string } 
 
   return {
     title: `${post.title} | FlowChat`,
-    description: post.description.substring(0, 160),
+    description: post.content.substring(0, 160),
   };
 }
 
 export default async function PostDetailPage({ params }: { params: { postId: string } }) {
-  const { postId } = params;
+  const { postId } = await params;
   const post = await getPostById(postId);
 
   if (!post) {

@@ -7,14 +7,16 @@ export interface Post {
   postId: string;
   username: string;
   title: string;
-  description: string;
-  image: string | null;
-  tag: string;
+  content: string;
+  imageAPIList: string[] | null;
+  tagNameList: string[] | null;
   likeCount: number;
+  isLiked: boolean;
   dislikeCount: number;
+  isDisliked: boolean;
   commentCount: number;
   updatedAt: string;
-  comments: Post[] | null;
+  commentList: Post[] | null;
 }
 
 export default function PostPreview({ post }: { post: Post }) {
@@ -28,33 +30,36 @@ export default function PostPreview({ post }: { post: Post }) {
           <div className="flex gap-4">
             <div className="flex-1">
               <h3 className="card-title text-lg font-bold line-clamp-2">{post.title}</h3>
-              <p className="text-base-content text-md my-2 line-clamp-3 md:line-clamp-6">{post.description}</p>
+              <p className="text-base-content text-md my-2 line-clamp-3 md:line-clamp-6">{post.content}</p>
             </div>
             {/* Image on the right side, conditionally rendered */}
-            {post.image && post.description.trim().length >= 50 && (
+            {post.imageAPIList && post.content.trim().length >= 50 && (
               <div className="flex-none w-24 sm:w-32 md:w-40 lg:w-48 xl:w-56">
                 <LoadingImage
-                  src={post.image}
+                  src={post.imageAPIList[0]}
                   alt={post.title}
-                  className="object-cover max-h-32 md:max-h-36 lg:max-h-40"
+                  className="object-cover rounded-lg max-h-32 md:max-h-36 lg:max-h-40"
                 />
               </div>
             )}
           </div>
           {/* Show image below title if no description */}
-          {post.image && post.description.trim().length < 50 && (
-            <div className="w-full max-w-xl mx-auto overflow-hidden">
-              <LoadingImage
-                src={post.image}
-                alt={post.title}
-                className="object-contain max-h-60 sm:max-h-72 md:max-h-80 lg:max-h-96"
-              />
+          {post.imageAPIList && post.content.trim().length < 50 && (
+            <div className="relative w-full overflow-hidden rounded-xl bg-base-300 aspect-video">
+              {/* Blurred background image */}
+              <div className="absolute inset-0 w-full h-full opacity-60">
+                <img src={post.imageAPIList[0]} className="object-cover blur-xl w-full h-full" />
+              </div>
+              {/* Main image */}
+              <div className="relative w-full h-full items-center justify-center">
+                <LoadingImage src={post.imageAPIList[0]} alt={post.title} className=" object-contain rounded-md" />
+              </div>
             </div>
           )}
           {/** Tags */}
-          {post.tag && (
+          {post.tagNameList && (
             <div className="flex flex-wrap gap-1">
-              {post.tag.split(",").map((tag, index) => (
+              {post.tagNameList.map((tag, index) => (
                 <div key={index} className="badge badge-sm badge-accent">
                   {tag.trim()}
                 </div>
@@ -67,6 +72,8 @@ export default function PostPreview({ post }: { post: Post }) {
             postLikeCount={post.likeCount}
             postDislikeCount={post.dislikeCount}
             postCommentCount={post.commentCount}
+            postIsLiked={post.isLiked}
+            postIsDisliked={post.isDisliked}
           />
         </div>
       </div>

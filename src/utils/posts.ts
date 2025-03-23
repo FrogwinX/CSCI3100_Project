@@ -17,7 +17,7 @@ interface PostPreviewResponse {
   message: string;
   data: {
     isSuccess: boolean;
-    posts: Post[];
+    postPreviewList: Post[];
   };
 }
 
@@ -30,7 +30,7 @@ interface PostContentResponse {
 }
 
 // TO BE DELETED, FOR DEVELOPMENT PURPOSES ONLY
-const descriptionSamples = [
+const contentSamples = [
   // Very short
   "",
   "Quick question about homework assignment #3.",
@@ -116,14 +116,16 @@ function getMockPosts(options: PostsOptions = {}): Post[] {
     postId: `mock-post-${i + 1}`,
     username: `user${i + 1}`,
     title: `Mock Post #${i + 1}: This is a sample post title for development`,
-    description: descriptionSamples[Math.floor(Math.random() * descriptionSamples.length)],
-    image: i % 3 === 0 ? "https://picsum.photos/400/300?random=" + i : null,
-    tag: getRandomTags(),
+    content: contentSamples[Math.floor(Math.random() * contentSamples.length)],
+    imageAPIList: i % 3 === 0 ? [`https://picsum.photos/400/300?random=${i}`] : null,
+    tagNameList: getRandomTags().split(","),
     likeCount: Math.floor(Math.random() * 10000),
+    isLiked: false,
     dislikeCount: Math.floor(Math.random() * 20),
+    isDisliked: false,
     commentCount: Math.floor(Math.random() * 50),
     updatedAt: new Date(Date.now() - Math.floor(Math.random() * 12 * 60 * 60 * 1000)).toISOString(),
-    comments: [],
+    commentList: [],
   }));
 
   // Apply filtering based on options
@@ -146,18 +148,18 @@ export async function getPosts(options: PostsOptions = {}): Promise<Post[]> {
     let apiUrl = "https://flowchatbackend.azurewebsites.net/api/Forum/";
     switch (options.filter) {
       case "latest":
-        apiUrl += "getLatestList?";
+        apiUrl += "getLatestPostPreviewList?";
         break;
       case "recommended":
-        apiUrl += "getRecommendedList?";
+        apiUrl += "getRecommendedPostPreviewList?";
         break;
       case "following":
-        apiUrl += "getFollowingList?";
+        apiUrl += "getFollowingPostPreviewList?";
         break;
     }
 
     // Add query parameters
-    apiUrl += `userid=${userId}&postNumOffset=${options.offset || 0}&postNum=${options.count || 10}`;
+    apiUrl += `userId=${userId}&postNum=${options.count || 10}`;
 
     // Fetch data from the API
     const response = await fetch(apiUrl, {
@@ -166,31 +168,28 @@ export async function getPosts(options: PostsOptions = {}): Promise<Post[]> {
       },
     });
 
+    // If API call fails, use mock data
     if (!response.ok) {
       console.log(`Mock posts are returned due to API request failed with status ${response.status}`);
       return getMockPosts(options);
     }
 
     const data: PostPreviewResponse = await response.json();
-
-    if (!data.data.isSuccess || !data.data.posts) {
-      console.log(`API returned isSuccess: false or missing post data`);
-      return getMockPosts(options);
-    }
-
     // Map API response to frontend Post interface
-    const posts: Post[] = data.data.posts.map((post) => ({
+    const posts: Post[] = data.data.postPreviewList.map((post) => ({
       postId: post.postId,
       username: post.username,
       title: post.title,
-      description: post.description,
-      image: post.image,
-      tag: post.tag,
+      content: post.content,
+      imageAPIList: post.imageAPIList,
+      tagNameList: post.tagNameList,
       likeCount: post.likeCount,
+      isLiked: post.isLiked,
       dislikeCount: post.dislikeCount,
+      isDisliked: post.isDisliked,
       commentCount: post.commentCount,
       updatedAt: post.updatedAt,
-      comments: [],
+      commentList: post.commentList,
     }));
 
     return posts;
@@ -206,14 +205,16 @@ function getMockPostById(postId: string): Post | null {
     postId: postId,
     username: "John Doe",
     title: `Mock Post #${postId}: Detailed View`,
-    description: descriptionSamples[Math.floor(Math.random() * descriptionSamples.length)],
-    image: "https://picsum.photos/800/600?random=" + postId,
-    tag: getRandomTags(),
+    content: contentSamples[Math.floor(Math.random() * contentSamples.length)],
+    imageAPIList: [`https://picsum.photos/800/600?random=${postId}`],
+    tagNameList: getRandomTags().split(","),
     likeCount: Math.floor(Math.random() * 100),
+    isLiked: false,
     dislikeCount: Math.floor(Math.random() * 20),
+    isDisliked: false,
     commentCount: Math.floor(Math.random() * 50),
     updatedAt: new Date(Date.now() - Math.floor(Math.random() * 10 * 24 * 60 * 60 * 1000)).toISOString(),
-    comments: [],
+    commentList: [],
   };
 
   return mockPost;
@@ -221,21 +222,15 @@ function getMockPostById(postId: string): Post | null {
 
 export async function getPostById(postId: string): Promise<Post | null> {
   try {
-    const { token } = await getUserAuthFromCookies();
+    const { userId, token } = await getUserAuthFromCookies();
 
-    // Build the API URL for a single post with comments
-    const apiUrl = `https://flowchatbackend.azurewebsites.net/api/Forum/getPostContent?postId=${postId}`;
-
-    // Prepare headers
-    const headers: HeadersInit = {};
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
+    const apiUrl = `https://flowchatbackend.azurewebsites.net/api/Forum/getPostContent?userId=${userId}&postId=${postId}`;
 
     // Fetch data from the API
     const response = await fetch(apiUrl, {
-      headers,
-      cache: "no-store",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     });
 
     // If API call fails, use mock data
@@ -245,47 +240,25 @@ export async function getPostById(postId: string): Promise<Post | null> {
     }
 
     const data: PostContentResponse = await response.json();
-
-    if (!data.data.isSuccess || !data.data.post) {
-      console.log(`API returned isSuccess: false or missing post data`);
-      return getMockPostById(postId);
-    }
-
     // Map API response to Post object
     const post = data.data.post;
     return {
       postId: post.postId,
       username: post.username,
       title: post.title,
-      description: post.description,
-      image: post.image,
-      tag: post.tag,
+      content: post.content,
+      imageAPIList: post.imageAPIList,
+      tagNameList: post.tagNameList,
       likeCount: post.likeCount,
+      isLiked: post.isLiked,
       dislikeCount: post.dislikeCount,
+      isDisliked: post.isDisliked,
       commentCount: post.commentCount,
       updatedAt: post.updatedAt,
-      comments: mapComments(post.comments as any),
+      commentList: post.commentList,
     };
   } catch (error) {
     console.error("Error fetching post:", error);
     return getMockPostById(postId);
   }
-}
-
-function mapComments(apiComments: Post[] | null): any[] {
-  if (!apiComments) return [];
-
-  return apiComments.map((post) => ({
-    postId: post.postId,
-    username: post.username,
-    title: post.title,
-    description: post.description,
-    image: post.image,
-    tag: post.tag,
-    likeCount: post.likeCount,
-    dislikeCount: post.dislikeCount,
-    commentCount: post.commentCount,
-    updatedAt: post.updatedAt,
-    comments: mapComments(post.comments as any),
-  }));
 }

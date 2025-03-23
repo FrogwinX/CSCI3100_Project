@@ -14,21 +14,28 @@ export default function PostDetail({ post }: { post: Post }) {
         <div className="flex gap-4">
           <div className="flex-1">
             <h3 className="card-title text-2xl font-bold">{post.title}</h3>
-            <p className="text-base-content text-md my-2 whitespace-pre-wrap">{post.description}</p>
+            <p className="text-base-content text-md my-2 whitespace-pre-wrap">{post.content}</p>
           </div>
         </div>
 
         {/** Image */}
-        {post.image && (
-          <div className="w-full max-w-4xl mx-auto">
-            <LoadingImage src={post.image} alt={post.title} className="object-contain" />
+        {post.imageAPIList && (
+          <div className="relative w-full overflow-hidden rounded-xl bg-base-300 aspect-video">
+            {/* Blurred background image */}
+            <div className="absolute inset-0 w-full h-full opacity-60">
+              <img src={post.imageAPIList[0]} className="object-cover blur-xl w-full h-full" />
+            </div>
+            {/* Main image */}
+            <div className="relative w-full h-full items-center justify-center">
+              <LoadingImage src={post.imageAPIList[0]} alt={post.title} className=" object-contain rounded-md" />
+            </div>
           </div>
         )}
 
         {/** Tags */}
-        {post.tag && (
+        {post.tagNameList && (
           <div className="flex flex-wrap gap-1">
-            {post.tag.split(",").map((tag, index) => (
+            {post.tagNameList.map((tag, index) => (
               <div key={index} className="badge badge-md badge-accent">
                 {tag.trim()}
               </div>
