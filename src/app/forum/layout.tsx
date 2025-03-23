@@ -1,6 +1,10 @@
 import BackButton from "@/components/navigation/BackButton";
+import SideMenu from "@/app/forum/SideMenu";
 
 export default function ForumLayout({ children }: { children: React.ReactNode }) {
+  const allTags = {
+    tech: ["programming", "ai", "web", "mobile", "cloud", "database", "security", "coding"],
+  };
   return (
     <div className="flex flex-grow w-full gap-x-2 md:px-32">
       {/* Left column - conditionally rendered back button */}
@@ -14,18 +18,12 @@ export default function ForumLayout({ children }: { children: React.ReactNode })
       </div>
 
       {/* Right column - conditionally rendered action menu */}
-      <div className="hidden md:block w-1/6">
+      <div className="hidden md:block w-1/3 min-w-[300px]">
         <div className="card bg-base-100 sticky top-20">
-          <div className="card-body">
-            <h2 className="card-title">Action menu</h2>
-            <p>
-              @CH0ISUM Please make this conditionally rendered component like the back button on the left and a mobile
-              version of this like navbar.
-            </p>
-            <div className="card-actions justify-end">
-              <button className="btn btn-primary">Filter</button>
-            </div>
-          </div>
+          <SideMenu>
+            {/* Add appropriate children content here */}
+            <div>Menu Content</div>
+          </SideMenu>
         </div>
       </div>
     </div>
