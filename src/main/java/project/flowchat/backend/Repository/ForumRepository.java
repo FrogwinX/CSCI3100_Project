@@ -411,4 +411,12 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
 
     @NativeQuery("SELECT tag_id, tag_name FROM FORUM.Tag_Data")
     List<List<String>> findAllTagName();
+
+    /**
+     * Check if post or comment is active
+     * @param postId postId Integer
+     * @return true if post or comment is active, false if post or comment is not active
+     */
+    @NativeQuery("SELECT is_active FROM FORUM.Post WHERE post_id = ?1")
+    boolean postOrCommentIsActive(Integer postId);
 }
