@@ -408,4 +408,7 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
     @Transactional
     @NativeQuery("UPDATE FORUM.Post SET dislike_count = dislike_count - 1 WHERE post_id = ?1")
     void minusDislikeCount(int postId);
+
+    @NativeQuery("SELECT tag_id, tag_name FROM FORUM.Tag_Data")
+    List<List<String>> findAllTagName();
 }
