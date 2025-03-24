@@ -3,8 +3,15 @@
 import { useEffect, useRef, useState } from "react";
 import PostPreview, { Post } from "./PostPreview";
 import { getPosts } from "@/utils/posts";
+import { Tag } from "@/utils/posts";
 
-export default function PostList({ filter = "latest" }: { filter?: "latest" | "recommended" | "following" }) {
+export default function PostList({
+  tags = [],
+  filter = "latest",
+}: {
+  tags: Tag[];
+  filter?: "latest" | "recommended" | "following";
+}) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hasMore, setHasMore] = useState(true);

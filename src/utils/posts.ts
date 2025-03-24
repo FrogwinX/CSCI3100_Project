@@ -20,6 +20,19 @@ interface PostContentResponse {
   };
 }
 
+export interface Tag {
+  tagId: string;
+  tagName: string;
+}
+
+interface TagResponse {
+  message: string;
+  data: {
+    isSuccess: boolean;
+    tagList: Tag[];
+  };
+}
+
 // TO BE DELETED, FOR DEVELOPMENT PURPOSES ONLY
 const contentSamples = [
   // Very short
@@ -129,6 +142,33 @@ function getMockPosts(
   return mockPosts.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
 }
 
+export async function getAllTags(): Promise<Tag[]> {
+  try {
+    const session = await getSession();
+    const apiUrl = `https://flowchatbackend.azurewebsites.net/api/Forum/getAllTag`;
+
+    // Fetch data from the API
+    const response = await fetch(apiUrl, {
+      headers: {
+        Authorization: `Bearer ${session.token}`,
+      },
+    });
+
+    // If API call fails, use mock data
+    if (!response.ok) {
+      console.log(`Mock tags are returned due to API request failed with status ${response.status}`);
+      return [];
+    }
+
+    const data: TagResponse = await response.json();
+
+    return data.data.tagList;
+  } catch (error) {
+    console.error("Error fetching tags:", error);
+    return [];
+  }
+}
+
 export async function getPosts(
   options: { filter?: "latest" | "recommended" | "following"; lastPostId?: string; count?: number } = {}
 ): Promise<Post[]> {
@@ -138,7 +178,7 @@ export async function getPosts(
     let apiUrl = "https://flowchatbackend.azurewebsites.net/api/Forum/";
     switch (options.filter) {
       case "latest":
-        apiUrl += "getLatestPostPreviewList?";
+        apiUrl += `getLatestPostPreviewList?lastPostId=${options.lastPostId}&`;
         break;
       case "recommended":
         apiUrl += "getRecommendedPostPreviewList?";
@@ -149,7 +189,7 @@ export async function getPosts(
     }
 
     // Add query parameters
-    apiUrl += `userId=${session.userId}&lastPostId=${options.lastPostId}&postNum=${options.count || 10}`;
+    apiUrl += `userId=${session.userId}&postNum=${options.count || 10}`;
 
     // Fetch data from the API
     const response = await fetch(apiUrl, {
