@@ -3,9 +3,15 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faShare } from "@fortawesome/free-solid-svg-icons";
 import { faThumbsDown, faThumbsUp, faComment } from "@fortawesome/free-regular-svg-icons";
-import { faThumbsDown as faThumbsDownSolid, faThumbsUp as faThumbsUpSolid } from "@fortawesome/free-solid-svg-icons";
+import {
+  faThumbsDown as faThumbsDownSolid,
+  faThumbsUp as faThumbsUpSolid,
+  faLink,
+  faShareNodes,
+} from "@fortawesome/free-solid-svg-icons";
 import { MouseEvent, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { useSession } from "@/hooks/useSession";
 
 export default function PostFooter({
   postId,
@@ -24,12 +30,14 @@ export default function PostFooter({
 }) {
   const router = useRouter();
   const pathname = usePathname();
+  const { session } = useSession();
 
   const [userLiked, setUserLiked] = useState(postIsLiked);
   const [userDisliked, setUserDisliked] = useState(postIsDisliked);
   const [likeCount, setLikeCount] = useState(postLikeCount);
   const [dislikeCount, setDislikeCount] = useState(postDislikeCount);
   const [isLoading, setIsLoading] = useState(false);
+  const [showToast, setShowToast] = useState(false);
 
   // Function to make API call for like/dislike
   const updateLikeStatus = async (action: "like" | "dislike" | "unlike" | "undislike") => {
@@ -41,44 +49,44 @@ export default function PostFooter({
         ? "https://flowchatbackend.azurewebsites.net/api/Forum/unlikeOrUndislike"
         : "https://flowchatbackend.azurewebsites.net/api/Forum/likeOrDislike";
 
-      // const response = await fetch(url, {
-      //   method: isRemoveAction ? "DELETE" : "POST",
-      //   headers: {
-      //     Authorization: `Bearer ${token}`,
-      //   },
-      //   body: JSON.stringify({
-      //     postId: parseInt(postId),
-      //     userId: userId,
-      //     action: action,
-      //   }),
-      // });
+      const response = await fetch(url, {
+        method: isRemoveAction ? "DELETE" : "POST",
+        headers: {
+          Authorization: `Bearer ${session.token}`,
+        },
+        body: JSON.stringify({
+          postId: parseInt(postId),
+          userId: session.userId,
+          action: action,
+        }),
+      });
 
-      // if (!response.ok) {
-      //   console.error("Failed to update like status:", await response.text());
-      //   setIsLoading(false);
-      //   return;
-      // }
-
-      // const data = await response.json();
-      // if (data.data.isSuccess) {
-      if (action === "like") {
-        setUserLiked(true);
-        setUserDisliked(false);
-        setLikeCount((prev) => prev + 1);
-        if (userDisliked) setDislikeCount((prev) => prev - 1);
-      } else if (action === "dislike") {
-        setUserDisliked(true);
-        setUserLiked(false);
-        setDislikeCount((prev) => prev + 1);
-        if (userLiked) setLikeCount((prev) => prev - 1);
-      } else if (action === "unlike") {
-        setUserLiked(false);
-        setLikeCount((prev) => prev - 1);
-      } else if (action === "undislike") {
-        setUserDisliked(false);
-        setDislikeCount((prev) => prev - 1);
+      if (!response.ok) {
+        console.error("Failed to update like status:", await response.text());
+        setIsLoading(false);
+        return;
       }
-      // }
+
+      const data = await response.json();
+      if (data.data.isSuccess) {
+        if (action === "like") {
+          setUserLiked(true);
+          setUserDisliked(false);
+          setLikeCount((prev) => prev + 1);
+          if (userDisliked) setDislikeCount((prev) => prev - 1);
+        } else if (action === "dislike") {
+          setUserDisliked(true);
+          setUserLiked(false);
+          setDislikeCount((prev) => prev + 1);
+          if (userLiked) setLikeCount((prev) => prev - 1);
+        } else if (action === "unlike") {
+          setUserLiked(false);
+          setLikeCount((prev) => prev - 1);
+        } else if (action === "undislike") {
+          setUserDisliked(false);
+          setDislikeCount((prev) => prev - 1);
+        }
+      }
     } catch (error) {
       console.error("Error updating like status:", error);
     } finally {
@@ -119,31 +127,51 @@ export default function PostFooter({
     }
   };
 
-  const handleShare = (e: MouseEvent) => {
+  const handleLinkCopy = async (e: MouseEvent) => {
     e.stopPropagation();
 
-    // Simple share implementation
+    try {
+      await navigator.clipboard.writeText(`${window.location.origin}/forum/post/${postId}`);
+      setShowToast(true);
+
+      // Hide toast after 3 seconds
+      setTimeout(() => {
+        setShowToast(false);
+      }, 3000);
+    } catch (err) {
+      console.error("Failed to copy text: ", err);
+    }
+  };
+
+  const handleShare = async (e: MouseEvent) => {
+    e.stopPropagation();
+
+    // Check if Web Share API is available
     if (navigator.share) {
-      navigator
-        .share({
-          title: "Check out this post on FlowChat",
+      try {
+        await navigator.share({
           url: `${window.location.origin}/forum/post/${postId}`,
-        })
-        .catch((err) => {
-          console.error("Could not share:", err);
         });
+      } catch (err) {
+        console.error("Error sharing: ", err);
+      }
     } else {
-      // Fallback for browsers that don't support navigator.share
-      const url = `${window.location.origin}/forum/post/${postId}`;
-      navigator.clipboard
-        .writeText(url)
-        .then(() => alert("Link copied to clipboard!"))
-        .catch((err) => console.error("Could not copy text:", err));
+      // Fallback to copy if share API is not available
+      handleLinkCopy(e);
     }
   };
 
   return (
     <div className="flex items-center gap-2">
+      {/* Toast notification */}
+      {showToast && (
+        <div className="toast toast-center">
+          <div className="alert alert-success">
+            <span>Link copied to clipboard!</span>
+          </div>
+        </div>
+      )}
+
       {/* Like, dislike */}
       <div className="bg-base-200 rounded-xl">
         <button className="btn btn-sm" onClick={handleLike} disabled={isLoading}>
@@ -168,10 +196,26 @@ export default function PostFooter({
       </button>
 
       {/* Share */}
-      <button className="btn btn-sm" onClick={handleShare}>
-        <FontAwesomeIcon icon={faShare} size="lg" />
-        Share
-      </button>
+      <div className="dropdown dropdown-start">
+        <div tabIndex={0} role="button" className="btn btn-sm">
+          <FontAwesomeIcon icon={faShare} size="lg" />
+          Share
+        </div>
+        <ul tabIndex={0} className="dropdown-content menu bg-base-100 rounded-box shadow w-35">
+          <li>
+            <button onClick={handleLinkCopy}>
+              <FontAwesomeIcon icon={faLink} />
+              Copy link
+            </button>
+          </li>
+          <li>
+            <button onClick={handleShare}>
+              <FontAwesomeIcon icon={faShareNodes} />
+              Share via...
+            </button>
+          </li>
+        </ul>
+      </div>
     </div>
   );
 }

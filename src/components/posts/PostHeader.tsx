@@ -26,11 +26,6 @@ export default function PostHeader({
   // Check if the current user is the author of the post
   const isAuthor = session.username === postUsername;
 
-  const handleFollow = (e: MouseEvent) => {
-    e.stopPropagation();
-    alert("Follow to be implemented");
-  };
-
   const handleEdit = (e: MouseEvent) => {
     e.stopPropagation();
     router.push(`/post/edit/${postId}`);
@@ -71,10 +66,6 @@ export default function PostHeader({
         </div>
       </div>
       <div className="flex gap-1">
-        <button className={`btn btn-primary btn-${size}`} onClick={handleFollow}>
-          <span className="font-bold">Follow</span>
-        </button>
-
         {/* Options menu */}
         <div className="dropdown dropdown-end">
           <div tabIndex={0} role="button" className={`btn btn-ghost btn-circle btn-${size}`}>
@@ -86,13 +77,13 @@ export default function PostHeader({
               <>
                 <li className="w-full">
                   <a onClick={handleEdit}>
-                    <FontAwesomeIcon icon={faPenToSquare} size="lg" />
+                    <FontAwesomeIcon icon={faPenToSquare} />
                     <span>Edit</span>
                   </a>
                 </li>
                 <li className="w-full">
                   <a onClick={handleDelete}>
-                    <FontAwesomeIcon icon={faTrashAlt} size="lg" />
+                    <FontAwesomeIcon icon={faTrashAlt} />
                     <span>Delete</span>
                   </a>
                 </li>
@@ -103,7 +94,7 @@ export default function PostHeader({
             {!isAuthor && (
               <li>
                 <a onClick={handleReport}>
-                  <FontAwesomeIcon icon={faFlag} size="lg" />
+                  <FontAwesomeIcon icon={faFlag} />
                   <span>Report</span>
                 </a>
               </li>

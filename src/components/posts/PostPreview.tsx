@@ -47,7 +47,7 @@ export default function PostPreview({ post }: { post: Post }) {
           {post.imageAPIList && post.content.trim().length < 50 && (
             <div className="relative w-full overflow-hidden rounded-xl bg-base-300 ">
               {/* Blurred background image */}
-              <div className="absolute inset-0 w-full h-full opacity-60">
+              <div className="absolute inset-0 w-full h-full opacity-60 scale-200">
                 <img src={post.imageAPIList[0]} className="object-cover blur-xl w-full h-full aspect-video" />
               </div>
               {/* Main image */}
