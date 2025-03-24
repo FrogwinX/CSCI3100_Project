@@ -207,7 +207,7 @@ public class ForumController {
         } catch (ExceptionService e) {
             Map<String, Object> data = new HashMap<>();
             data.put("isSuccess", false);
-            data.put("post", null);
+            data.put("commentList", null);
             responseBodyDTO.setMessage(e.getMessage());
             responseBodyDTO.setData(data);
         } catch (Exception e) {
@@ -275,7 +275,30 @@ public class ForumController {
         } catch (ExceptionService e) {
             Map<String, Object> data = new HashMap<>();
             data.put("isSuccess", false);
-            data.put("post", null);
+            data.put("postPreviewList", null);
+            data.put("userList", null);
+            responseBodyDTO.setMessage(e.getMessage());
+            responseBodyDTO.setData(data);
+        } catch (Exception e) {
+            responseBodyDTO.setMessage("Fail: " + e);
+            responseBodyDTO.setData(null);
+        }
+        return responseBodyDTO;
+    }
+
+    @GetMapping("getAllTag")
+    private ResponseBodyDTO getAllTag() {
+        try {
+            Map<String, Object> data = new HashMap<>();
+            List<Map<String, Object>> tagList = forumService.getAllTag();
+            data.put("isSuccess", true);
+            data.put("tagList", tagList);
+            responseBodyDTO.setMessage("The tag list is returned");
+            responseBodyDTO.setData(data);
+        } catch (ExceptionService e) {
+            Map<String, Object> data = new HashMap<>();
+            data.put("isSuccess", false);
+            data.put("tagList", null);
             responseBodyDTO.setMessage(e.getMessage());
             responseBodyDTO.setData(data);
         } catch (Exception e) {

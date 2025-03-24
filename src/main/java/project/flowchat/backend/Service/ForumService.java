@@ -549,4 +549,16 @@ public class ForumService {
         }
         return postPreviewModelList;
     }
+
+    public List<Map<String, Object>> getAllTag() throws Exception {
+        List<Map<String, Object>> tagList = new ArrayList<>();
+        List<List<String>> tagIdAndNameList = forumRepository.findAllTagName();
+        for (List<String> list : tagIdAndNameList) {
+            Map<String, Object> tag = new HashMap<>();
+            tag.put("tagId", list.get(0));
+            tag.put("tagName", list.get(1));
+            tagList.add(tag);
+        }
+        return tagList;
+    }
 }
