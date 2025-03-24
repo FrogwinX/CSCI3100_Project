@@ -100,12 +100,12 @@ public class ForumController {
                                     @RequestPart(required = false) MultipartFile file) {
         try {
             Map<String, Object> data = new HashMap<>();
-            forumService.createPostOrComment(   (int) requestBody.get("userId"),
+            forumService.createPostOrComment(   (Integer) requestBody.get("userId"),
                                                 (String) requestBody.get("title"),
                                                 (String) requestBody.get("content"),
                                                 (List<String>) requestBody.get("tag"),
                                                 (MultipartFile) file,
-                                                (int) requestBody.get("attachTo"));
+                                                (Integer) requestBody.get("attachTo"));
 
             responseBodyDTO.setMessage("A new post/comment is created");
             data.put("isSuccess", true);
@@ -129,8 +129,8 @@ public class ForumController {
                                     @RequestPart(required = false) MultipartFile file) {
         try {
             Map<String, Object> data = new HashMap<>();
-            forumService.updatePostOrComment(   (int) requestBody.get("postId"),
-                                                (int) requestBody.get("userId"),
+            forumService.updatePostOrComment(   (Integer) requestBody.get("postId"),
+                                                (Integer) requestBody.get("userId"),
                                                 (String) requestBody.get("title"),
                                                 (String) requestBody.get("content"),
                                                 (List<String>) requestBody.get("tag"),
@@ -156,7 +156,7 @@ public class ForumController {
     private ResponseBodyDTO deletePostOrComment(@RequestBody Map<String, Object> requestBody) {
         try {
             Map<String, Object> data = new HashMap<>();
-            forumService.deletePostOrComment((int) requestBody.get("postId"), (int) requestBody.get("userId"));
+            forumService.deletePostOrComment((Integer) requestBody.get("postId"), (Integer) requestBody.get("userId"));
             responseBodyDTO.setMessage("The post/comment is deleted");
             data.put("isSuccess", true);
             responseBodyDTO.setData(data);
@@ -221,8 +221,8 @@ public class ForumController {
     private ResponseBodyDTO likeOrDislike(@RequestBody Map<String, Object> requestBody) {
         try {
             Map<String, Object> data = new HashMap<>();
-            forumService.likeOrDislike((int) requestBody.get("postId"),
-                                        (int) requestBody.get("userId"), 
+            forumService.likeOrDislike((Integer) requestBody.get("postId"),
+                                        (Integer) requestBody.get("userId"), 
                                         (String) requestBody.get("action"));
             data.put("isSuccess", true);
             responseBodyDTO.setMessage("The post/comment is liked/disliked");
@@ -243,8 +243,8 @@ public class ForumController {
     private ResponseBodyDTO unlikeOrUndislike(@RequestBody Map<String, Object> requestBody) {
         try {
             Map<String, Object> data = new HashMap<>();
-            forumService.unlikeOrUndislike((int) requestBody.get("postId"),
-                                        (int) requestBody.get("userId"), 
+            forumService.unlikeOrUndislike((Integer) requestBody.get("postId"),
+                                        (Integer) requestBody.get("userId"), 
                                         (String) requestBody.get("action"));
             data.put("isSuccess", true);
             responseBodyDTO.setMessage("The post/comment is un-liked/un-disliked");
