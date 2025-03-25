@@ -27,7 +27,7 @@ public class ForumController {
     private final AccountService accountService;
     private ResponseBodyDTO responseBodyDTO;
 
-    @GetMapping("getLatestPostPreviewList")
+    @PostMapping("getLatestPostPreviewList")
     private ResponseBodyDTO getLatestPostPreviewList(@RequestParam Integer userId, Integer lastPostId, Integer postNum) {
         try {
             Map<String, Object> data = new HashMap<>();
