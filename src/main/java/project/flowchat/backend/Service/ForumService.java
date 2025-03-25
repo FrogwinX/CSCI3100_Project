@@ -90,7 +90,7 @@ public class ForumService {
      * @param attachTo 0 if it is a post, post id if it is a comment
      * @throws Exception
      */
-    public void createPostOrComment(int userId, String title, String content, List<String> tag, MultipartFile image, int attachTo) throws Exception {
+    public void createPostOrComment(Integer userId, String title, String content, List<String> tag, MultipartFile image, Integer attachTo) throws Exception {
         securityService.checkUserIdWithToken(userId);
         Integer imageId = null;
         if (image != null) {
@@ -121,13 +121,13 @@ public class ForumService {
 
     /**
      * add a new record to FORUM.Post
-     * @param userId userId int
+     * @param userId userId Integer
      * @param title title string
      * @param content content string
-     * @param attachTo attachTo int
+     * @param attachTo attachTo Integer
      * @return the corresponding record in the database
      */
-    private PostModel addPostOrCommentToDatabase(int userId, String title, String content, int attachTo) {
+    private PostModel addPostOrCommentToDatabase(Integer userId, String title, String content, Integer attachTo) {
         PostModel postModel = new PostModel();
         postModel.setUserId(userId);
         postModel.setTitle(title);
@@ -154,7 +154,7 @@ public class ForumService {
      * @throws Exception
      */
     @Transactional
-    public void updatePostOrComment(int postId, int userId, String title, String content, List<String> tag, MultipartFile image, Integer attachTo) throws Exception {
+    public void updatePostOrComment(Integer postId, Integer userId, String title, String content, List<String> tag, MultipartFile image, Integer attachTo) throws Exception {
         securityService.checkUserIdWithToken(userId);
 
         Optional<PostModel> postModelOptional = forumRepository.findById(postId);
@@ -226,10 +226,10 @@ public class ForumService {
 
     /**
      * Add tag for post with given post id
-     * @param postId postId int
+     * @param postId postId Integer
      * @param tag tag list of string
      */
-    private void addTag(int postId, List<String> tag) {
+    private void addTag(Integer postId, List<String> tag) {
         Integer tagId;
         for (String oneTag: tag) {
             tagId = forumRepository.getTagIdFromTagName(oneTag);
@@ -246,7 +246,7 @@ public class ForumService {
      * @throws Exception
      */
     @Transactional
-    public void deletePostOrComment(int postId, int userId) throws Exception {
+    public void deletePostOrComment(Integer postId, Integer userId) throws Exception {
         securityService.checkUserIdWithToken(userId);
         Optional<PostModel> postModelOptional = forumRepository.findById(postId);
         PostModel postModel = postModelOptional.get();
@@ -463,9 +463,9 @@ public class ForumService {
 
     /**
      * Delete data in Post_Image and Image_Data
-     * @param postId postId int
+     * @param postId postId Integer
      */
-    private void deleteImage(int postId) {
+    private void deleteImage(Integer postId) {
         // There may be multiple images in a post or comment, use forumRepository.findImageIdByPostId(postId);
         Integer imageId = forumRepository.findImageId(postId);
         if (imageId != null) {
@@ -481,13 +481,16 @@ public class ForumService {
      * @param action like or dislike
      * @throws Exception
      */
-    public void likeOrDislike(int postId, int userId, String action) throws Exception{
+    public void likeOrDislike(Integer postId, Integer userId, String action) throws Exception{
         securityService.checkUserIdWithToken(userId);
         if (forumRepository.isLikeClick(postId, userId) != null) {
             throw new ExceptionService("User has liked that post/comment before");
         }
         if (forumRepository.isDislikeClick(postId, userId) != null) {
             throw new ExceptionService("User has disliked that post/comment before");
+        }
+        if (forumRepository.postOrCommentIsActive(postId) == false) {
+            throw new ExceptionService("The post/comment is not active");
         }
         if (action.equals("like")) {
             forumRepository.addLikeRelationship(postId, userId);
@@ -509,8 +512,11 @@ public class ForumService {
      * @param action unlike or undislike
      * @throws Exception
      */
-    public void unlikeOrUndislike(int postId, int userId, String action) throws Exception{
+    public void unlikeOrUndislike(Integer postId, Integer userId, String action) throws Exception{
         securityService.checkUserIdWithToken(userId);
+        if (forumRepository.postOrCommentIsActive(postId) == false) {
+            throw new ExceptionService("The post/comment is not active");
+        }
         if (action.equals("unlike")) {
             if (forumRepository.isLikeClick(postId, userId) == null) {
                 throw new ExceptionService("User has not liked that post/comment before");

@@ -108,19 +108,19 @@ public class SecurityService {
 
     public void checkUserIdWithToken(int userId) throws Exception {
         if ((int) getClaims().get("id") != userId && getClaims().get("role").equals("user")) {
-            throw new ExceptionService("User id does not match in JWT");
+            ExceptionService.throwException(ExceptionService.USERID_JWT_NOT_MATCH);
         }
     }
 
     /**
      * Get JWT claims from the request attribute
      * @return JWT claims of that request
-     * @throws Exception
+     * @throws ExceptionService REQUEST_NOT_AVAILABLE
      */
     public Claims getClaims() throws Exception{
         ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         if (attributes == null) {
-            throw new ExceptionService("No request available");
+            ExceptionService.throwException(ExceptionService.REQUEST_NOT_AVAILABLE);
         }
         HttpServletRequest request = attributes.getRequest();
         return (Claims) request.getAttribute("claims");
@@ -163,20 +163,20 @@ public class SecurityService {
      */
     protected void setKeyUnavailable(String email, String key, KeyType keyType) throws Exception {
         if (key == null || (keyType == KeyType.LICENSE && key.length() != 16) || (keyType == KeyType.AUTHENTICATION && key.length() != 6)) {
-            throw new ExceptionService("Key Type not match");
+            ExceptionService.throwException(ExceptionService.INVALID_KEY_LENGTH);
         }
         LicenseModel licenseModel = licenseRepository.getKeyInfo(email, key);
         if (licenseModel == null) {
-            throw new ExceptionService("Key not match");
+            ExceptionService.throwException(ExceptionService.KEY_NOT_MATCH);
         }
         else if (!licenseModel.getIsAvailable()) {
-            throw new ExceptionService("Key is not available");
+            ExceptionService.throwException(ExceptionService.KEY_NOT_AVAILABLE);
         }
         licenseRepository.setKeyUnavailable(email, key);
         ZonedDateTime keyExpiredTime = licenseModel.getExpiresAt();
         Comparator<ZonedDateTime> timeComparator = Comparator.naturalOrder();
         if (timeComparator.compare(ZonedDateTime.now(ZoneId.of("Asia/Hong_Kong")), keyExpiredTime) > 0) {
-            throw new ExceptionService("Key is expired");
+            ExceptionService.throwException(ExceptionService.EXPIRED_KEY);
         }
     }
 

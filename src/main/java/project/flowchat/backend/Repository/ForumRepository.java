@@ -22,13 +22,13 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
 
     /**
      * Insert record into Post_Tag
-     * @param postId postId int
-     * @param tagId tagId int
+     * @param postId postId Integer
+     * @param tagId tagId Integer
      */
     @Modifying
     @Transactional
     @NativeQuery("INSERT INTO FORUM.Post_Tag (post_id, tag_id) VALUES (?1, ?2)")
-    void connectPostWithTag(int postId, int tagId);
+    void connectPostWithTag(Integer postId, Integer tagId);
 
     /**
      * Find active comments from post id, filtered out the blocked users, ordered by the descending order of likes num
@@ -234,181 +234,189 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
 
     /**
      * Add the comment count by 1 of the given post id
-     * @param postId postId int
+     * @param postId postId Integer
      */
     @Modifying
     @Transactional
     @NativeQuery("UPDATE FORUM.Post SET comment_count = comment_count + 1 WHERE post_id = ?1")
-    void addCommentCountByOne(int postId);
+    void addCommentCountByOne(Integer postId);
 
     /**
      * Insert record into FORUM.Post_Image
-     * @param postId postId int
-     * @param imageId imageId int
+     * @param postId postId Integer
+     * @param imageId imageId Integer
      */
     @Modifying
     @Transactional
     @NativeQuery("INSERT INTO FORUM.Post_Image (post_id, image_id) VALUES (?1, ?2)")
-    void connectPostWithImage(int postId, int imageId);
+    void connectPostWithImage(Integer postId, Integer imageId);
 
     /**
      * Delete all tag from FORUM.Post_Tag with the given post id
-     * @param postId postId int
+     * @param postId postId Integer
      */
     @Modifying
     @Transactional
     @NativeQuery("DELETE FROM FORUM.Post_Tag WHERE post_id = ?1")
-    void deleteTagInPost(int postId);
+    void deleteTagInPost(Integer postId);
 
     /**
      * Reduce comment count of the post or comment by the given count
-     * @param postId postId int
+     * @param postId postId Integer
      * @param count count int
      */
     @Modifying
     @Transactional
     @NativeQuery("UPDATE FORUM.Post SET comment_count = comment_count - ?2 WHERE post_id = ?1")
-    void removeCommentCountByNum(int postId, int count);
+    void removeCommentCountByNum(Integer postId, int count);
 
     /**
      * Add comment count of the post or comment by the given count
-     * @param postId postId int
+     * @param postId postId Integer
      * @param count count int
      */
     @Modifying
     @Transactional
     @NativeQuery("UPDATE FORUM.Post SET comment_count = comment_count + ?2 WHERE post_id = ?1")
-    void addCommentCountByNum(int postId, int count);
+    void addCommentCountByNum(Integer postId, int count);
 
     /**
      * Find the image id with the given post id
-     * @param postId postId int
+     * @param postId postId Integer
      * @return corresponding image id
      */
     @NativeQuery("SELECT image_id FROM FORUM.Post_Image WHERE post_id = ?1")
-    Integer findImageId(int postId);
+    Integer findImageId(Integer postId);
 
     /**
      * Delete relevant record in Post_Image table
-     * @param imageId imageId int
+     * @param imageId imageId Integer
      */
     @Modifying
     @Transactional
     @NativeQuery("DELETE FROM FORUM.Post_Image WHERE image_id = ?1")
-    void deleteInPostImage(int imageId);
+    void deleteInPostImage(Integer imageId);
 
     /**
      * Delete relevant record in Image_Data table
-     * @param imageId imageId int
+     * @param imageId imageId Integer
      */
     @Modifying
     @Transactional
     @NativeQuery("DELETE FROM FORUM.Image_Data WHERE image_id = ?1")
-    void deleteInImageData(int imageId);
+    void deleteInImageData(Integer imageId);
 
     /**
      * Minus the comment count by 1 of the given post id
-     * @param postId postId int
+     * @param postId postId Integer
      */
     @Modifying
     @Transactional
     @NativeQuery("UPDATE FORUM.Post SET comment_count = comment_count - 1 WHERE post_id = ?1")
-    void minusCommentCountByOne(int postId);
+    void minusCommentCountByOne(Integer postId);
 
     /**
      * Find if user liked that post or comment before
-     * @param postId postId int
-     * @param userId userId int
+     * @param postId postId Integer
+     * @param userId userId Integer
      * @return post id if user liked that post or comment before, null if user did not like that post or comment
      */
     @NativeQuery("SELECT post_id FROM FORUM.[Like] WHERE post_id = ?1 AND user_id = ?2")
-    Integer isLikeClick(int postId, int userId);
+    Integer isLikeClick(Integer postId, Integer userId);
 
     /**
      * Add a record in Like table
-     * @param postId postId int
-     * @param userId userId int
+     * @param postId postId Integer
+     * @param userId userId Integer
      */
     @Modifying
     @Transactional
     @NativeQuery("INSERT INTO FORUM.[Like] VALUES (?1, ?2)")
-    void addLikeRelationship(int postId, int userId);
+    void addLikeRelationship(Integer postId, Integer userId);
 
     /**
      * Add 1 to like count in Post table
-     * @param postId postId int
+     * @param postId postId Integer
      */
     @Modifying
     @Transactional
     @NativeQuery("UPDATE FORUM.Post SET like_count = like_count + 1 WHERE post_id = ?1")
-    void addLikeCount(int postId);
+    void addLikeCount(Integer postId);
 
     /**
      * Find if user disliked that post or comment before
-     * @param postId postId int
-     * @param userId userId int
+     * @param postId postId Integer
+     * @param userId userId Integer
      * @return post id if user disliked that post or comment before, null if user did not dislike that post or comment
      */
     @NativeQuery("SELECT post_id FROM FORUM.Dislike WHERE post_id = ?1 AND user_id = ?2")
-    Integer isDislikeClick(int postId, int userId);
+    Integer isDislikeClick(Integer postId, Integer userId);
 
     /**
      * Add a record in Dislike table
-     * @param postId postId int
-     * @param userId userId int
+     * @param postId postId Integer
+     * @param userId userId Integer
      */
     @Modifying
     @Transactional
     @NativeQuery("INSERT INTO FORUM.Dislike VALUES (?1, ?2)")
-    void addDislikeRelationship(int postId, int userId);
+    void addDislikeRelationship(Integer postId, Integer userId);
 
     /**
      * Add 1 to dislike count in Post table
-     * @param postId postId int
+     * @param postId postId Integer
      */
     @Modifying
     @Transactional
     @NativeQuery("UPDATE FORUM.Post SET dislike_count = dislike_count + 1 WHERE post_id = ?1")
-    void addDislikeCount(int postId);
+    void addDislikeCount(Integer postId);
 
     /**
      * Remove a record from Like table with the corresponding post id and user id
-     * @param postId postId int
-     * @param userId userId int
+     * @param postId postId Integer
+     * @param userId userId Integer
      */
     @Modifying
     @Transactional
     @NativeQuery("DELETE FROM FORUM.[Like] WHERE post_id = ?1 AND user_id = ?2")
-    void removeLikeRelationship(int postId, int userId);
+    void removeLikeRelationship(Integer postId, Integer userId);
 
     /**
      * Minus like count of a post or comment with the given postId by one in Post table
-     * @param postId postId int
+     * @param postId postId Integer
      */
     @Modifying
     @Transactional
     @NativeQuery("UPDATE FORUM.Post SET like_count = like_count - 1 WHERE post_id = ?1")
-    void minusLikeCount(int postId);
+    void minusLikeCount(Integer postId);
 
     /**
      * Remove a record from Dislike table with the corresponding post id and user id
-     * @param postId postId int
-     * @param userId userId int
+     * @param postId postId Integer
+     * @param userId userId Integer
      */
     @Modifying
     @Transactional
     @NativeQuery("DELETE FROM FORUM.Dislike WHERE post_id = ?1 AND user_id = ?2")
-    void removeDislikeRelationship(int postId, int userId);
+    void removeDislikeRelationship(Integer postId, Integer userId);
 
     /**
      * Minus dislike count of a post or comment with the given postId by one in Post table
-     * @param postId postId int
+     * @param postId postId Integer
      */
     @Modifying
     @Transactional
     @NativeQuery("UPDATE FORUM.Post SET dislike_count = dislike_count - 1 WHERE post_id = ?1")
-    void minusDislikeCount(int postId);
+    void minusDislikeCount(Integer postId);
 
     @NativeQuery("SELECT tag_id, tag_name FROM FORUM.Tag_Data")
     List<List<String>> findAllTagName();
+
+    /**
+     * Check if post or comment is active
+     * @param postId postId Integer
+     * @return true if post or comment is active, false if post or comment is not active
+     */
+    @NativeQuery("SELECT is_active FROM FORUM.Post WHERE post_id = ?1")
+    boolean postOrCommentIsActive(Integer postId);
 }
