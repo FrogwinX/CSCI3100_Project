@@ -1,9 +1,8 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faMagnifyingGlass, faPlus, faFilter } from "@fortawesome/free-solid-svg-icons";
+import { faMagnifyingGlass, faPlus } from "@fortawesome/free-solid-svg-icons";
 import { getAllTags, Tag } from "@/utils/posts";
-import PostList from "@/components/posts/PostPreviewList";
 
 export default function SideMenu() {
   const [searchTags, setSearchTags] = useState<Tag[]>([]);
@@ -33,8 +32,6 @@ export default function SideMenu() {
     const filteredTags = AllTags.filter((tag) => tag.tagName.toLowerCase().includes(search));
     setRecommendedTags(filteredTags);
   };
-
-  const handleFilterPostsByTags = (tags: Tag[]) => {};
 
   return (
     <div className="card-body gap-0">
@@ -70,11 +67,7 @@ export default function SideMenu() {
             <button
               key={tag.tagId}
               className={`btn btn-sm ${searchTags.some((t) => t.tagId === tag.tagId) ? "btn-primary" : "btn-accent"}`}
-              onClick={() => {
-                toggleTag(tag);
-                handleFilterPostsByTags(searchTags);
-                console.log(searchTags);
-              }}
+              onClick={() => toggleTag(tag)}
             >
               {tag.tagName}
             </button>

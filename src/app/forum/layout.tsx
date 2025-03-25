@@ -2,9 +2,6 @@ import BackButton from "@/components/navigation/BackButton";
 import SideMenu from "@/app/forum/SideMenu";
 
 export default function ForumLayout({ children }: { children: React.ReactNode }) {
-  const allTags = {
-    tech: ["programming", "ai", "web", "mobile", "cloud", "database", "security", "coding"],
-  };
   return (
     <div className="flex flex-grow w-full gap-x-2 md:px-32">
       {/* Left column - conditionally rendered back button */}
