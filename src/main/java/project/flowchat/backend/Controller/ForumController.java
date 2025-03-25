@@ -17,7 +17,7 @@ import java.util.Map;
 
 @AllArgsConstructor
 @RestController
-@CrossOrigin
+@CrossOrigin(origins = {"http://localhost:3000", "https://kind-wave-0b69df000.6.azurestaticapps.net"})
 @RequestMapping("api/Forum")
 public class ForumController {
 
@@ -171,7 +171,6 @@ public class ForumController {
         }
         return responseBodyDTO;
     }
-
 
     @GetMapping("getPostContent")
     private ResponseBodyDTO getPostContent(@RequestParam Integer postId, Integer userId) {
