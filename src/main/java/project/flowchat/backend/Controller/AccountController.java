@@ -27,12 +27,7 @@ public class AccountController {
             Map<String, Object> data = new HashMap<>();
             Boolean isUsernameUnique = accountService.isUsernameUnique(username);
             data.put("isUsernameUnique", isUsernameUnique);
-            if (isUsernameUnique) {
-                responseBodyDTO.setMessage("The username is unique");
-            }
-            else {
-                responseBodyDTO.setMessage("The username is not unique");
-            }
+            responseBodyDTO.setMessage("The username is unique");
             responseBodyDTO.setData(data);
         } catch (ExceptionService e) {
             responseBodyDTO.setMessage(e.getMessage());
@@ -52,12 +47,7 @@ public class AccountController {
             Map<String, Object> data = new HashMap<>();
             Boolean isEmailUnique = accountService.isEmailUnique(email);
             data.put("isEmailUnique", isEmailUnique);
-            if (isEmailUnique) {
-                responseBodyDTO.setMessage("The email is unique");
-            }
-            else {
-                responseBodyDTO.setMessage("The email is not unique");
-            }
+            responseBodyDTO.setMessage("The email is unique");
             responseBodyDTO.setData(data);
         } catch (ExceptionService e) {
             responseBodyDTO.setMessage(e.getMessage());
