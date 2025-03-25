@@ -1,6 +1,7 @@
 import PostFooter from "@/components/posts/PostFooter";
 import PostLink from "@/components/navigation/PostLink";
 import PostHeader from "@/components/posts/PostHeader";
+import Image from "next/image";
 import LoadingImage from "./LoadingImage";
 
 export interface Post {
@@ -48,7 +49,13 @@ export default function PostPreview({ post }: { post: Post }) {
             <div className="relative w-full overflow-hidden rounded-xl bg-base-300 ">
               {/* Blurred background image */}
               <div className="absolute inset-0 w-full h-full opacity-60 scale-200">
-                <img src={post.imageAPIList[0]} className="object-cover blur-xl w-full h-full aspect-video" />
+                <Image
+                  src={post.imageAPIList[0]}
+                  alt="Blurred Background"
+                  className="object-cover blur-xl w-full h-full aspect-video"
+                  width={500}
+                  height={500}
+                />
               </div>
               {/* Main image */}
               <div className="relative w-full h-full items-center justify-center">

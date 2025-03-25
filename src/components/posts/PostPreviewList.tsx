@@ -17,12 +17,22 @@ export default function PostList({
   const [hasMore, setHasMore] = useState(true);
   const observerTarget = useRef<HTMLDivElement>(null);
 
-  // Initial data loading - only happens once
   useEffect(() => {
     const fetchInitialPosts = async () => {
+      setIsLoading(true);
       try {
         const initialPosts = await getPosts({ filter, lastPostId: "0" });
-        setPosts(initialPosts);
+
+        // Filter posts if tags are selected
+        if (tags.length === 0) {
+          setPosts(initialPosts);
+        } else {
+          const filteredPosts = initialPosts.filter(
+            (post) => post.tagNameList?.some((tag) => tags.some((t) => t.tagName === tag)) ?? false
+          );
+          setPosts(filteredPosts);
+        }
+
         setHasMore(initialPosts.length > 0);
       } catch (err) {
         console.error("Failed to load posts:", err);
@@ -32,8 +42,7 @@ export default function PostList({
     };
 
     fetchInitialPosts();
-  }, []); // Only run once on mount - filter won't change
-
+  }, []); // Refetch when tags or filter changes
   // Infinite scrolling setup
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -76,7 +85,15 @@ export default function PostList({
       if (newPosts.length === 0) {
         setHasMore(false);
       } else {
-        setPosts((prevPosts) => [...prevPosts, ...newPosts]);
+        if (tags.length === 0) {
+          setPosts((prevPosts) => [...prevPosts, ...newPosts]);
+        } else {
+          // Fixed to match the same filtering logic used for initial posts
+          const filteredPosts = newPosts.filter(
+            (post) => post.tagNameList?.some((tag) => tags.some((t) => t.tagName === tag)) ?? false
+          );
+          setPosts((prevPosts) => [...prevPosts, ...filteredPosts]);
+        }
       }
     } catch (err) {
       console.error("Failed to load more posts:", err);
