@@ -9,7 +9,7 @@ export default function PostList({
   tags = [],
   filter = "latest",
 }: {
-  tags: Tag[];
+  tags?: Tag[];
   filter?: "latest" | "recommended" | "following";
 }) {
   const [posts, setPosts] = useState<Post[]>([]);

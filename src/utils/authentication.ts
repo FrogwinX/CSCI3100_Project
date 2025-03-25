@@ -81,7 +81,7 @@ export async function login(formData: FormData) {
     if (result.data.isPasswordCorrect && result.data.isAccountActive && result.data.user) {
       const session = await getSession();
 
-      // Save user data in session (don't store token in session)
+      // Save user data in session
       session.userId = result.data.user.id;
       session.username = result.data.user.username;
       session.roles = result.data.user.roles;

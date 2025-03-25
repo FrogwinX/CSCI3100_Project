@@ -11,14 +11,10 @@ export async function GET() {
       username: session.username,
       roles: session.roles,
       isLoggedIn: session.isLoggedIn,
+      token: session.token,
     });
   } catch (error) {
     console.error("Error fetching session:", error);
-    return NextResponse.json(
-      {
-        isLoggedIn: false,
-      },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to get session data" }, { status: 500 });
   }
 }
