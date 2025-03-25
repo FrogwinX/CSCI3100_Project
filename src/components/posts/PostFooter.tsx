@@ -45,9 +45,7 @@ export default function PostFooter({
 
     try {
       const isRemoveAction = action === "unlike" || action === "undislike";
-      const url = isRemoveAction
-        ? "https://flowchatbackend.azurewebsites.net/api/Forum/unlikeOrUndislike"
-        : "https://flowchatbackend.azurewebsites.net/api/Forum/likeOrDislike";
+      const url = isRemoveAction ? "/api/Forum/unlikeOrUndislike" : "/api/Forum/likeOrDislike";
 
       const response = await fetch(url, {
         method: isRemoveAction ? "DELETE" : "POST",
