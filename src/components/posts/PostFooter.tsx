@@ -41,7 +41,8 @@ export default function PostFooter({
 
   // Function to make API call for like/dislike
   const updateLikeStatus = async (action: "like" | "dislike" | "unlike" | "undislike") => {
-    setIsLoading(true);
+    const setLoadingState = !isLoading; // avoid double toggling of loading state
+    if (setLoadingState) setIsLoading(true);
 
     try {
       const isRemoveAction = action === "unlike" || action === "undislike";
@@ -69,14 +70,10 @@ export default function PostFooter({
       if (data.data.isSuccess) {
         if (action === "like") {
           setUserLiked(true);
-          setUserDisliked(false);
           setLikeCount((prev) => prev + 1);
-          if (userDisliked) setDislikeCount((prev) => prev - 1);
         } else if (action === "dislike") {
           setUserDisliked(true);
-          setUserLiked(false);
           setDislikeCount((prev) => prev + 1);
-          if (userLiked) setLikeCount((prev) => prev - 1);
         } else if (action === "unlike") {
           setUserLiked(false);
           setLikeCount((prev) => prev - 1);
@@ -88,29 +85,58 @@ export default function PostFooter({
     } catch (error) {
       console.error("Error updating like status:", error);
     } finally {
-      setIsLoading(false);
+      if (setLoadingState) setIsLoading(false);
     }
   };
 
-  // Event handlers
-  const handleLike = (e: MouseEvent) => {
+  const handleLike = async (e: MouseEvent) => {
     e.stopPropagation();
     if (isLoading) return;
 
+    // If already liked, just unlike
     if (userLiked) {
       updateLikeStatus("unlike");
-    } else {
+    }
+    // If currently disliked, need to undislike first then like
+    else if (userDisliked) {
+      setIsLoading(true);
+      try {
+        // First remove the dislike
+        await updateLikeStatus("undislike");
+        // Then add the like
+        await updateLikeStatus("like");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    // Not liked or disliked, just like
+    else {
       updateLikeStatus("like");
     }
   };
 
-  const handleDislike = (e: MouseEvent) => {
+  const handleDislike = async (e: MouseEvent) => {
     e.stopPropagation();
     if (isLoading) return;
 
+    // If already disliked, just undislike
     if (userDisliked) {
       updateLikeStatus("undislike");
-    } else {
+    }
+    // If currently liked, need to unlike first then dislike
+    else if (userLiked) {
+      setIsLoading(true);
+      try {
+        // First remove the like
+        await updateLikeStatus("unlike");
+        // Then add the dislike
+        await updateLikeStatus("dislike");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    // Not liked or disliked, just dislike
+    else {
       updateLikeStatus("dislike");
     }
   };

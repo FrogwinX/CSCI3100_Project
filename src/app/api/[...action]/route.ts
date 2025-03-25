@@ -27,6 +27,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { actio
   const response = await fetch(`https://flowchatbackend.azurewebsites.net/api/${actionPath}`, {
     method: "DELETE",
     headers: {
+      "Content-Type": "application/json",
       Authorization: request.headers.get("Authorization") || "",
     },
     body: JSON.stringify(body),
