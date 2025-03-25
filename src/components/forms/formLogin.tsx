@@ -3,9 +3,10 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useAuth } from "@/hooks/useAuth";
 import { faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { login } from "@/utils/authentication";
+import { useSession } from "@/hooks/useSession";
 
 export default function Login() {
   const [loading, setLoading] = useState<boolean>(false);
@@ -13,25 +14,23 @@ export default function Login() {
   const [UsernameOrEmail, setUserInput] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<string[]>([]);
-  const { login } = useAuth();
   const router = useRouter();
+  const { refresh } = useSession();
 
   const handleLogin = async (e: React.FormEvent) => {
     setLoading(true);
     e.preventDefault();
-
-    let username = null;
-    let email = null;
-
-    if (UsernameOrEmail.includes("@")) {
-      email = UsernameOrEmail;
-    } else {
-      username = UsernameOrEmail;
-    }
+    const formData = new FormData();
 
     if (!UsernameOrEmail) {
       setErrors((prevErrors) => ["Username or email is required.", ...prevErrors]);
       return;
+    }
+
+    if (UsernameOrEmail.includes("@")) {
+      formData.append("email", UsernameOrEmail);
+    } else {
+      formData.append("username", UsernameOrEmail);
     }
 
     if (!password) {
@@ -39,10 +38,14 @@ export default function Login() {
       return;
     }
 
+    formData.append("password", password);
+
     try {
-      const result = await login(username, email, password);
+      const result = await login(formData);
       setLoading(false);
       if (result.data.isPasswordCorrect && result.data.isAccountActive && result.data.user) {
+        // refresh the session to update the UI
+        await refresh();
         router.push("/forum");
       } else {
         setServerErrorMessage(result.message);

@@ -1,10 +1,10 @@
 "use client";
 import React, { FormEvent, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/hooks/useAuth";
 import { OTPInput, SlotProps } from "input-otp";
 import { faTriangleExclamation, faCheck } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { checkEmailUnique, requestAuthCode, resetPasswordByEmail } from "@/utils/authentication";
 
 function Slot(props: SlotProps) {
   return (
@@ -58,7 +58,6 @@ export default function ForgotPasswordPage() {
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
 
   const router = useRouter();
-  const { requestAuthCode, checkEmailUnique, resetPasswordByEmail } = useAuth();
 
   useEffect(() => {
     let timer: NodeJS.Timeout | null = null;
@@ -79,7 +78,11 @@ export default function ForgotPasswordPage() {
     setFailure(false);
     setLoading(true);
     try {
-      const result = await resetPasswordByEmail(email, password, AuthCode);
+      const formData = new FormData();
+      formData.append("email", email);
+      formData.append("password", password);
+      formData.append("authenticationCode", AuthCode);
+      const result = await resetPasswordByEmail(formData);
       if (result.data.username && result.data.isSuccess) {
         setFailure(false);
         setLoading(false);

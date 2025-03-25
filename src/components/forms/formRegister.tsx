@@ -1,10 +1,10 @@
 "use client";
 import React, { useEffect, FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/hooks/useAuth";
 import { OTPInput, SlotProps } from "input-otp";
 import { faTriangleExclamation, faCheck } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { checkEmailUnique, checkUsernameUnique, register, requestLicenseKey } from "@/utils/authentication";
 
 function Slot(props: SlotProps) {
   return (
@@ -53,7 +53,6 @@ export default function RegisterForm() {
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
 
   const router = useRouter();
-  const { requestLicenseKey, register, checkUsernameUnique, checkEmailUnique } = useAuth();
 
   useEffect(() => {
     let timer: NodeJS.Timeout | null = null;
@@ -74,7 +73,12 @@ export default function RegisterForm() {
     setFailure(false);
     setLoading(true);
     try {
-      const result = await register(username, email, password, licenseKey);
+      const formData = new FormData();
+      formData.append("username", username);
+      formData.append("email", email);
+      formData.append("password", password);
+      formData.append("licenseKey", licenseKey);
+      const result = await register(formData);
       if (result.data.user && result.data.isSuccess) {
         setServerSuccessMessage(result.message);
         setFailure(false);

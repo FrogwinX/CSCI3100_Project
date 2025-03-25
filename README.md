@@ -18,8 +18,9 @@
 
 ## Documentation and Useful Links
 
-1. [Next.js](https://nextjs.org/docs/app/building-your-application)
-2. [React](https://react.dev/learn/your-first-component)
-3. [DaisyUI](https://daisyui.com/components/)
-4. [Tailwind CSS](https://tailwindcss.com/docs/styling-with-utility-classes)
-5. [Font Awesome Icon](https://docs.fontawesome.com/web/setup/get-started)
+1. [Deployed Site](https://kind-wave-0b69df000.6.azurestaticapps.net)
+2. [Next.js](https://nextjs.org/docs/app/building-your-application)
+3. [React](https://react.dev/learn/your-first-component)
+4. [DaisyUI](https://daisyui.com/components/)
+5. [Tailwind CSS](https://tailwindcss.com/docs/styling-with-utility-classes)
+6. [Font Awesome Icon](https://docs.fontawesome.com/web/setup/get-started)
