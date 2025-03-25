@@ -17,8 +17,7 @@ import java.util.Map;
 
 @AllArgsConstructor
 @RestController
-@CrossOrigin(origins = {"http://localhost:3000", "https://kind-wave-0b69df000.6.azurestaticapps.net"},
-        methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE})
+@CrossOrigin(origins = {"http://localhost:3000", "https://kind-wave-0b69df000.6.azurestaticapps.net"})
 @RequestMapping("api/Forum")
 public class ForumController {
 
@@ -218,12 +217,12 @@ public class ForumController {
     }
 
     @PostMapping("likeOrDislike")
-    private ResponseBodyDTO likeOrDislike(@RequestBody Map<String, Object> requestBody) {
+    private ResponseBodyDTO likeOrDislike(@RequestBody Map<String, String> requestBody) {
         try {
             Map<String, Object> data = new HashMap<>();
-            forumService.likeOrDislike((Integer) requestBody.get("postId"),
-                                        (Integer) requestBody.get("userId"), 
-                                        (String) requestBody.get("action"));
+            forumService.likeOrDislike(Integer.parseInt(requestBody.get("postId")),
+                                        Integer.parseInt(requestBody.get("userId")),
+                                        requestBody.get("action"));
             data.put("isSuccess", true);
             responseBodyDTO.setMessage("The post/comment is liked/disliked");
             responseBodyDTO.setData(data);

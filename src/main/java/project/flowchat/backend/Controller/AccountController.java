@@ -13,8 +13,7 @@ import java.util.Map;
 
 @AllArgsConstructor
 @RestController
-@CrossOrigin(origins = {"http://localhost:3000", "https://kind-wave-0b69df000.6.azurestaticapps.net"},
-        methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE})
+@CrossOrigin(origins = {"http://localhost:3000", "https://kind-wave-0b69df000.6.azurestaticapps.net"})
 @RequestMapping("api/Account")
 public class AccountController {
 
