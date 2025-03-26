@@ -1,6 +1,7 @@
 import PostHeader from "@/components/posts/PostHeader";
 import PostFooter from "@/components/posts/PostFooter";
 import { Post } from "@/components/posts/PostPreview";
+import Image from "next/image";
 import LoadingImage from "@/components/posts/LoadingImage";
 
 export default function PostDetail({ post }: { post: Post }) {
@@ -23,7 +24,13 @@ export default function PostDetail({ post }: { post: Post }) {
           <div className="relative w-full overflow-hidden rounded-xl bg-base-300">
             {/* Blurred background image */}
             <div className="absolute inset-0 w-full h-full opacity-60 scale-200">
-              <img src={post.imageAPIList[0]} className="object-cover blur-xl w-full h-full" />
+              <Image
+                src={post.imageAPIList[0]}
+                alt="Blurred background"
+                className="object-cover blur-xl w-full h-full"
+                width={500}
+                height={500}
+              />
             </div>
             {/* Main image */}
             <div className="relative w-full h-full items-center justify-center">

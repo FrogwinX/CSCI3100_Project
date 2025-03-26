@@ -1,6 +1,5 @@
 import { SessionOptions, getIronSession, unsealData } from "iron-session";
 import type { NextRequest } from "next/server";
-const { cookies } = await import("next/headers");
 
 // Type for session data
 export interface SessionData {
@@ -30,6 +29,7 @@ export const sessionOptions: SessionOptions = {
 
 // Get the session data
 export async function getSession() {
+  const { cookies } = await import("next/headers");
   const session = await getIronSession<SessionData>(await cookies(), sessionOptions);
 
   // Initialize the session if not already done

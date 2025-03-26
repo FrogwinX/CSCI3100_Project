@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 
-export async function POST(request: NextRequest, { params }: { params: { action: string[] } }) {
-  const { action } = await params;
-  const actionPath = action.join("/");
+type Params = Promise<{ action: string[] }>;
+
+export async function POST(request: NextRequest, props: { params: Params }) {
+  const params = await props.params;
+  const actionPath = params.action.join("/");
   const body = await request.json();
 
   const response = await fetch(`https://flowchatbackend.azurewebsites.net/api/${actionPath}`, {
@@ -19,9 +21,9 @@ export async function POST(request: NextRequest, { params }: { params: { action:
   return NextResponse.json(data);
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { action: string[] } }) {
-  const { action } = await params;
-  const actionPath = action.join("/");
+export async function DELETE(request: NextRequest, props: { params: Params }) {
+  const params = await props.params;
+  const actionPath = params.action.join("/");
   const body = await request.json();
 
   const response = await fetch(`https://flowchatbackend.azurewebsites.net/api/${actionPath}`, {
