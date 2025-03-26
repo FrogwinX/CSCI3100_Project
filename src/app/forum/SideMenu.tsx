@@ -3,9 +3,10 @@ import React, { useEffect, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faMagnifyingGlass, faPlus } from "@fortawesome/free-solid-svg-icons";
 import { getAllTags, Tag } from "@/utils/posts";
+import { useTagContext } from "@/hooks/useTags";
 
 export default function SideMenu() {
-  const [searchTags, setSearchTags] = useState<Tag[]>([]);
+  const { selectedTags: searchTags, setSelectedTags: setSearchTags } = useTagContext();
   const [AllTags, setAllTags] = useState<Tag[]>([]);
   // New state to hold shuffled tags
   const [recommendedTags, setRecommendedTags] = useState<Tag[]>([]);

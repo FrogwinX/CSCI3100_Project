@@ -1,25 +1,26 @@
 import BackButton from "@/components/navigation/BackButton";
 import SideMenu from "@/app/forum/SideMenu";
+import { TagProvider } from "@/hooks/useTags";
 
 export default function ForumLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex flex-grow w-full gap-x-2 md:px-32">
-      {/* Left column - conditionally rendered back button */}
-      <div className="hidden lg:flex w-1/6 flex-col items-end pt-4 pr-4 sticky top-16 h-fit">
-        <BackButton />
-      </div>
-
-      {/* Middle column - main content */}
-      <div className="flex-grow w-full lg:w-4/6">
-        <div className="bg-base-100 min-h-full">{children}</div>
-      </div>
-
-      {/* Right column - conditionally rendered action menu */}
-      <div className="hidden md:block w-1/6">
-        <div className="card bg-base-100 sticky top-16 w-64 h-screen">
-          <SideMenu />
+    <TagProvider>
+      <div className="flex flex-grow w-full gap-x-2 md:px-32">
+        {/* Left column - conditionally rendered back button */}
+        <div className="hidden lg:flex w-1/6 flex-col items-end pt-4 pr-4 sticky top-16 h-fit">
+          <BackButton />
+        </div>
+        {/* Middle column - main content */}
+        <div className="flex-grow w-full lg:w-4/6">
+          <div className="bg-base-100 min-h-full">{children}</div>
+        </div>
+        {/* Right column - conditionally rendered action menu */}
+        <div className="hidden md:block w-1/6">
+          <div className="card bg-base-100 sticky top-16 w-64 h-screen">
+            <SideMenu />
+          </div>
         </div>
       </div>
-    </div>
+    </TagProvider>
   );
 }

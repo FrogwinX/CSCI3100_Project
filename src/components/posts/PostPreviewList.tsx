@@ -3,35 +3,49 @@
 import { useEffect, useRef, useState } from "react";
 import PostPreview, { Post } from "./PostPreview";
 import { getPosts } from "@/utils/posts";
-import { Tag } from "@/utils/posts";
+import { useTagContext } from "@/hooks/useTags";
 
-export default function PostList({
-  tags = [],
-  filter = "latest",
-}: {
-  tags?: Tag[];
-  filter?: "latest" | "recommended" | "following";
-}) {
+export default function PostList({ filter = "latest" }: { filter?: "latest" | "recommended" | "following" }) {
+  const { selectedTags: tags } = useTagContext();
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hasMore, setHasMore] = useState(true);
   const observerTarget = useRef<HTMLDivElement>(null);
+
+  const filterPostsByTags = (postsToFilter: Post[]) => {
+    if (tags.length === 0) {
+      return postsToFilter; // No filtering needed if no tags selected
+    }
+
+    return postsToFilter.filter((post) => {
+      // Skip posts with no tags if we have selected tags
+      if (!post.tagNameList || post.tagNameList.length === 0) {
+        return false;
+      }
+
+      // Check if post contains ALL selected tags
+      return tags.every((tag) => post.tagNameList!.includes(tag.tagName));
+    });
+  };
 
   useEffect(() => {
     const fetchInitialPosts = async () => {
       setIsLoading(true);
       try {
         const initialPosts = await getPosts({ filter, lastPostId: "0" });
+        const filteredPosts = filterPostsByTags(initialPosts);
+
+        setPosts(filteredPosts);
 
         // Filter posts if tags are selected
-        if (tags.length === 0) {
-          setPosts(initialPosts);
-        } else {
-          const filteredPosts = initialPosts.filter(
-            (post) => post.tagNameList?.some((tag) => tags.some((t) => t.tagName === tag)) ?? false
-          );
-          setPosts(filteredPosts);
-        }
+        // if (tags.length === 0) {
+        //   setPosts(initialPosts);
+        // } else {
+        //   const filteredPosts = initialPosts.filter((post) =>
+        //     tags.every((t) => post.tagNameList?.includes(t.tagName) ?? false)
+        //   );
+        //   setPosts(filteredPosts);
+        // }
 
         setHasMore(initialPosts.length > 0);
       } catch (err) {
@@ -42,7 +56,8 @@ export default function PostList({
     };
 
     fetchInitialPosts();
-  }, []); // Refetch when tags or filter changes
+  }, [filter, tags]); // Refetch when tags or filter changes
+
   // Infinite scrolling setup
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -89,9 +104,14 @@ export default function PostList({
           setPosts((prevPosts) => [...prevPosts, ...newPosts]);
         } else {
           // Fixed to match the same filtering logic used for initial posts
-          const filteredPosts = newPosts.filter(
-            (post) => post.tagNameList?.some((tag) => tags.some((t) => t.tagName === tag)) ?? false
-          );
+          // const filteredPosts = newPosts.filter((post) =>
+          //   tags.every((t) => post.tagNameList?.includes(t.tagName) ?? false)
+          // );
+
+          const filteredPosts = filterPostsByTags(newPosts);
+          if (filteredPosts.length === 0) {
+            setHasMore(false);
+          }
           setPosts((prevPosts) => [...prevPosts, ...filteredPosts]);
         }
       }
