@@ -47,34 +47,55 @@ export default function PostList({ filter = "latest" }: { filter?: "latest" | "r
         //   setPosts(filteredPosts);
         // }
 
-          setHasMore(initialPosts.length > 0);
-        } catch (err) {
-          console.error("Failed to load posts:", err);
-        } finally {
-          setIsLoading(false);
-        }
-      };
+        setHasMore(initialPosts.length > 0);
+      } catch (err) {
+        console.error("Failed to load posts:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
     fetchInitialPosts();
   }, [filter, tags]); // Refetch when tags or filter changes
 
   // Infinite scrolling setup
   useEffect(() => {
-    const loadMorePosts = async () => {
-      if (isLoading || !hasMore || posts.length === 0) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !isLoading) {
+          loadMorePosts();
+        }
+      },
+      { threshold: 0.1 }
+    );
 
-      setIsLoading(true);
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
 
-      try {
-        // Get the ID of the last post
-        const lastPostId = posts[posts.length - 1].postId;
+    return () => {
+      if (observerTarget.current) {
+        observer.unobserve(observerTarget.current);
+      }
+    };
+  }, [hasMore, isLoading]);
 
-        // Fetch more posts
-        const newPosts = await getPosts({
-          filter,
-          lastPostId,
-          count: 10,
-        });
+  // Function to load more posts
+  const loadMorePosts = async () => {
+    if (isLoading || !hasMore || posts.length === 0) return;
+
+    setIsLoading(true);
+
+    try {
+      // Get the ID of the last post
+      const lastPostId = posts[posts.length - 1].postId;
+
+      // Fetch more posts
+      const newPosts = await getPosts({
+        filter,
+        lastPostId,
+        count: 10,
+      });
 
       if (newPosts.length === 0) {
         setHasMore(false);
@@ -124,7 +145,7 @@ export default function PostList({ filter = "latest" }: { filter?: "latest" | "r
               <div className="h-10"></div>
             ) : (
               <div className="text-center text-base-content/50 my-4">
-                <p className="text-sm">You&apos;ve reached the end</p>
+                <p className="text-sm">You've reached the end</p>
               </div>
             )}
           </div>
