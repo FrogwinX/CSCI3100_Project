@@ -26,9 +26,6 @@ public class ForumService {
     private final ImageService imageService;
     private final SecurityService securityService;
 
-    /* This hashset is used to prevent repeated post selections */
-    HashSet<Integer> postHashSet;
-
     /**
      * Convert post data from database (PostModel) to Java Object (PostDTO)
      * @param post post data from database (PostModel)
@@ -284,22 +281,16 @@ public class ForumService {
     }
 
     /**
-     * Get a list of latest post previews for a user
+     * Get a list of latest post previews from the lastPostId for a user
      * @param userId userId Integer
+     * @param excludingPostIdList a list of postId that have already retrieved
      * @param postNum required number of post previews
      * @return latest post preview list
      * @throws Exception any exception
      */
-    public List<PostDTO> getLatestPostPreviewList(Integer userId, Integer lastPostId, Integer postNum) throws Exception {
+    public List<PostDTO> getLatestPostPreviewList(Integer userId, List<Integer> excludingPostIdList, Integer postNum) throws Exception {
         securityService.checkUserIdWithToken(userId);
-        Integer offset;
-        if (lastPostId == 0) {
-            offset = 0;
-        }
-        else {
-            offset = forumRepository.findLatestActivePostOffsetByPostId(userId, lastPostId);
-        }
-        List<PostModel> postModelList = forumRepository.findLatestActivePostByRange(userId, offset, postNum);
+        List<PostModel> postModelList = forumRepository.findLatestActivePostByRange(userId, excludingPostIdList, postNum);
         List<PostDTO> postPreviewModelList = new ArrayList<>();
         for (PostModel post : postModelList) {
             PostDTO postPreview = createPostDTO(post, userId);
@@ -313,61 +304,81 @@ public class ForumService {
      * @param postType string : "popular" or "latest" or "random"
      * @param userId userId Integer
      * @param tagId tagId Integer
-     * @param queryPostNum number of queries made in the database
+     * @param excludingPostIdList a list of postId that have already retrieved
      * @param requiredPostNum actual required number
      * @return a list of post previews
      */
-    private List<PostDTO> generatePostPreviewListByTagRecommendation(String postType, Integer userId, Integer tagId, int queryPostNum, int requiredPostNum) {
+    private List<PostDTO> generatePostPreviewListByTagRecommendation(String postType, Integer userId, Integer tagId, List<Integer> excludingPostIdList, int requiredPostNum) {
         List<PostDTO> postPreviewModelList = new ArrayList<>();
         List<PostModel> tagPostList;
-        int count = 0;
         tagPostList = switch (postType) {
-            case "popular" -> forumRepository.findPopularActivePostByRangeAndTag(userId, tagId, queryPostNum);
-            case "latest" -> forumRepository.findLatestActivePostByRangeAndTag(userId, tagId, queryPostNum);
-            default -> forumRepository.findPopularActivePostByRange(userId, queryPostNum);
+            case "popular" -> forumRepository.findPopularActivePostByRangeAndTag(userId, tagId, excludingPostIdList, requiredPostNum);
+            case "latest" -> forumRepository.findLatestActivePostByRangeAndTag(userId, tagId, excludingPostIdList, requiredPostNum);
+            default -> forumRepository.findPopularActivePostByRange(userId, excludingPostIdList, requiredPostNum);
         };
         for (PostModel post : tagPostList) {
-            if (count == requiredPostNum) {
-                break;
-            }
-            Integer postId = post.getPostId();
-            if (!postHashSet.contains(postId)) {
-                PostDTO postPreview = createPostDTO(post, userId);
-                postPreviewModelList.add(postPreview);
-                postHashSet.add(postId);
-                count++;
-            }
+            PostDTO postPreview = createPostDTO(post, userId);
+            postPreviewModelList.add(postPreview);
         }
         return postPreviewModelList;
     }
 
     /**
+     * Add the new generated postId in the get preview list to the excludingPostIdList to prevent repeated posts
+     * @param postPreviewModelList postPreviewModelList newly generated post preview list
+     * @param excludingPostIdList excludingPostIdList
+     * @return new excludingPostIdList
+     */
+    private List<Integer> addExcludingPostIdList(List<PostDTO> postPreviewModelList, List<Integer> excludingPostIdList) {
+        for (PostDTO post : postPreviewModelList) {
+            excludingPostIdList.add(post.getPostId());
+        }
+        return excludingPostIdList;
+    }
+
+    /**
      * Get a list of recommended post previews for a user
      * @param userId userId Integer
+     * @param excludingPostIdList a list of postId that have already retrieved
      * @param postNum required number of post previews
      * @return recommended post preview list
      * @throws Exception any exception
      */
-    public List<PostDTO> getRecommendedPostPreviewList(Integer userId, Integer postNum) throws Exception {
+    public List<PostDTO> getRecommendedPostPreviewList(Integer userId, List<Integer> excludingPostIdList, Integer postNum) throws Exception {
         securityService.checkUserIdWithToken(userId);
         List<PostDTO> postPreviewModelList = new ArrayList<>();
         List<Integer> topTwoTagId = forumRepository.findRecommendedTagByHighestScore(userId);
         if (topTwoTagId.size() == 2) {
             Integer firstTagId = topTwoTagId.get(0);
             Integer secondTagId = topTwoTagId.get(1);
+            List<PostDTO> list;
             int latestFirstTagPostNum = postNum / 2 / 2;
             int popularFirstTagPostNum = max(1, postNum / 2 - latestFirstTagPostNum);
             int latestSecondTagPostNum = postNum * 3 / 10 / 2;
             int popularSecondTagPostNum = postNum * 3 / 10 - latestSecondTagPostNum;
 
             List<PostDTO> popularPostPreviewModelList = new ArrayList<>();
-            popularPostPreviewModelList.addAll(generatePostPreviewListByTagRecommendation("popular", userId, firstTagId, popularFirstTagPostNum, popularFirstTagPostNum));
-            popularPostPreviewModelList.addAll(generatePostPreviewListByTagRecommendation("popular", userId, secondTagId, popularFirstTagPostNum * 2, popularSecondTagPostNum));
+
+            list = generatePostPreviewListByTagRecommendation("popular", userId, firstTagId, excludingPostIdList, popularFirstTagPostNum);
+            excludingPostIdList = addExcludingPostIdList(list, excludingPostIdList);
+            popularPostPreviewModelList.addAll(list);
+
+            list = generatePostPreviewListByTagRecommendation("popular", userId, secondTagId, excludingPostIdList, popularSecondTagPostNum);
+            excludingPostIdList = addExcludingPostIdList(list, excludingPostIdList);
+            popularPostPreviewModelList.addAll(list);
+
             Collections.shuffle(popularPostPreviewModelList);
 
             List<PostDTO> latestPostPreviewModelList = new ArrayList<>();
-            latestPostPreviewModelList.addAll(generatePostPreviewListByTagRecommendation("latest", userId, firstTagId, popularFirstTagPostNum * 3, latestFirstTagPostNum));
-            latestPostPreviewModelList.addAll(generatePostPreviewListByTagRecommendation("latest", userId, secondTagId, popularFirstTagPostNum * 4, latestSecondTagPostNum));
+
+            list = generatePostPreviewListByTagRecommendation("latest", userId, firstTagId, excludingPostIdList, latestFirstTagPostNum);
+            excludingPostIdList = addExcludingPostIdList(list, excludingPostIdList);
+            latestPostPreviewModelList.addAll(list);
+
+            list = generatePostPreviewListByTagRecommendation("latest", userId, secondTagId, excludingPostIdList, latestSecondTagPostNum);
+            excludingPostIdList = addExcludingPostIdList(list, excludingPostIdList);
+            latestPostPreviewModelList.addAll(list);
+
             Collections.shuffle(latestPostPreviewModelList);
 
             postPreviewModelList.addAll(popularPostPreviewModelList);
@@ -375,30 +386,30 @@ public class ForumService {
 
             int remainingPostNum = postNum - postPreviewModelList.size();
             Random random = new Random();
-            List<PostDTO> randomPopularPostPreviewModelList = generatePostPreviewListByTagRecommendation("random", userId, null, popularFirstTagPostNum * 5, remainingPostNum);
+            List<PostDTO> randomPopularPostPreviewModelList = generatePostPreviewListByTagRecommendation("random", userId, null, excludingPostIdList, remainingPostNum);
             for (PostDTO postPreview : randomPopularPostPreviewModelList) {
                 postPreviewModelList.add(random.nextInt(postPreviewModelList.size() + 1), postPreview);
             }
         }
         else {
-            postPreviewModelList.addAll(generatePostPreviewListByTagRecommendation("random", userId, null, postNum, postNum));
+            postPreviewModelList.addAll(generatePostPreviewListByTagRecommendation("random", userId, null, excludingPostIdList, postNum));
             Collections.shuffle(postPreviewModelList);
         }
 
-        postHashSet.clear();
         return postPreviewModelList;
     }
 
     /**
      * Get a list of following post previews for a user
      * @param userId userId Integer
+     * @param excludingPostIdList a list of postId that have already retrieved
      * @param postNum required number of post previews
      * @return following post preview list
      * @throws Exception any exception
      */
-    public List<PostDTO> getFollowingPostPreviewList(Integer userId, Integer postNum) throws Exception {
+    public List<PostDTO> getFollowingPostPreviewList(Integer userId, List<Integer> excludingPostIdList, Integer postNum) throws Exception {
         securityService.checkUserIdWithToken(userId);
-        List<PostModel> postModelList = forumRepository.findFollowingActivePostByRange(userId, postNum);
+        List<PostModel> postModelList = forumRepository.findFollowingActivePostByRange(userId, excludingPostIdList, postNum);
         List<PostDTO> postPreviewModelList = new ArrayList<>();
         for (PostModel post : postModelList) {
             PostDTO postPreview = createPostDTO(post, userId);
@@ -537,17 +548,18 @@ public class ForumService {
     }
 
     /**
-     * Get a list of popular post previews containing the case-insensitive keywords for a user
+     * Get a list of popular post previews from lastPostId containing the case-insensitive keywords for a user
      * @param userId userId Integer
      * @param keyword keyword case-insensitive String
+     * @param excludingPostIdList a list of postId that have already retrieved
      * @param searchNum required number of post previews
      * @return popular post preview list
      * @throws Exception any exception
      */
-    public List<PostDTO> searchPost(Integer userId, String keyword, Integer searchNum) throws Exception {
+    public List<PostDTO> searchPost(Integer userId, String keyword, List<Integer> excludingPostIdList, Integer searchNum) throws Exception {
         securityService.checkUserIdWithToken(userId);
         keyword = "%" + keyword + "%";
-        List<PostModel> postModelList = forumRepository.findActivePostByRangeAndKeyword(userId, keyword, searchNum);
+        List<PostModel> postModelList = forumRepository.findPopularActivePostByRangeAndKeyword(userId, keyword, excludingPostIdList, searchNum);
         List<PostDTO> postPreviewModelList = new ArrayList<>();
         for (PostModel post : postModelList) {
             PostDTO postPreview = createPostDTO(post, userId);
