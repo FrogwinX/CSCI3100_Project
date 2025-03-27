@@ -132,7 +132,7 @@ public class ForumController {
     @SuppressWarnings("unchecked")
     @PutMapping(value = "updatePostOrComment", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     private ResponseBodyDTO updatePostOrComment(@RequestPart Map<String, Object> requestBody,
-                                    @RequestPart(required = false) MultipartFile file) {
+                                    @RequestPart(required = false) List<MultipartFile> files) {
         try {
             Map<String, Object> data = new HashMap<>();
             forumService.updatePostOrComment(   (Integer) requestBody.get("postId"),
@@ -140,7 +140,7 @@ public class ForumController {
                                                 (String) requestBody.get("title"),
                                                 (String) requestBody.get("content"),
                                                 (List<String>) requestBody.get("tag"),
-                                                (MultipartFile) file,
+                                                (List<MultipartFile>) files,
                                                 (Integer) requestBody.get("attachTo"));
 
             responseBodyDTO.setMessage("A new post/comment is updated");

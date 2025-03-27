@@ -291,15 +291,6 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
     void addCommentCountByNum(Integer postId, int count);
 
     /**
-     * Find the image id with the given post id
-     *
-     * @param postId postId Integer
-     * @return corresponding image id
-     */
-    @NativeQuery("SELECT image_id FROM FORUM.Post_Image WHERE post_id = ?1")
-    Integer findImageId(Integer postId);
-
-    /**
      * Delete relevant record in Post_Image table
      *
      * @param imageId imageId Integer

@@ -154,12 +154,12 @@ public class ForumService {
      * @param title new title of the post
      * @param content new content of the post or comment
      * @param tag new tag of the post, empty list if user wants to delete tag
-     * @param image new image of the post or comment, empty image if user wants to delete image
+     * @param images new images of the post or comment, single empty image if user wants to delete image
      * @param attachTo new post id if it is a comment, can only change from non-zero to non-zero
      * @throws Exception INVALID_POST_CREATOR, POST_DELETED, MAKE_COMMENT_TO_A_POST
      */
     @Transactional
-    public void updatePostOrComment(Integer postId, Integer userId, String title, String content, List<String> tag, MultipartFile image, Integer attachTo) throws Exception {
+    public void updatePostOrComment(Integer postId, Integer userId, String title, String content, List<String> tag, List<MultipartFile> images, Integer attachTo) throws Exception {
         securityService.checkUserIdWithToken(userId);
 
         Optional<PostModel> postModelOptional = forumRepository.findById(postId);
@@ -207,21 +207,23 @@ public class ForumService {
         }
 
 
-        if (image != null) {
-            if (image.isEmpty()) {
-                deleteImage(postId);
-            }
-            else {
-                // There may be multiple images in a post or comment, use forumRepository.findImageIdByPostId(postId);
-                Integer imageId = forumRepository.findImageId(postId);
-                if (imageId == null) {
-                    // Add new image
-                    imageId = imageService.saveImage(image);
-                    forumRepository.connectPostWithImage(postId, imageId);
+        if (images != null) {
+            deleteImage(postId);
+            if (images.size() != 1 || !images.get(0).isEmpty()) {
+                // Save new images
+                List<Integer> allImageId = new ArrayList<Integer>();
+                for (MultipartFile image: images) {
+                    if (image.getContentType() == null || !image.getContentType().startsWith("image/")) {
+                        ExceptionService.throwException(ExceptionService.FILE_NOT_IMAGE);
+                    }
                 }
-                else {
-                    // Change image
-                    imageService.changeImage(image, imageId);
+        
+                for (MultipartFile image: images) {
+                    allImageId.add(imageService.saveImage(image));
+                }
+
+                for (Integer singleImageId: allImageId) {
+                    forumRepository.connectPostWithImage(postId, singleImageId);
                 }
             }
         }
@@ -486,8 +488,8 @@ public class ForumService {
      */
     private void deleteImage(Integer postId) {
         // There may be multiple images in a post or comment, use forumRepository.findImageIdByPostId(postId);
-        Integer imageId = forumRepository.findImageId(postId);
-        if (imageId != null) {
+        List<Integer> allImageId = forumRepository.findImageIdByPostId(postId);
+        for (Integer imageId: allImageId) {
             forumRepository.deleteInPostImage(imageId);
             forumRepository.deleteInImageData(imageId);
         }
