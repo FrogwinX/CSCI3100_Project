@@ -30,6 +30,9 @@ public class ExceptionService extends Exception {
     public static final String POST_NOT_DISLIKED = "Has not disliked this post or comment before.";
     public static final String INVALID_POST_OPTION = "Invalid post action.";
 
+    /* Image Service Expected Exceptions */
+    public static final String FILE_NOT_IMAGE = "The file is not an image";
+
     public ExceptionService(String message) {
         super(message);
     }

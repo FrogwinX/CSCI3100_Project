@@ -83,15 +83,21 @@ public class ForumService {
      * @param title title of the post
      * @param content content of the post or comment
      * @param tag tag for the post
-     * @param image image of the post or comment, optional
+     * @param images images of the post or comment, optional
      * @param attachTo 0 if it is a post, post id if it is a comment
-     * @throws Exception
+     * @throws Exception FILE_NOT_IMAGE
      */
-    public void createPostOrComment(Integer userId, String title, String content, List<String> tag, MultipartFile image, Integer attachTo) throws Exception {
+    public void createPostOrComment(Integer userId, String title, String content, List<String> tag, List<MultipartFile> images, Integer attachTo) throws Exception {
         securityService.checkUserIdWithToken(userId);
-        Integer imageId = null;
-        if (image != null) {
-            imageId = imageService.saveImage(image);
+        List<Integer> allImageId = new ArrayList<Integer>();
+        for (MultipartFile image: images) {
+            if (image.getContentType() == null || !image.getContentType().startsWith("image/")) {
+                ExceptionService.throwException(ExceptionService.FILE_NOT_IMAGE);
+            }
+        }
+
+        for (MultipartFile image: images) {
+            allImageId.add(imageService.saveImage(image));
         }
 
         PostModel postOrComment;
@@ -110,8 +116,10 @@ public class ForumService {
                 parent = forumRepository.findById(parent.getAttachTo()).get();
             }
         }
-        if (imageId != null) {
-            forumRepository.connectPostWithImage(postOrComment.getPostId(), imageId);
+        if (allImageId.size() != 0) {
+            for (Integer singleImageId: allImageId) {
+                forumRepository.connectPostWithImage(postOrComment.getPostId(), singleImageId);
+            }
         }
 
     }

@@ -103,14 +103,14 @@ public class ForumController {
     @SuppressWarnings("unchecked")
     @PostMapping(value = "createPostOrComment", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     private ResponseBodyDTO createPostOrComment(@RequestPart Map<String, Object> requestBody,
-                                    @RequestPart(required = false) MultipartFile file) {
+                                    @RequestPart(required = false) List<MultipartFile> files) {
         try {
             Map<String, Object> data = new HashMap<>();
             forumService.createPostOrComment(   (Integer) requestBody.get("userId"),
                                                 (String) requestBody.get("title"),
                                                 (String) requestBody.get("content"),
                                                 (List<String>) requestBody.get("tag"),
-                                                (MultipartFile) file,
+                                                (List<MultipartFile>) files,
                                                 (Integer) requestBody.get("attachTo"));
 
             responseBodyDTO.setMessage("A new post/comment is created");
