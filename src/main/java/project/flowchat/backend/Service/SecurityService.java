@@ -31,7 +31,7 @@ public class SecurityService {
     private final UserAccountRepository userAccountRepository;
     private final LicenseRepository licenseRepository;
 
-    private final int EXPIRATION_TIME = 7 * 24 * 60 * 60 * 1000; // 7 days
+    private static final int EXPIRATION_TIME = 7 * 24 * 60 * 60 * 1000; // 7 days
     private static Key key = null;
 
     protected enum KeyType {

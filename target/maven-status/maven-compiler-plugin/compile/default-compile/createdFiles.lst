@@ -11,11 +11,7 @@ project/flowchat/backend/Service/ForumService.class
 project/flowchat/backend/Service/ImageService.class
 project/flowchat/backend/Model/UserAccountModel.class
 project/flowchat/backend/Service/AccountService.class
-project/flowchat/backend/Service/SystemService.class
-project/flowchat/backend/Model/SystemModel.class
 project/flowchat/backend/Repository/LicenseRepository.class
-project/flowchat/backend/Repository/SystemRepository.class
-project/flowchat/backend/Controller/SystemController.class
 project/flowchat/backend/Service/AccountService$1.class
 project/flowchat/backend/Controller/ImageController.class
 project/flowchat/backend/Model/PostModel.class

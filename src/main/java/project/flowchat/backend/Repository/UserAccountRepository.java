@@ -118,6 +118,7 @@ public interface UserAccountRepository extends JpaRepository<UserAccountModel, I
      * Find a list of userId and usernames of the active users with case-insensitive keywords in usernames or emails, filtered out the blocked users, ordered randomly
      * @param userId userId Integer
      * @param keyword keywords case-insensitive String
+     * @param excludingUserIdList a list of userId that have already retrieved
      * @param searchNum required number of queries
      * @return a lists of userId and usernames
      */
@@ -130,8 +131,9 @@ public interface UserAccountRepository extends JpaRepository<UserAccountModel, I
                             "SELECT user_id_to\n" +
                             "FROM PROFILE.Block\n" +
                             "WHERE user_id_from = ?1)\n" +
-                            "ORDER BY NEWID()\n" +
+                            "AND user_id NOT IN ?3\n" +
+                            "ORDER BY user_id\n" +
                             "OFFSET 0 ROWS\n" +
-                            "FETCH NEXT ?3 ROWS ONLY\n")
-    List<List<String>> findActiveUserByKeyword(Integer userId, String keyword, Integer searchNum);
+                            "FETCH NEXT ?4 ROWS ONLY\n")
+    List<List<String>> findActiveUserByKeyword(Integer userId, String keyword, List<Integer> excludingUserIdList, Integer searchNum);
 }

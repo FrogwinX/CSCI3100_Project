@@ -346,14 +346,15 @@ public class AccountService {
      * @param userId userId Integer
      * @param keyword keyword case-insensitive String
      * @param searchNum required number of post previews
+     * @param excludingUserIdList a list of userId that have already retrieved
      * @return a list of userId and usernames
      * @throws Exception any exception
      */
-    public List<Map<String, Object>> searchUser(Integer userId, String keyword, Integer searchNum) throws Exception {
+    public List<Map<String, Object>> searchUser(Integer userId, String keyword, List<Integer> excludingUserIdList, Integer searchNum) throws Exception {
         securityService.checkUserIdWithToken(userId);
         keyword = "%" + keyword + "%";
         List<Map<String, Object>> userList = new ArrayList<>();
-        List<List<String>> usernameAndUserIdList = userAccountRepository.findActiveUserByKeyword(userId, keyword, searchNum);
+        List<List<String>> usernameAndUserIdList = userAccountRepository.findActiveUserByKeyword(userId, keyword, excludingUserIdList, searchNum);
         for (List<String> list : usernameAndUserIdList) {
             Map<String, Object> user = new HashMap<>();
             user.put("userId", list.get(0));

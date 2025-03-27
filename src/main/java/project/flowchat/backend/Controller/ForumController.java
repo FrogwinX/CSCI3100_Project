@@ -22,15 +22,17 @@ import java.util.Map;
 public class ForumController {
 
     @Autowired
-    private final ForumService forumService;
     private final AccountService accountService;
+    private final ForumService forumService;
     private ResponseBodyDTO responseBodyDTO;
 
     @GetMapping("getLatestPostPreviewList")
-    private ResponseBodyDTO getLatestPostPreviewList(@RequestParam Integer userId, Integer lastPostId, Integer postNum) {
+    private ResponseBodyDTO getLatestPostPreviewList(@RequestParam Integer userId,
+                                                     @RequestParam(value = "excludingPostIdList") List<Integer> excludingPostIdList,
+                                                     @RequestParam Integer postNum) {
         try {
             Map<String, Object> data = new HashMap<>();
-            List<PostDTO> postPreviewModelList = forumService.getLatestPostPreviewList(userId, lastPostId, postNum);
+            List<PostDTO> postPreviewModelList = forumService.getLatestPostPreviewList(userId, excludingPostIdList, postNum);
             data.put("isSuccess", true);
             data.put("postPreviewList", postPreviewModelList);
             responseBodyDTO.setMessage("The latest post preview list is returned");
@@ -49,10 +51,12 @@ public class ForumController {
     }
 
     @GetMapping("getRecommendedPostPreviewList")
-    private ResponseBodyDTO getRecommendedPostPreviewList(@RequestParam Integer userId, Integer postNum) {
+    private ResponseBodyDTO getRecommendedPostPreviewList(@RequestParam Integer userId,
+                                                          @RequestParam(value = "excludingPostIdList") List<Integer> excludingPostIdList,
+                                                          @RequestParam Integer postNum) {
         try {
             Map<String, Object> data = new HashMap<>();
-            List<PostDTO> postPreviewModelList = forumService.getRecommendedPostPreviewList(userId, postNum);
+            List<PostDTO> postPreviewModelList = forumService.getRecommendedPostPreviewList(userId, excludingPostIdList, postNum);
             data.put("isSuccess", true);
             data.put("postPreviewList", postPreviewModelList);
             responseBodyDTO.setMessage("The recommended post preview list is returned");
@@ -72,10 +76,12 @@ public class ForumController {
     }
 
     @GetMapping("getFollowingPostPreviewList")
-    private ResponseBodyDTO getFollowingPostPreviewList(@RequestParam Integer userId, Integer postNum) {
+    private ResponseBodyDTO getFollowingPostPreviewList(@RequestParam Integer userId,
+                                                        @RequestParam(value = "excludingPostIdList") List<Integer> excludingPostIdList,
+                                                        @RequestParam Integer postNum) {
         try {
             Map<String, Object> data = new HashMap<>();
-            List<PostDTO> postPreviewModelList = forumService.getFollowingPostPreviewList(userId, postNum);
+            List<PostDTO> postPreviewModelList = forumService.getFollowingPostPreviewList(userId, excludingPostIdList, postNum);
             data.put("isSuccess", true);
             data.put("postPreviewList", postPreviewModelList);
             responseBodyDTO.setMessage("The following post preview list is returned");
@@ -217,12 +223,12 @@ public class ForumController {
     }
 
     @PostMapping("likeOrDislike")
-    private ResponseBodyDTO likeOrDislike(@RequestBody Map<String, String> requestBody) {
+    private ResponseBodyDTO likeOrDislike(@RequestBody Map<String, Object> requestBody) {
         try {
             Map<String, Object> data = new HashMap<>();
-            forumService.likeOrDislike(Integer.parseInt(requestBody.get("postId")),
-                                        Integer.parseInt(requestBody.get("userId")),
-                                        requestBody.get("action"));
+            forumService.likeOrDislike( (Integer) requestBody.get("postId"),
+                                        (Integer) requestBody.get("userId"),
+                                        (String) requestBody.get("action"));
             data.put("isSuccess", true);
             responseBodyDTO.setMessage("The post/comment is liked/disliked");
             responseBodyDTO.setData(data);
@@ -260,22 +266,47 @@ public class ForumController {
         return responseBodyDTO;
     }
 
-    @GetMapping("search")
-    private ResponseBodyDTO search(@RequestParam Integer userId, String keyword, Integer searchNum) {
+    @GetMapping("searchUser")
+    private ResponseBodyDTO searchUser(@RequestParam Integer userId,
+                                       @RequestParam String keyword,
+                                       @RequestParam(value = "excludingUserIdList") List<Integer> excludingUserIdList,
+                                       @RequestParam Integer searchNum) {
         try {
             Map<String, Object> data = new HashMap<>();
-            List<PostDTO> postPreviewList = forumService.searchPost(userId, keyword, searchNum);
-            List<Map<String, Object>> userList = accountService.searchUser(userId, keyword, searchNum);
+            List<Map<String, Object>> userList = accountService.searchUser(userId, keyword, excludingUserIdList, searchNum);
             data.put("isSuccess", true);
-            data.put("postPreviewList", postPreviewList);
             data.put("userList", userList);
             responseBodyDTO.setMessage("The search result is returned");
             responseBodyDTO.setData(data);
         } catch (ExceptionService e) {
             Map<String, Object> data = new HashMap<>();
             data.put("isSuccess", false);
-            data.put("postPreviewList", null);
             data.put("userList", null);
+            responseBodyDTO.setMessage(e.getMessage());
+            responseBodyDTO.setData(data);
+        } catch (Exception e) {
+            responseBodyDTO.setMessage("Fail: " + e);
+            responseBodyDTO.setData(null);
+        }
+        return responseBodyDTO;
+    }
+
+    @GetMapping("searchPost")
+    private ResponseBodyDTO searchPost(@RequestParam Integer userId,
+                                       @RequestParam String keyword,
+                                       @RequestParam(value = "excludingPostIdList") List<Integer> excludingPostIdList,
+                                       @RequestParam Integer searchNum) {
+        try {
+            Map<String, Object> data = new HashMap<>();
+            List<PostDTO> postPreviewList = forumService.searchPost(userId, keyword, excludingPostIdList, searchNum);
+            data.put("isSuccess", true);
+            data.put("postPreviewList", postPreviewList);
+            responseBodyDTO.setMessage("The search result is returned");
+            responseBodyDTO.setData(data);
+        } catch (ExceptionService e) {
+            Map<String, Object> data = new HashMap<>();
+            data.put("isSuccess", false);
+            data.put("postPreviewList", null);
             responseBodyDTO.setMessage(e.getMessage());
             responseBodyDTO.setData(data);
         } catch (Exception e) {
