@@ -20,6 +20,15 @@ public class ExceptionService extends Exception {
     public static final String ACTIVE_ACCOUNT = "This email address has been used.";
     public static final String INCORRECT_PASSWORD = "Incorrect username, email address or password.";
 
+    /* Forum Service Expected Exceptions*/
+    public static final String INVALID_POST_CREATOR = "This post or comment is not created by you.";
+    public static final String POST_DELETED = "This post or comment has been deleted.";
+    public static final String MAKE_COMMENT_TO_A_POST = "Cannot make a comment become a post.";
+    public static final String ALREADY_LIKED_THIS_POST = "Already liked this post or comment.";
+    public static final String ALREADY_DISLIKED_THIS_POST = "Already disliked this post or comment.";
+    public static final String POST_NOT_LIKED = "Has not liked this post or comment before.";
+    public static final String POST_NOT_DISLIKED = "Has not disliked this post or comment before.";
+    public static final String INVALID_POST_OPTION = "Invalid post action.";
 
     public ExceptionService(String message) {
         super(message);

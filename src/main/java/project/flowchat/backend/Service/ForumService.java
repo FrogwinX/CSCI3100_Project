@@ -148,7 +148,7 @@ public class ForumService {
      * @param tag new tag of the post, empty list if user wants to delete tag
      * @param image new image of the post or comment, empty image if user wants to delete image
      * @param attachTo new post id if it is a comment, can only change from non-zero to non-zero
-     * @throws Exception
+     * @throws Exception INVALID_POST_CREATOR, POST_DELETED, MAKE_COMMENT_TO_A_POST
      */
     @Transactional
     public void updatePostOrComment(Integer postId, Integer userId, String title, String content, List<String> tag, MultipartFile image, Integer attachTo) throws Exception {
@@ -158,11 +158,11 @@ public class ForumService {
         PostModel postModel = postModelOptional.get();
         if (userId != postModel.getUserId()
         && ((String) securityService.getClaims().get("role")).equals("user")) {
-            throw new ExceptionService("The post/comment is not created by that user");
+            ExceptionService.throwException(ExceptionService.INVALID_POST_CREATOR);
         }
 
         if (!postModel.getIsActive()) {
-            throw new ExceptionService("The post/comment is not active");
+            ExceptionService.throwException(ExceptionService.POST_DELETED);
         }
 
         if (content != null) postModel.setContent(content);
@@ -195,7 +195,7 @@ public class ForumService {
             }
         }
         else if (attachTo != null && attachTo == 0) {
-            throw new ExceptionService("Cannot make a comment become a post");
+            ExceptionService.throwException(ExceptionService.MAKE_COMMENT_TO_A_POST);
         }
 
 
@@ -240,7 +240,7 @@ public class ForumService {
      * Set post or comment is_active to false, delete image and tag in the database
      * @param postId post id of the post or comment that user want to delete
      * @param userId user id of user who wants to delete the post or comment
-     * @throws Exception
+     * @throws Exception INVALID_POST_CREATOR, POST_DELETED
      */
     @Transactional
     public void deletePostOrComment(Integer postId, Integer userId) throws Exception {
@@ -250,11 +250,11 @@ public class ForumService {
 
         if (userId != postModel.getUserId()
         && ((String) securityService.getClaims().get("role")).equals("user")) {
-            throw new ExceptionService("The post/comment is not created by that user");
+            ExceptionService.throwException(ExceptionService.INVALID_POST_CREATOR);
         }
 
         if (!postModel.getIsActive()) {
-            throw new ExceptionService("The post/comment is not active");
+            ExceptionService.throwException(ExceptionService.POST_DELETED);
         }
 
         postModel.setIsActive(false);
@@ -490,18 +490,18 @@ public class ForumService {
      * @param postId post id of the post or comment that user want to like or dislike
      * @param userId user id of the user
      * @param action like or dislike
-     * @throws Exception
+     * @throws Exception ALREADY_LIKED_THAT_POST, ALREADY_DISLIKED_THAT_POST, POST_DELETED, INVALID_POST_OPTION
      */
     public void likeOrDislike(Integer postId, Integer userId, String action) throws Exception{
         securityService.checkUserIdWithToken(userId);
         if (forumRepository.isLikeClick(postId, userId) != null) {
-            throw new ExceptionService("User has liked that post/comment before");
+            ExceptionService.throwException(ExceptionService.ALREADY_LIKED_THIS_POST);
         }
         if (forumRepository.isDislikeClick(postId, userId) != null) {
-            throw new ExceptionService("User has disliked that post/comment before");
+            ExceptionService.throwException(ExceptionService.ALREADY_DISLIKED_THIS_POST);
         }
         if (forumRepository.postOrCommentIsActive(postId) == false) {
-            throw new ExceptionService("The post/comment is not active");
+            ExceptionService.throwException(ExceptionService.POST_DELETED);
         }
         if (action.equals("like")) {
             forumRepository.addLikeRelationship(postId, userId);
@@ -512,7 +512,7 @@ public class ForumService {
             forumRepository.addDislikeCount(postId);
         }
         else {
-            throw new ExceptionService("Action not available: " + action);
+            ExceptionService.throwException(ExceptionService.INVALID_POST_OPTION);
         }
     }
 
@@ -521,29 +521,29 @@ public class ForumService {
      * @param postId post id of the post or comment that user want to unlike or undislike
      * @param userId user id of the user
      * @param action unlike or undislike
-     * @throws Exception
+     * @throws Exception POST_DELETED, POST_NOT_LIKED, POST_NOT_DISLIKED, INVALID_POST_OPTION
      */
     public void unlikeOrUndislike(Integer postId, Integer userId, String action) throws Exception{
         securityService.checkUserIdWithToken(userId);
         if (forumRepository.postOrCommentIsActive(postId) == false) {
-            throw new ExceptionService("The post/comment is not active");
+            ExceptionService.throwException(ExceptionService.POST_DELETED);
         }
         if (action.equals("unlike")) {
             if (forumRepository.isLikeClick(postId, userId) == null) {
-                throw new ExceptionService("User has not liked that post/comment before");
+                ExceptionService.throwException(ExceptionService.POST_NOT_LIKED);
             }
             forumRepository.removeLikeRelationship(postId, userId);
             forumRepository.minusLikeCount(postId);
         }
         else if (action.equals("undislike")) {
             if (forumRepository.isDislikeClick(postId, userId) == null) {
-                throw new ExceptionService("User has not disliked that post/comment before");
+                ExceptionService.throwException(ExceptionService.POST_NOT_DISLIKED);
             }
             forumRepository.removeDislikeRelationship(postId, userId);
             forumRepository.minusDislikeCount(postId);
         }
         else {
-            throw new ExceptionService("Action not available: " + action);
+            ExceptionService.throwException(ExceptionService.INVALID_POST_OPTION);
         }
     }
 
