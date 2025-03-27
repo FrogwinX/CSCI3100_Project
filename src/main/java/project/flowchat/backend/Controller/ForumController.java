@@ -217,12 +217,12 @@ public class ForumController {
     }
 
     @PostMapping("likeOrDislike")
-    private ResponseBodyDTO likeOrDislike(@RequestBody Map<String, String> requestBody) {
+    private ResponseBodyDTO likeOrDislike(@RequestBody Map<String, Object> requestBody) {
         try {
             Map<String, Object> data = new HashMap<>();
-            forumService.likeOrDislike(Integer.parseInt(requestBody.get("postId")),
-                                        Integer.parseInt(requestBody.get("userId")),
-                                        requestBody.get("action"));
+            forumService.likeOrDislike( (Integer) requestBody.get("postId"),
+                                        (Integer) requestBody.get("userId"),
+                                        (String) requestBody.get("action"));
             data.put("isSuccess", true);
             responseBodyDTO.setMessage("The post/comment is liked/disliked");
             responseBodyDTO.setData(data);
