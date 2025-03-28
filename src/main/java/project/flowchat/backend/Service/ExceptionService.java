@@ -33,6 +33,9 @@ public class ExceptionService extends Exception {
     /* Image Service Expected Exceptions */
     public static final String FILE_NOT_IMAGE = "The file is not an image";
 
+    /* Chat Service Expected Exceptions */
+    public static final String MESSAGE_ALREADY_READ = "This message has already been read.";
+
     public ExceptionService(String message) {
         super(message);
     }

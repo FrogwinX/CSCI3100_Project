@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import jakarta.transaction.Transactional;
@@ -22,6 +23,8 @@ public class ChatService {
     @Autowired
     private final ImageService imageService;
     private final MessageRepository messageRepository;
+    private final SecurityService securityService;
+    private SimpMessagingTemplate messagingTemplate;
 
     /**
      * Send message and store it in database
@@ -94,5 +97,28 @@ public class ChatService {
         }
 
         return messageDTO;
+    }
+
+    /**
+     * Update the read at time of a message
+     * @param userId user id of the user who read the message
+     * @param messageId message id of the message that is read
+     * @param topic topic of chat room
+     * @throws Exception MESSAGE_ALREADY_READ
+     */
+    public void updateReadAt(Integer userId, Integer messageId, String topic) throws Exception {
+        securityService.checkUserIdWithToken(userId);
+        MessageModel messageModel = messageRepository.findById(messageId).get();
+        if (messageModel.getReadAt() != null) {
+            ExceptionService.throwException(ExceptionService.MESSAGE_ALREADY_READ);
+        }
+        messageModel.setReadAt(ZonedDateTime.now(ZoneId.of("Asia/Hong_Kong")));
+        messageRepository.save(messageModel);
+
+        ChatReceiveMessageDTO refreshMessaage = new ChatReceiveMessageDTO();
+        refreshMessaage.setSuccess(true);
+        refreshMessaage.setRefresh(true);
+
+        messagingTemplate.convertAndSend("/topic/" + topic, refreshMessaage);
     }
 }

@@ -23,4 +23,5 @@ public class ChatReceiveMessageDTO {
     private ZonedDateTime readAt;
     private List<String> imageAPIList;
     private Boolean success;
+    private Boolean refresh;
 }
