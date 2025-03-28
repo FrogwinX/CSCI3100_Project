@@ -30,6 +30,7 @@ public class AccountService {
     @Autowired
     private final UserAccountRepository userAccountRepository;
     private final SecurityService securityService;
+    private final ForumService forumService;
     private JavaMailSender mailSender;
 
     private static final Integer USER_ROLE_ID = 2;
@@ -253,7 +254,7 @@ public class AccountService {
      * @param password password string
      * @return UserAccountModel Object
      */
-    private UserAccountModel createAccount(String username, String email, String password) {
+    private UserAccountModel addAccountToDatabase(String username, String email, String password) {
         UserAccountModel userAccountModel = new UserAccountModel();
         userAccountModel.setUsername(username);
         userAccountModel.setEmail(email);
@@ -278,7 +279,9 @@ public class AccountService {
         isUsernameUnique(username);
         isEmailUnique(email);
         securityService.setKeyUnavailable(email, licenseKey, SecurityService.KeyType.LICENSE);
-        return createAccount(username, email, password);
+        UserAccountModel userAccountModel = addAccountToDatabase(username, email, password);
+        forumService.addAllTagsForUserToDatabase(userAccountModel.getUserId());
+        return userAccountModel;
     }
 
     /**

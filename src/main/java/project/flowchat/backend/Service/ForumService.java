@@ -125,6 +125,17 @@ public class ForumService {
     }
 
     /**
+     * Add all recommendation tag relationship for a user
+     * @param userId userId Integer
+     */
+    public void addAllTagsForUserToDatabase(Integer userId) {
+        final int TAG_NUM = 25;
+        for (int i=1; i<=TAG_NUM; i++) {
+            forumRepository.addRecommendationTagIdByUserId(userId, i);
+        }
+    }
+
+    /**
      * add a new record to FORUM.Post
      * @param userId userId Integer
      * @param title title string
@@ -341,48 +352,39 @@ public class ForumService {
      */
     public List<PostDTO> getRecommendedPostPreviewList(Integer userId, List<Integer> excludingPostIdList, Integer postNum) throws Exception {
         securityService.checkUserIdWithToken(userId);
-        List<PostDTO> postPreviewModelList = new ArrayList<>();
-        List<Integer> topTwoTagId = forumRepository.findRecommendedTagByHighestScore(userId);
-        if (topTwoTagId.size() == 2) {
-            Integer firstTagId = topTwoTagId.get(0);
-            Integer secondTagId = topTwoTagId.get(1);
 
-            int popularFirstTagPostNum = max(1, postNum / 2);
-            int popularSecondTagPostNum = postNum * 3 / 10;
+        List<PostDTO> postPreviewlList = new ArrayList<>();
+        List<Integer> topFiveTagId = forumRepository.findRecommendedTagByHighestScore(userId);
 
-            excludingPostIdList.addAll(forumRepository.findViewPostListByUserId(userId));
+        excludingPostIdList.addAll(forumRepository.findViewPostListByUserId(userId));
 
-            List<PostDTO> popularPostPreviewModelList = new ArrayList<>();
+        final double[] postDistribution = {0.3, 0.2, 0.1, 0.1, 0.1};
+        for (int i=0; i<postDistribution.length; i++) {
+            if (topFiveTagId.size() == i) {
+                break;
+            }
+            Integer tagId = topFiveTagId.get(i);
+            int popularPostNum = max(1, (int) (postNum * postDistribution[i]));
 
-            List<PostDTO> popularFirstTagPostList = generatePostPreviewListByTagRecommendation("popular", userId, firstTagId, excludingPostIdList, popularFirstTagPostNum);
-            for (PostDTO post : popularFirstTagPostList) {
+            List<PostDTO> popularTagPostList = generatePostPreviewListByTagRecommendation("popular", userId, tagId, excludingPostIdList, popularPostNum);
+            for (PostDTO post : popularTagPostList) {
                 excludingPostIdList.add(post.getPostId());
             }
-            popularPostPreviewModelList.addAll(popularFirstTagPostList);
+            postPreviewlList.addAll(popularTagPostList);
 
-            List<PostDTO> popularSecondTagPostList = generatePostPreviewListByTagRecommendation("popular", userId, secondTagId, excludingPostIdList, popularSecondTagPostNum);
-            for (PostDTO post : popularSecondTagPostList) {
-                excludingPostIdList.add(post.getPostId());
-            }
-            popularPostPreviewModelList.addAll(popularSecondTagPostList);
-
-            Collections.shuffle(popularPostPreviewModelList);
-
-            postPreviewModelList.addAll(popularPostPreviewModelList);
-
-            int remainingPostNum = postNum - postPreviewModelList.size();
-            Random random = new Random();
-            List<PostDTO> randomPopularPostPreviewModelList = generatePostPreviewListByTagRecommendation("random", userId, null, excludingPostIdList, remainingPostNum);
-            for (PostDTO postPreview : randomPopularPostPreviewModelList) {
-                postPreviewModelList.add(random.nextInt(postPreviewModelList.size() + 1), postPreview);
+            if (i == 2) {
+                Collections.shuffle(postPreviewlList);
             }
         }
-        else {
-            postPreviewModelList.addAll(generatePostPreviewListByTagRecommendation("random", userId, null, excludingPostIdList, postNum));
-            Collections.shuffle(postPreviewModelList);
+
+        int remainingPostNum = postNum - postPreviewlList.size();
+        Random random = new Random();
+        List<PostDTO> randomPopularPostPreviewList = generatePostPreviewListByTagRecommendation("random", userId, null, excludingPostIdList, remainingPostNum);
+        for (PostDTO postPreview : randomPopularPostPreviewList) {
+            postPreviewlList.add(random.nextInt(postPreviewlList.size() + 1), postPreview);
         }
 
-        return postPreviewModelList;
+        return postPreviewlList;
     }
 
     /**

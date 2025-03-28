@@ -14,7 +14,6 @@ import java.util.List;
 public interface ForumRepository extends JpaRepository<PostModel, Integer> {
     /**
      * Get tag id from tag name
-     *
      * @param tagName tag name string
      * @return corresponding tag id
      */
@@ -23,7 +22,6 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
 
     /**
      * Insert record into Post_Tag
-     *
      * @param postId postId Integer
      * @param tagId  tagId Integer
      */
@@ -34,7 +32,6 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
 
     /**
      * Find active comments from post id, filtered out the blocked users, ordered by the descending order of likes num
-     *
      * @param postId postId Integer
      * @param userId userId Integer
      * @return a list of comments
@@ -52,7 +49,6 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
 
     /**
      * Find post content by postId
-     *
      * @param postId postId Integer
      * @return a single post
      */
@@ -61,7 +57,6 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
 
     /**
      * Find imageId by postId. A post may contain multiple images
-     *
      * @param postId postId Integer
      * @return a list of imageId
      */
@@ -70,7 +65,6 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
 
     /**
      * Find post tag(s) by postId. A post may contain multiple tags
-     *
      * @param postId postId Integer
      * @return a list of tag names
      */
@@ -82,7 +76,6 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
 
     /**
      * Find post tagId by postId. A post may contain multiple tags
-     *
      * @param postId postId Integer
      * @return a list of tagId
      */
@@ -93,7 +86,6 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
 
     /**
      * Find some active posts, filtered out the blocked users, ordered by the descending order of post update time
-     *
      * @param userId  userId Integer
      * @param excludingPostIdList a list of postId that have already retrieved
      * @param postNum required number of post
@@ -115,7 +107,6 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
 
     /**
      * Find some active posts, filtered in the following users, ordered by random order
-     *
      * @param userId  userId Integer
      * @param excludingPostIdList a list of postId that have already retrieved
      * @param postNum required number of post
@@ -130,14 +121,13 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
             "FROM PROFILE.Follow\n" +
             "WHERE user_id_from = ?1)\n" +
             "AND post_id NOT IN ?2\n" +
-            "ORDER BY NEWID()\n" +
+            "ORDER BY popularity_score DESC\n" +
             "OFFSET 0 ROWS\n" +
             "FETCH NEXT ?3 ROWS ONLY")
     List<PostModel> findFollowingActivePostByRange(Integer userId, List<Integer> excludingPostIdList, Integer postNum);
 
     /**
      * Find some active posts, filtered out the blocked users, ordered by the descending order of likes num
-     *
      * @param userId  userId Integer
      * @param excludingPostIdList a list of postId that have already retrieved
      * @param postNum required number of post
@@ -159,7 +149,6 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
 
     /**
      * Find some active posts by a tag, filtered out the blocked users, ordered by the descending order of post update time
-     *
      * @param userId  userId Integer
      * @param tagId   tagId Integer
      * @param excludingPostIdList a list of postId that have already retrieved
@@ -185,7 +174,6 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
 
     /**
      * Find some active posts from a tag, filtered out the blocked users, ordered by the descending order of likes num
-     *
      * @param userId  userId Integer
      * @param tagId   tagId Integer
      * @param excludingPostIdList a list of postId that have already retrieved
@@ -210,8 +198,17 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
     List<PostModel> findPopularActivePostByRangeAndTag(Integer userId, Integer tagId, List<Integer> excludingPostIdList, Integer postNum);
 
     /**
+     * Add the new tagId with the userId to Recommendation table
+     * @param userId userId Integer
+     * @param tagId tagId Integer
+     */
+    @Modifying
+    @Transactional
+    @NativeQuery("INSERT INTO FORUM.Recommendation (user_id, tag_id) VALUES (?1, ?2)")
+    void addRecommendationTagIdByUserId(Integer userId, Integer tagId);
+
+    /**
      * Find the two tags with the highest interaction scores from the user
-     *
      * @param userId userId Integer
      * @return two or less than two tagId
      */
@@ -220,7 +217,7 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
             "WHERE user_id = ?1\n" +
             "ORDER BY score DESC\n" +
             "OFFSET 0 ROWS\n" +
-            "FETCH NEXT 2 ROWS ONLY")
+            "FETCH NEXT 5 ROWS ONLY")
     List<Integer> findRecommendedTagByHighestScore(Integer userId);
 
     /**
