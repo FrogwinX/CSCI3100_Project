@@ -39,32 +39,32 @@ public class ChatService {
         messageModel.setSentAt(ZonedDateTime.now(ZoneId.of("Asia/Hong_Kong")));
         messageModel.setReadAt(null);
 
-        if (!connectImageAndMessage(message.getImageIdList(), messageModel.getMessageId())) {
+        if (!connectImageAndMessage(message.getImageIdList())) {
             ChatReceiveMessageDTO returnMessage = new ChatReceiveMessageDTO();
             returnMessage.setSuccess(false);
             returnMessage.setContent("Invalid image id list");
             return returnMessage;
         }
+        messageModel = messageRepository.save(messageModel);
 
-        messageRepository.save(messageModel);
+        for (Integer imageId: message.getImageIdList()) {
+            messageRepository.connectMessageWithImage(messageModel.getMessageId(), imageId);
+        }
+
         return convertToDTO(messageModel, message.getImageIdList());
     }
 
     /**
-     * Connect images and message if all images are not connected to any message or post
+     * Check if all images are not connected to any message or post
      * @param imageIdList
      * @return true if the given image id list does not contain any image that is not connected to any message or post, false otherwise
      */
-    private Boolean connectImageAndMessage(List<Integer> imageIdList, Integer messageId) {
+    private Boolean connectImageAndMessage(List<Integer> imageIdList) {
         List<Integer> unconnectImageList = messageRepository.getUnconnectImageList();
         for (Integer imageId : imageIdList) {
             if (!unconnectImageList.contains(imageId)) {
                 return false;
             }
-        }
-
-        for (Integer imageId: imageIdList) {
-            messageRepository.connectMessageWithImage(messageId, imageId);
         }
         return true;
     }
