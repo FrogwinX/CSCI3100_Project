@@ -54,4 +54,26 @@ public class ChatController {
         }
         return responseBodyDTO;
     }
+
+    @PutMapping("/deleteMessage")
+    public ResponseBodyDTO deleteMessage(@RequestBody Map<String, Object> requestBody) {
+        try {
+            Map<String, Object> data = new HashMap<>();
+            chatService.deleteMessage((Integer) requestBody.get("userId"),
+                                    (Integer) requestBody.get("messageId"),
+                                    (String) requestBody.get("topic"));
+            data.put("isSuccess", true);
+            responseBodyDTO.setMessage("The message is deleted");
+            responseBodyDTO.setData(data);
+        } catch (ExceptionService e) {
+            Map<String, Object> data = new HashMap<>();
+            data.put("isSuccess", false);
+            responseBodyDTO.setMessage(e.getMessage());
+            responseBodyDTO.setData(data);
+        } catch (Exception e) {
+            responseBodyDTO.setMessage("Fail: " + e);
+            responseBodyDTO.setData(null);
+        }
+        return responseBodyDTO;
+    }
 }

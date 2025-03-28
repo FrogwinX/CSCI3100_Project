@@ -14,6 +14,7 @@ import lombok.AllArgsConstructor;
 import project.flowchat.backend.DTO.ChatReceiveMessageDTO;
 import project.flowchat.backend.DTO.ChatSendMessageDTO;
 import project.flowchat.backend.Model.MessageModel;
+import project.flowchat.backend.Repository.ForumRepository;
 import project.flowchat.backend.Repository.MessageRepository;
 
 @AllArgsConstructor
@@ -23,6 +24,7 @@ public class ChatService {
     @Autowired
     private final ImageService imageService;
     private final MessageRepository messageRepository;
+    private final ForumRepository forumRepository;
     private final SecurityService securityService;
     private SimpMessagingTemplate messagingTemplate;
 
@@ -87,6 +89,7 @@ public class ChatService {
         messageDTO.setAttachTo(messageModel.getAttachTo());
         messageDTO.setSentAt(messageModel.getSentAt());
         messageDTO.setReadAt(messageModel.getReadAt());
+        messageDTO.setRefresh(false);
 
         if (imageIdList != null && imageIdList.size() > 0) {
             List<String> imageAPIList = new ArrayList<>();
@@ -109,6 +112,9 @@ public class ChatService {
     public void updateReadAt(Integer userId, Integer messageId, String topic) throws Exception {
         securityService.checkUserIdWithToken(userId);
         MessageModel messageModel = messageRepository.findById(messageId).get();
+        if (!messageModel.getIsActive()) {
+            ExceptionService.throwException(ExceptionService.MESSAGE_ALREADY_DELETED);
+        }
         if (messageModel.getReadAt() != null) {
             ExceptionService.throwException(ExceptionService.MESSAGE_ALREADY_READ);
         }
@@ -120,5 +126,35 @@ public class ChatService {
         refreshMessaage.setRefresh(true);
 
         messagingTemplate.convertAndSend("/topic/" + topic, refreshMessaage);
+    }
+
+    public void deleteMessage(Integer userId, Integer messageId, String topic) throws Exception {
+        securityService.checkUserIdWithToken(userId);
+        MessageModel messageModel = messageRepository.findById(messageId).get();
+        if (!messageModel.getIsActive()) {
+            ExceptionService.throwException(ExceptionService.MESSAGE_ALREADY_DELETED);
+        }
+        messageModel.setIsActive(false);
+        messageRepository.save(messageModel);
+
+        deleteImage(messageId);
+
+        ChatReceiveMessageDTO refreshMessaage = new ChatReceiveMessageDTO();
+        refreshMessaage.setSuccess(true);
+        refreshMessaage.setRefresh(true);
+
+        messagingTemplate.convertAndSend("/topic/" + topic, refreshMessaage);
+    }
+
+        /**
+     * Delete data in Message_Image and Image_Data
+     * @param messageId messageId Integer
+     */
+    private void deleteImage(Integer messageId) {
+        List<Integer> allImageId = messageRepository.findImageIdByMessageId(messageId);
+        for (Integer imageId: allImageId) {
+            messageRepository.deleteInMessageImage(imageId);
+            forumRepository.deleteInImageData(imageId);
+        }
     }
 }

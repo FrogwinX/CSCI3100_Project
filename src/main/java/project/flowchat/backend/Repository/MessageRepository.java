@@ -29,4 +29,21 @@ public interface MessageRepository extends JpaRepository<MessageModel, Integer> 
     @Modifying
     @NativeQuery("INSERT INTO CHAT.Message_Image (message_id, image_id) VALUES (?1, ?2)")
     void connectMessageWithImage(Integer messageId, Integer imageId);
+
+    /**
+     * Find image_id by message_id
+     * @param messageId Integer
+     * @return list of image_id
+     */
+    @NativeQuery("SELECT image_id FROM CHAT.Message_Image WHERE message_id = ?1")
+    List<Integer> findImageIdByMessageId(Integer messageId);
+
+    /**
+     * Delete all image_id that are connected to message_id
+     * @param imageId Integer
+     */
+    @Transactional
+    @Modifying
+    @NativeQuery("DELETE FROM CHAT.Message_Image WHERE image_id = ?1")
+    void deleteInMessageImage(Integer iamgeId);
 }
