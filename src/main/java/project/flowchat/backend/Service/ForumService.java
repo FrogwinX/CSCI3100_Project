@@ -3,6 +3,8 @@ package project.flowchat.backend.Service;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.transaction.Transactional;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import project.flowchat.backend.Model.PostModel;
@@ -12,9 +14,11 @@ import project.flowchat.backend.Repository.UserAccountRepository;
 
 import java.time.*;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import static java.lang.Integer.max;
+import static java.lang.Integer.min;
 
 @AllArgsConstructor
 @Service
@@ -74,6 +78,8 @@ public class ForumService {
         postDTO.setUpdatedAt(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm").format(post.getUpdatedAt()));
         postDTO.setCommentList(null);
 
+        updatePostPopularity(post);
+
         return postDTO;
     }
 
@@ -99,10 +105,12 @@ public class ForumService {
             // Post
             postOrComment = addPostOrCommentToDatabase(userId, title, content, attachTo);
             addTag(postOrComment.getPostId(), tag);
+            updateRecommendationScore(postOrComment.getPostId(), userId, "post");
         }
         else {
             // Comment
             postOrComment = addPostOrCommentToDatabase(userId, null, content, attachTo);
+            updateRecommendationScore(attachTo, userId, "comment");
             forumRepository.addCommentCountByOne(attachTo);
             PostModel parent = forumRepository.findById(attachTo).get();
             while (parent.getAttachTo() != 0) {
@@ -114,6 +122,17 @@ public class ForumService {
             forumRepository.connectPostWithImage(postOrComment.getPostId(), imageId);
         }
 
+    }
+
+    /**
+     * Add all recommendation tag relationship for a user
+     * @param userId userId Integer
+     */
+    public void addAllTagsForUserToDatabase(Integer userId) {
+        final int TAG_NUM = 25;
+        for (int i=1; i<=TAG_NUM; i++) {
+            forumRepository.addRecommendationTagIdByUserId(userId, i);
+        }
     }
 
     /**
@@ -324,19 +343,6 @@ public class ForumService {
     }
 
     /**
-     * Add the new generated postId in the get preview list to the excludingPostIdList to prevent repeated posts
-     * @param postPreviewModelList postPreviewModelList newly generated post preview list
-     * @param excludingPostIdList excludingPostIdList
-     * @return new excludingPostIdList
-     */
-    private List<Integer> addExcludingPostIdList(List<PostDTO> postPreviewModelList, List<Integer> excludingPostIdList) {
-        for (PostDTO post : postPreviewModelList) {
-            excludingPostIdList.add(post.getPostId());
-        }
-        return excludingPostIdList;
-    }
-
-    /**
      * Get a list of recommended post previews for a user
      * @param userId userId Integer
      * @param excludingPostIdList a list of postId that have already retrieved
@@ -346,57 +352,39 @@ public class ForumService {
      */
     public List<PostDTO> getRecommendedPostPreviewList(Integer userId, List<Integer> excludingPostIdList, Integer postNum) throws Exception {
         securityService.checkUserIdWithToken(userId);
-        List<PostDTO> postPreviewModelList = new ArrayList<>();
-        List<Integer> topTwoTagId = forumRepository.findRecommendedTagByHighestScore(userId);
-        if (topTwoTagId.size() == 2) {
-            Integer firstTagId = topTwoTagId.get(0);
-            Integer secondTagId = topTwoTagId.get(1);
-            List<PostDTO> list;
-            int latestFirstTagPostNum = postNum / 2 / 2;
-            int popularFirstTagPostNum = max(1, postNum / 2 - latestFirstTagPostNum);
-            int latestSecondTagPostNum = postNum * 3 / 10 / 2;
-            int popularSecondTagPostNum = postNum * 3 / 10 - latestSecondTagPostNum;
 
-            List<PostDTO> popularPostPreviewModelList = new ArrayList<>();
+        List<PostDTO> postPreviewlList = new ArrayList<>();
+        List<Integer> topFiveTagId = forumRepository.findRecommendedTagByHighestScore(userId);
 
-            list = generatePostPreviewListByTagRecommendation("popular", userId, firstTagId, excludingPostIdList, popularFirstTagPostNum);
-            excludingPostIdList = addExcludingPostIdList(list, excludingPostIdList);
-            popularPostPreviewModelList.addAll(list);
+        excludingPostIdList.addAll(forumRepository.findViewPostListByUserId(userId));
 
-            list = generatePostPreviewListByTagRecommendation("popular", userId, secondTagId, excludingPostIdList, popularSecondTagPostNum);
-            excludingPostIdList = addExcludingPostIdList(list, excludingPostIdList);
-            popularPostPreviewModelList.addAll(list);
+        final double[] postDistribution = {0.3, 0.2, 0.1, 0.1, 0.1};
+        for (int i=0; i<postDistribution.length; i++) {
+            if (topFiveTagId.size() == i) {
+                break;
+            }
+            Integer tagId = topFiveTagId.get(i);
+            int popularPostNum = max(1, (int) (postNum * postDistribution[i]));
 
-            Collections.shuffle(popularPostPreviewModelList);
+            List<PostDTO> popularTagPostList = generatePostPreviewListByTagRecommendation("popular", userId, tagId, excludingPostIdList, popularPostNum);
+            for (PostDTO post : popularTagPostList) {
+                excludingPostIdList.add(post.getPostId());
+            }
+            postPreviewlList.addAll(popularTagPostList);
 
-            List<PostDTO> latestPostPreviewModelList = new ArrayList<>();
-
-            list = generatePostPreviewListByTagRecommendation("latest", userId, firstTagId, excludingPostIdList, latestFirstTagPostNum);
-            excludingPostIdList = addExcludingPostIdList(list, excludingPostIdList);
-            latestPostPreviewModelList.addAll(list);
-
-            list = generatePostPreviewListByTagRecommendation("latest", userId, secondTagId, excludingPostIdList, latestSecondTagPostNum);
-            excludingPostIdList = addExcludingPostIdList(list, excludingPostIdList);
-            latestPostPreviewModelList.addAll(list);
-
-            Collections.shuffle(latestPostPreviewModelList);
-
-            postPreviewModelList.addAll(popularPostPreviewModelList);
-            postPreviewModelList.addAll(latestPostPreviewModelList);
-
-            int remainingPostNum = postNum - postPreviewModelList.size();
-            Random random = new Random();
-            List<PostDTO> randomPopularPostPreviewModelList = generatePostPreviewListByTagRecommendation("random", userId, null, excludingPostIdList, remainingPostNum);
-            for (PostDTO postPreview : randomPopularPostPreviewModelList) {
-                postPreviewModelList.add(random.nextInt(postPreviewModelList.size() + 1), postPreview);
+            if (i == 2) {
+                Collections.shuffle(postPreviewlList);
             }
         }
-        else {
-            postPreviewModelList.addAll(generatePostPreviewListByTagRecommendation("random", userId, null, excludingPostIdList, postNum));
-            Collections.shuffle(postPreviewModelList);
+
+        int remainingPostNum = postNum - postPreviewlList.size();
+        Random random = new Random();
+        List<PostDTO> randomPopularPostPreviewList = generatePostPreviewListByTagRecommendation("random", userId, null, excludingPostIdList, remainingPostNum);
+        for (PostDTO postPreview : randomPopularPostPreviewList) {
+            postPreviewlList.add(random.nextInt(postPreviewlList.size() + 1), postPreview);
         }
 
-        return postPreviewModelList;
+        return postPreviewlList;
     }
 
     /**
@@ -428,6 +416,11 @@ public class ForumService {
     public PostDTO getPostContentByPostId(Integer postId, Integer userId) throws Exception {
         securityService.checkUserIdWithToken(userId);
         PostModel post = forumRepository.findPostByPostId(postId);
+        if (forumRepository.isPostView(postId, userId) == null) {
+            forumRepository.addViewRelationship(postId, userId);
+            forumRepository.addViewCount(postId);
+            updateRecommendationScore(postId, userId, "view");
+        }
         return createPostDTO(post, userId);
     }
 
@@ -506,10 +499,12 @@ public class ForumService {
         if (action.equals("like")) {
             forumRepository.addLikeRelationship(postId, userId);
             forumRepository.addLikeCount(postId);
+            updateRecommendationScore(postId, userId, "like");
         }
         else if (action.equals("dislike")) {
             forumRepository.addDislikeRelationship(postId, userId);
             forumRepository.addDislikeCount(postId);
+            updateRecommendationScore(postId, userId, "dislike");
         }
         else {
             throw new ExceptionService("Action not available: " + action);
@@ -534,6 +529,7 @@ public class ForumService {
             }
             forumRepository.removeLikeRelationship(postId, userId);
             forumRepository.minusLikeCount(postId);
+            updateRecommendationScore(postId, userId, "unlike");
         }
         else if (action.equals("undislike")) {
             if (forumRepository.isDislikeClick(postId, userId) == null) {
@@ -541,6 +537,7 @@ public class ForumService {
             }
             forumRepository.removeDislikeRelationship(postId, userId);
             forumRepository.minusDislikeCount(postId);
+            updateRecommendationScore(postId, userId, "undislike");
         }
         else {
             throw new ExceptionService("Action not available: " + action);
@@ -568,6 +565,11 @@ public class ForumService {
         return postPreviewModelList;
     }
 
+    /**
+     * Get all the tagId and tagName
+     * @return a list of all tagId and tagName
+     * @throws Exception any Exceptions
+     */
     public List<Map<String, Object>> getAllTag() throws Exception {
         List<Map<String, Object>> tagList = new ArrayList<>();
         List<List<String>> tagIdAndNameList = forumRepository.findAllTagName();
@@ -578,5 +580,59 @@ public class ForumService {
             tagList.add(tag);
         }
         return tagList;
+    }
+
+    /**
+     * Update post popularity score by calculating the number of likes, dislikes, comments and views
+     * @param post post PostModel
+     */
+    @Async
+    public void updatePostPopularity(PostModel post) {
+        int score = 0;
+        score += (int) (5 * 5 *  Math.log(post.getLikeCount() + post.getDislikeCount() + 1)); // Like and Dislike
+        score += (int) (5 * 7 *  Math.log(0.5 * post.getCommentCount() + 1)); // Comment
+        score += (int) (5 * 8 *  Math.log(0.15 * post.getViewCount() + 3)); // View
+        int day = (int) ChronoUnit.DAYS.between(post.getUpdatedAt(), ZonedDateTime.now(ZoneId.of("Asia/Hong_Kong")));
+        score += max(-50, (int) (-0.2 * day * day + 30)); // Time
+        forumRepository.updatePostPopularity(post.getPostId(), score);
+    }
+
+    /**
+     * Update recommendation score by different interaction types
+     * @param postId postId Integer
+     * @param userId userId Integer
+     * @param interactionType including "view", "like", "dislike", "unlike", "undislike", "comment", "post"
+     */
+    @Async
+    public void updateRecommendationScore(Integer postId, Integer userId, String interactionType) {
+        List<Integer> tagIdList = forumRepository.findTagIdByPostId(postId);
+        for (Integer tagId : tagIdList) {
+            int score = forumRepository.findRecommendationScore(userId, tagId);
+            score = switch (interactionType) {
+                case "view" -> min(Integer.MAX_VALUE, score + 10);
+                case "like" -> min(Integer.MAX_VALUE, score + 30);
+                case "dislike" -> max(0, score - 10);
+                case "unlike" -> min(Integer.MAX_VALUE, score - 30);
+                case "undislike" -> max(0, score + 10);
+                case "comment" -> min(Integer.MAX_VALUE, score + 50);
+                case "post" -> min(Integer.MAX_VALUE, score + 100);
+                default -> score;
+            };
+            forumRepository.updateRecommendationTime(userId, tagId);
+            forumRepository.updateRecommendationScore(userId, tagId, score);
+        }
+    }
+
+    /**
+     * Schedule job for decay the recommendation score by 5 for all pair of userId and tagId with updatedTime less than 3 days
+     */
+    @Scheduled(fixedRate = 24 * 60 * 60 * 1000) // Runs every day
+    public void autoDecayRecommendationScore() {
+        List<List<Integer>> allRecommendationList = forumRepository.findInfrequentRecommendation();
+        for (List<Integer> list : allRecommendationList) {
+            int score = forumRepository.findRecommendationScore(list.getFirst(), list.getLast());
+            score = max(0, score - 5);
+            forumRepository.updateRecommendationScore(list.getFirst(), list.getLast(), score);
+        }
     }
 }

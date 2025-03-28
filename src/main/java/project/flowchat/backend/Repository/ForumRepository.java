@@ -14,7 +14,6 @@ import java.util.List;
 public interface ForumRepository extends JpaRepository<PostModel, Integer> {
     /**
      * Get tag id from tag name
-     *
      * @param tagName tag name string
      * @return corresponding tag id
      */
@@ -23,7 +22,6 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
 
     /**
      * Insert record into Post_Tag
-     *
      * @param postId postId Integer
      * @param tagId  tagId Integer
      */
@@ -34,7 +32,6 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
 
     /**
      * Find active comments from post id, filtered out the blocked users, ordered by the descending order of likes num
-     *
      * @param postId postId Integer
      * @param userId userId Integer
      * @return a list of comments
@@ -52,7 +49,6 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
 
     /**
      * Find post content by postId
-     *
      * @param postId postId Integer
      * @return a single post
      */
@@ -61,7 +57,6 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
 
     /**
      * Find imageId by postId. A post may contain multiple images
-     *
      * @param postId postId Integer
      * @return a list of imageId
      */
@@ -70,9 +65,8 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
 
     /**
      * Find post tag(s) by postId. A post may contain multiple tags
-     *
      * @param postId postId Integer
-     * @return a list of tagId
+     * @return a list of tag names
      */
     @NativeQuery("SELECT tag_name \n" +
             "FROM FORUM.Post_Tag PT\n" +
@@ -81,8 +75,17 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
     List<String> findPostTagNameByPostId(Integer postId);
 
     /**
+     * Find post tagId by postId. A post may contain multiple tags
+     * @param postId postId Integer
+     * @return a list of tagId
+     */
+    @NativeQuery("SELECT tag_id\n" +
+            "FROM FORUM.Post_Tag\n" +
+            "WHERE post_id = ?1")
+    List<Integer> findTagIdByPostId(Integer postId);
+
+    /**
      * Find some active posts, filtered out the blocked users, ordered by the descending order of post update time
-     *
      * @param userId  userId Integer
      * @param excludingPostIdList a list of postId that have already retrieved
      * @param postNum required number of post
@@ -104,7 +107,6 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
 
     /**
      * Find some active posts, filtered in the following users, ordered by random order
-     *
      * @param userId  userId Integer
      * @param excludingPostIdList a list of postId that have already retrieved
      * @param postNum required number of post
@@ -119,14 +121,13 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
             "FROM PROFILE.Follow\n" +
             "WHERE user_id_from = ?1)\n" +
             "AND post_id NOT IN ?2\n" +
-            "ORDER BY NEWID()\n" +
+            "ORDER BY popularity_score DESC\n" +
             "OFFSET 0 ROWS\n" +
             "FETCH NEXT ?3 ROWS ONLY")
     List<PostModel> findFollowingActivePostByRange(Integer userId, List<Integer> excludingPostIdList, Integer postNum);
 
     /**
      * Find some active posts, filtered out the blocked users, ordered by the descending order of likes num
-     *
      * @param userId  userId Integer
      * @param excludingPostIdList a list of postId that have already retrieved
      * @param postNum required number of post
@@ -141,21 +142,20 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
             "FROM PROFILE.Block\n" +
             "WHERE user_id_from = ?1)\n" +
             "AND post_id NOT IN ?2\n" +
-            "ORDER BY like_count DESC\n" +
+            "ORDER BY popularity_score DESC\n" +
             "OFFSET 0 ROWS\n" +
             "FETCH NEXT ?3 ROWS ONLY")
     List<PostModel> findPopularActivePostByRange(Integer userId, List<Integer> excludingPostIdList, Integer postNum);
 
     /**
      * Find some active posts by a tag, filtered out the blocked users, ordered by the descending order of post update time
-     *
      * @param userId  userId Integer
      * @param tagId   tagId Integer
      * @param excludingPostIdList a list of postId that have already retrieved
      * @param postNum required number of post
      * @return a lists of posts
      */
-    @NativeQuery("SELECT P.post_id, user_id, title, content, like_count, dislike_count, comment_count, attach_to, is_active, created_at, updated_at\n" +
+    @NativeQuery("SELECT P.post_id, user_id, title, content, like_count, dislike_count, comment_count, view_count, popularity_score, attach_to, is_active, created_at, updated_at\n" +
             "FROM FORUM.Post P\n" +
             "JOIN FORUM.Post_Tag PT \n" +
             "ON P.post_id = PT.post_id\n" +
@@ -174,14 +174,13 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
 
     /**
      * Find some active posts from a tag, filtered out the blocked users, ordered by the descending order of likes num
-     *
      * @param userId  userId Integer
      * @param tagId   tagId Integer
      * @param excludingPostIdList a list of postId that have already retrieved
      * @param postNum required number of post
      * @return a lists of posts
      */
-    @NativeQuery("SELECT P.post_id, user_id, title, content, like_count, dislike_count, comment_count, attach_to, is_active, created_at, updated_at\n" +
+    @NativeQuery("SELECT P.post_id, user_id, title, content, like_count, dislike_count, comment_count, view_count, popularity_score, attach_to, is_active, created_at, updated_at\n" +
             "FROM FORUM.Post P\n" +
             "JOIN FORUM.Post_Tag PT \n" +
             "ON P.post_id = PT.post_id\n" +
@@ -193,14 +192,23 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
             "FROM PROFILE.Block\n" +
             "WHERE user_id_from = ?1)\n" +
             "AND P.post_id NOT IN ?3\n" +
-            "ORDER BY like_count DESC\n" +
+            "ORDER BY popularity_score DESC\n" +
             "OFFSET 0 ROWS\n" +
             "FETCH NEXT ?4 ROWS ONLY")
     List<PostModel> findPopularActivePostByRangeAndTag(Integer userId, Integer tagId, List<Integer> excludingPostIdList, Integer postNum);
 
     /**
+     * Add the new tagId with the userId to Recommendation table
+     * @param userId userId Integer
+     * @param tagId tagId Integer
+     */
+    @Modifying
+    @Transactional
+    @NativeQuery("INSERT INTO FORUM.Recommendation (user_id, tag_id) VALUES (?1, ?2)")
+    void addRecommendationTagIdByUserId(Integer userId, Integer tagId);
+
+    /**
      * Find the two tags with the highest interaction scores from the user
-     *
      * @param userId userId Integer
      * @return two or less than two tagId
      */
@@ -209,7 +217,7 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
             "WHERE user_id = ?1\n" +
             "ORDER BY score DESC\n" +
             "OFFSET 0 ROWS\n" +
-            "FETCH NEXT 2 ROWS ONLY")
+            "FETCH NEXT 5 ROWS ONLY")
     List<Integer> findRecommendedTagByHighestScore(Integer userId);
 
     /**
@@ -232,7 +240,7 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
             "FROM PROFILE.Block\n" +
             "WHERE user_id_from = ?1)\n" +
             "AND post_id NOT IN ?3\n" +
-            "ORDER BY like_count DESC\n" +
+            "ORDER BY popularity_score DESC\n" +
             "OFFSET 0 ROWS\n" +
             "FETCH NEXT ?4 ROWS ONLY\n")
     List<PostModel> findPopularActivePostByRangeAndKeyword(Integer userId, String keyword, List<Integer> excludingPostIdList, Integer searchNum);
@@ -444,4 +452,94 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
      */
     @NativeQuery("SELECT is_active FROM FORUM.Post WHERE post_id = ?1")
     boolean postOrCommentIsActive(Integer postId);
+
+    /**
+     * Find if user viewed that post before
+     * @param postId postId Integer
+     * @param userId userId Integer
+     * @return post id if user viewed that post before, null if user did not view that post
+     */
+    @NativeQuery("SELECT post_id FROM FORUM.[View] WHERE post_id = ?1 AND user_id = ?2")
+    Integer isPostView(Integer postId, Integer userId);
+
+    /**
+     * Add a record in View table
+     * @param postId postId Integer
+     * @param userId userId Integer
+     */
+    @Modifying
+    @Transactional
+    @NativeQuery("INSERT INTO FORUM.[View] VALUES (?1, ?2)")
+    void addViewRelationship(Integer postId, Integer userId);
+
+    /**
+     * Add 1 to view count in Post table
+     * @param postId postId Integer
+     */
+    @Modifying
+    @Transactional
+    @NativeQuery("UPDATE FORUM.Post SET view_count = view_count + 1 WHERE post_id = ?1")
+    void addViewCount(Integer postId);
+
+    /**
+     * Find some active posts by a tag, filtered out the blocked users, ordered by the descending order of post update time
+     * @param userId  userId Integer
+     * @return a lists of postId
+     */
+    @NativeQuery("SELECT P.post_id\n" +
+            "FROM FORUM.Post P\n" +
+            "JOIN FORUM.[View] V\n" +
+            "ON P.post_id = V.post_id\n" +
+            "AND V.user_id = ?1\n" +
+            "WHERE DATEADD(HOUR, 8, GETUTCDATE()) <= DATEADD(WEEK, 1, updated_at)\n")
+    List<Integer> findViewPostListByUserId(Integer userId);
+
+    /**
+     * Update a new popularity score for a post
+     * @param postId postId Integer
+     * @param val a new popularity score
+     */
+    @Modifying
+    @Transactional
+    @NativeQuery("UPDATE FORUM.Post SET popularity_score = ?2 WHERE post_id = ?1")
+    void updatePostPopularity(Integer postId, int val);
+
+    /**
+     * Find a list of userId and tagId that the tag interaction is not updated for at least 3 days
+     * @return a list of userId and tagId
+     */
+    @NativeQuery("SELECT user_id, tag_id\n" +
+            "FROM FORUM.Recommendation\n" +
+            "WHERE DATEADD(HOUR, 8, GETUTCDATE()) > DATEADD(DAY, 3, updated_at)\n" +
+            "AND score != 0")
+    List<List<Integer>> findInfrequentRecommendation();
+
+    /**
+     * Find the recommendation score of the pair of userId and tagId
+     * @param userId userId Integer
+     * @param tagId tagId Integer
+     * @return Integer
+     */
+    @NativeQuery("SELECT score FROM FORUM.Recommendation WHERE user_id = ?1 AND tag_id = ?2")
+    Integer findRecommendationScore(Integer userId, Integer tagId);
+
+    /**
+     * Update the recommendation time of the pair of userId and tagId
+     * @param userId userId Integer
+     * @param tagId tagId Integer
+     */
+    @Modifying
+    @Transactional
+    @NativeQuery("UPDATE FORUM.Recommendation SET updated_at = (DATEADD(HOUR, 8, GETUTCDATE())) WHERE user_id = ?1 AND tag_id = ?2")
+    void updateRecommendationTime(Integer userId, Integer tagId);
+
+    /**
+     * Update the recommendation score of the pair of userId and tagId
+     * @param userId userId Integer
+     * @param tagId tagId Integer
+     */
+    @Modifying
+    @Transactional
+    @NativeQuery("UPDATE FORUM.Recommendation SET score = ?3 WHERE user_id = ?1 AND tag_id = ?2")
+    void updateRecommendationScore(Integer userId, Integer tagId, int val);
 }

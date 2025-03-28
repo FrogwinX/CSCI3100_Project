@@ -24,6 +24,8 @@ public class PostModel {
     private Integer likeCount;
     private Integer dislikeCount;
     private Integer commentCount;
+    private Integer viewCount;
+    private Integer popularityScore;
     private Integer attachTo;
     private Boolean isActive;
     private ZonedDateTime createdAt;
