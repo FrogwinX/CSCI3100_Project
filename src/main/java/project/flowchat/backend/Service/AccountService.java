@@ -290,9 +290,7 @@ public class AccountService {
      * @throws ExceptionService ACTIVE_ACCOUNT
      */
     public void requestLicenseKey(String email) throws Exception {
-        if (isAccountActive(null, email)) {
-            ExceptionService.throwException(ExceptionService.ACTIVE_ACCOUNT);
-        }
+        isEmailUnique(email);
         String licenseKey = securityService.generateLicenseKey();
         securityService.saveKey(email, licenseKey, SecurityService.KeyType.LICENSE);
         sendEmail(email, licenseKey, SecurityService.KeyType.LICENSE,"Activate Your FlowChat Account", "licenseKeyEmail.html");
