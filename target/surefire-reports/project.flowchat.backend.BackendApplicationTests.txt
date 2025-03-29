@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: project.flowchat.backend.BackendApplicationTests
 -------------------------------------------------------------------------------
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 7.051 s -- in project.flowchat.backend.BackendApplicationTests
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 11.40 s -- in project.flowchat.backend.BackendApplicationTests
