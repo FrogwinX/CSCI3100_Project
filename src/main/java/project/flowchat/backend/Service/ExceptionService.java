@@ -20,6 +20,23 @@ public class ExceptionService extends Exception {
     public static final String ACTIVE_ACCOUNT = "This email address has been used.";
     public static final String INCORRECT_PASSWORD = "Incorrect username, email address or password.";
 
+    /* Forum Service Expected Exceptions*/
+    public static final String INVALID_POST_CREATOR = "This post or comment is not created by you.";
+    public static final String POST_DELETED = "This post or comment has been deleted.";
+    public static final String MAKE_COMMENT_TO_A_POST = "Cannot make a comment become a post.";
+    public static final String ALREADY_LIKED_THIS_POST = "Already liked this post or comment.";
+    public static final String ALREADY_DISLIKED_THIS_POST = "Already disliked this post or comment.";
+    public static final String POST_NOT_LIKED = "Has not liked this post or comment before.";
+    public static final String POST_NOT_DISLIKED = "Has not disliked this post or comment before.";
+    public static final String INVALID_POST_OPTION = "Invalid post action.";
+
+    /* Image Service Expected Exceptions */
+    public static final String FILE_NOT_IMAGE = "The file is not an image";
+
+    /* Chat Service Expected Exceptions */
+    public static final String MESSAGE_ALREADY_READ = "This message has already been read.";
+    public static final String MESSAGE_ALREADY_DELETED = "This message has already been deleted.";
+    public static final String NOT_MESSAGE_SENDER_OR_RECEIVER = "You are not the sender or receiver of this message.";
 
     public ExceptionService(String message) {
         super(message);
