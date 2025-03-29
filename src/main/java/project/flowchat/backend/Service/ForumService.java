@@ -89,15 +89,21 @@ public class ForumService {
      * @param title title of the post
      * @param content content of the post or comment
      * @param tag tag for the post
-     * @param image image of the post or comment, optional
+     * @param images images of the post or comment, optional
      * @param attachTo 0 if it is a post, post id if it is a comment
-     * @throws Exception
+     * @throws Exception FILE_NOT_IMAGE
      */
-    public void createPostOrComment(Integer userId, String title, String content, List<String> tag, MultipartFile image, Integer attachTo) throws Exception {
+    public void createPostOrComment(Integer userId, String title, String content, List<String> tag, List<MultipartFile> images, Integer attachTo) throws Exception {
         securityService.checkUserIdWithToken(userId);
-        Integer imageId = null;
-        if (image != null) {
-            imageId = imageService.saveImage(image);
+        List<Integer> allImageId = new ArrayList<Integer>();
+        for (MultipartFile image: images) {
+            if (image.getContentType() == null || !image.getContentType().startsWith("image/")) {
+                ExceptionService.throwException(ExceptionService.FILE_NOT_IMAGE);
+            }
+        }
+
+        for (MultipartFile image: images) {
+            allImageId.add(imageService.saveImage(image));
         }
 
         PostModel postOrComment;
@@ -118,8 +124,10 @@ public class ForumService {
                 parent = forumRepository.findById(parent.getAttachTo()).get();
             }
         }
-        if (imageId != null) {
-            forumRepository.connectPostWithImage(postOrComment.getPostId(), imageId);
+        if (allImageId.size() != 0) {
+            for (Integer singleImageId: allImageId) {
+                forumRepository.connectPostWithImage(postOrComment.getPostId(), singleImageId);
+            }
         }
 
     }
@@ -148,9 +156,11 @@ public class ForumService {
         postModel.setUserId(userId);
         postModel.setTitle(title);
         postModel.setContent(content);
+        postModel.setViewCount(0);
         postModel.setLikeCount(0);
         postModel.setDislikeCount(0);
         postModel.setCommentCount(0);
+        postModel.setPopularityScore(0);
         postModel.setAttachTo(attachTo);
         postModel.setIsActive(true);
         postModel.setCreatedAt(ZonedDateTime.now(ZoneId.of("Asia/Hong_Kong")));
@@ -165,23 +175,23 @@ public class ForumService {
      * @param title new title of the post
      * @param content new content of the post or comment
      * @param tag new tag of the post, empty list if user wants to delete tag
-     * @param image new image of the post or comment, empty image if user wants to delete image
+     * @param images new images of the post or comment, single empty image if user wants to delete image
      * @param attachTo new post id if it is a comment, can only change from non-zero to non-zero
-     * @throws Exception
+     * @throws Exception INVALID_POST_CREATOR, POST_DELETED, MAKE_COMMENT_TO_A_POST
      */
     @Transactional
-    public void updatePostOrComment(Integer postId, Integer userId, String title, String content, List<String> tag, MultipartFile image, Integer attachTo) throws Exception {
+    public void updatePostOrComment(Integer postId, Integer userId, String title, String content, List<String> tag, List<MultipartFile> images, Integer attachTo) throws Exception {
         securityService.checkUserIdWithToken(userId);
 
         Optional<PostModel> postModelOptional = forumRepository.findById(postId);
         PostModel postModel = postModelOptional.get();
         if (userId != postModel.getUserId()
         && ((String) securityService.getClaims().get("role")).equals("user")) {
-            throw new ExceptionService("The post/comment is not created by that user");
+            ExceptionService.throwException(ExceptionService.INVALID_POST_CREATOR);
         }
 
         if (!postModel.getIsActive()) {
-            throw new ExceptionService("The post/comment is not active");
+            ExceptionService.throwException(ExceptionService.POST_DELETED);
         }
 
         if (content != null) postModel.setContent(content);
@@ -214,25 +224,27 @@ public class ForumService {
             }
         }
         else if (attachTo != null && attachTo == 0) {
-            throw new ExceptionService("Cannot make a comment become a post");
+            ExceptionService.throwException(ExceptionService.MAKE_COMMENT_TO_A_POST);
         }
 
 
-        if (image != null) {
-            if (image.isEmpty()) {
-                deleteImage(postId);
-            }
-            else {
-                // There may be multiple images in a post or comment, use forumRepository.findImageIdByPostId(postId);
-                Integer imageId = forumRepository.findImageId(postId);
-                if (imageId == null) {
-                    // Add new image
-                    imageId = imageService.saveImage(image);
-                    forumRepository.connectPostWithImage(postId, imageId);
+        if (images != null) {
+            deleteImage(postId);
+            if (images.size() != 1 || !images.get(0).isEmpty()) {
+                // Save new images
+                List<Integer> allImageId = new ArrayList<Integer>();
+                for (MultipartFile image: images) {
+                    if (image.getContentType() == null || !image.getContentType().startsWith("image/")) {
+                        ExceptionService.throwException(ExceptionService.FILE_NOT_IMAGE);
+                    }
                 }
-                else {
-                    // Change image
-                    imageService.changeImage(image, imageId);
+        
+                for (MultipartFile image: images) {
+                    allImageId.add(imageService.saveImage(image));
+                }
+
+                for (Integer singleImageId: allImageId) {
+                    forumRepository.connectPostWithImage(postId, singleImageId);
                 }
             }
         }
@@ -259,7 +271,7 @@ public class ForumService {
      * Set post or comment is_active to false, delete image and tag in the database
      * @param postId post id of the post or comment that user want to delete
      * @param userId user id of user who wants to delete the post or comment
-     * @throws Exception
+     * @throws Exception INVALID_POST_CREATOR, POST_DELETED
      */
     @Transactional
     public void deletePostOrComment(Integer postId, Integer userId) throws Exception {
@@ -269,11 +281,11 @@ public class ForumService {
 
         if (userId != postModel.getUserId()
         && ((String) securityService.getClaims().get("role")).equals("user")) {
-            throw new ExceptionService("The post/comment is not created by that user");
+            ExceptionService.throwException(ExceptionService.INVALID_POST_CREATOR);
         }
 
         if (!postModel.getIsActive()) {
-            throw new ExceptionService("The post/comment is not active");
+            ExceptionService.throwException(ExceptionService.POST_DELETED);
         }
 
         postModel.setIsActive(false);
@@ -471,8 +483,8 @@ public class ForumService {
      */
     private void deleteImage(Integer postId) {
         // There may be multiple images in a post or comment, use forumRepository.findImageIdByPostId(postId);
-        Integer imageId = forumRepository.findImageId(postId);
-        if (imageId != null) {
+        List<Integer> allImageId = forumRepository.findImageIdByPostId(postId);
+        for (Integer imageId: allImageId) {
             forumRepository.deleteInPostImage(imageId);
             forumRepository.deleteInImageData(imageId);
         }
@@ -483,18 +495,18 @@ public class ForumService {
      * @param postId post id of the post or comment that user want to like or dislike
      * @param userId user id of the user
      * @param action like or dislike
-     * @throws Exception
+     * @throws Exception ALREADY_LIKED_THAT_POST, ALREADY_DISLIKED_THAT_POST, POST_DELETED, INVALID_POST_OPTION
      */
     public void likeOrDislike(Integer postId, Integer userId, String action) throws Exception{
         securityService.checkUserIdWithToken(userId);
         if (forumRepository.isLikeClick(postId, userId) != null) {
-            throw new ExceptionService("User has liked that post/comment before");
+            ExceptionService.throwException(ExceptionService.ALREADY_LIKED_THIS_POST);
         }
         if (forumRepository.isDislikeClick(postId, userId) != null) {
-            throw new ExceptionService("User has disliked that post/comment before");
+            ExceptionService.throwException(ExceptionService.ALREADY_DISLIKED_THIS_POST);
         }
         if (forumRepository.postOrCommentIsActive(postId) == false) {
-            throw new ExceptionService("The post/comment is not active");
+            ExceptionService.throwException(ExceptionService.POST_DELETED);
         }
         if (action.equals("like")) {
             forumRepository.addLikeRelationship(postId, userId);
@@ -507,7 +519,7 @@ public class ForumService {
             updateRecommendationScore(postId, userId, "dislike");
         }
         else {
-            throw new ExceptionService("Action not available: " + action);
+            ExceptionService.throwException(ExceptionService.INVALID_POST_OPTION);
         }
     }
 
@@ -516,16 +528,16 @@ public class ForumService {
      * @param postId post id of the post or comment that user want to unlike or undislike
      * @param userId user id of the user
      * @param action unlike or undislike
-     * @throws Exception
+     * @throws Exception POST_DELETED, POST_NOT_LIKED, POST_NOT_DISLIKED, INVALID_POST_OPTION
      */
     public void unlikeOrUndislike(Integer postId, Integer userId, String action) throws Exception{
         securityService.checkUserIdWithToken(userId);
         if (forumRepository.postOrCommentIsActive(postId) == false) {
-            throw new ExceptionService("The post/comment is not active");
+            ExceptionService.throwException(ExceptionService.POST_DELETED);
         }
         if (action.equals("unlike")) {
             if (forumRepository.isLikeClick(postId, userId) == null) {
-                throw new ExceptionService("User has not liked that post/comment before");
+                ExceptionService.throwException(ExceptionService.POST_NOT_LIKED);
             }
             forumRepository.removeLikeRelationship(postId, userId);
             forumRepository.minusLikeCount(postId);
@@ -533,14 +545,14 @@ public class ForumService {
         }
         else if (action.equals("undislike")) {
             if (forumRepository.isDislikeClick(postId, userId) == null) {
-                throw new ExceptionService("User has not disliked that post/comment before");
+                ExceptionService.throwException(ExceptionService.POST_NOT_DISLIKED);
             }
             forumRepository.removeDislikeRelationship(postId, userId);
             forumRepository.minusDislikeCount(postId);
             updateRecommendationScore(postId, userId, "undislike");
         }
         else {
-            throw new ExceptionService("Action not available: " + action);
+            ExceptionService.throwException(ExceptionService.INVALID_POST_OPTION);
         }
     }
 
