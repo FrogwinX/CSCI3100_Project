@@ -11,6 +11,7 @@ export default function PostList({ filter = "latest" }: { filter?: "latest" | "r
   const [isLoading, setIsLoading] = useState(true);
   const [hasMore, setHasMore] = useState(true);
   const observerTarget = useRef<HTMLDivElement>(null);
+  const [excludedPostIds, setExcludedPostIds] = useState<Set<number>>(new Set());
 
   const filterPostsByTags = (postsToFilter: Post[]) => {
     if (tags.length === 0) {
@@ -32,8 +33,25 @@ export default function PostList({ filter = "latest" }: { filter?: "latest" | "r
     const fetchInitialPosts = async () => {
       setIsLoading(true);
       try {
-        const initialPosts = await getPosts({ filter, lastPostId: "0" });
+        // getPosts(
+        //   options: {
+        //     filter?: "latest" | "recommended" | "following";
+        //     excludingPostIdList?: number[];
+        //     lastPostId?: string;
+        //     count?: number;
+        //   } = {}
+        // )
+        const initialPosts = await getPosts({ filter });
+        if (!initialPosts) {
+          setHasMore(false);
+          return;
+        }
         const filteredPosts = filterPostsByTags(initialPosts);
+        //store all post ids in a set to avoid duplicates
+        const newExcludedPostIds = new Set<number>(
+          filteredPosts.map((post) => Number(post.postId)).concat(Array.from(excludedPostIds))
+        );
+        setExcludedPostIds(newExcludedPostIds);
 
         setPosts(filteredPosts);
 
@@ -47,7 +65,7 @@ export default function PostList({ filter = "latest" }: { filter?: "latest" | "r
         //   setPosts(filteredPosts);
         // }
 
-        setHasMore(initialPosts.length > 0);
+        setHasMore(initialPosts && initialPosts.length > 0 ? true : false);
       } catch (err) {
         console.error("Failed to load posts:", err);
       } finally {
@@ -93,26 +111,28 @@ export default function PostList({ filter = "latest" }: { filter?: "latest" | "r
       // Fetch more posts
       const newPosts = await getPosts({
         filter,
-        lastPostId,
+        excludingPostIdList: Array.from(excludedPostIds),
         count: 10,
       });
 
-      if (newPosts.length === 0) {
+      if (!newPosts) {
         setHasMore(false);
       } else {
         if (tags.length === 0) {
           setPosts((prevPosts) => [...prevPosts, ...newPosts]);
         } else {
-          // Fixed to match the same filtering logic used for initial posts
-          // const filteredPosts = newPosts.filter((post) =>
-          //   tags.every((t) => post.tagNameList?.includes(t.tagName) ?? false)
-          // );
-
           const filteredPosts = filterPostsByTags(newPosts);
           if (filteredPosts.length === 0) {
             setHasMore(false);
+          } else {
+            // Update excludedPostIds to include new posts
+            setPosts((prevPosts) => [...prevPosts, ...filteredPosts]);
           }
-          setPosts((prevPosts) => [...prevPosts, ...filteredPosts]);
+          // Update excludedPostIds to include new posts
+          const newExcludedPostIds = new Set<number>(
+            filteredPosts.map((post) => Number(post.postId)).concat(Array.from(excludedPostIds))
+          );
+          setExcludedPostIds(newExcludedPostIds);
         }
       }
     } catch (err) {

@@ -1,5 +1,5 @@
 import BackButton from "@/components/navigation/BackButton";
-import SideMenu from "@/app/forum/SideMenu";
+import SideMenu from "@/components/navigation/SideMenu";
 import { TagProvider } from "@/hooks/useTags";
 
 export default function ForumLayout({ children }: { children: React.ReactNode }) {
