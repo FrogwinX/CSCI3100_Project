@@ -103,7 +103,7 @@ public class ForumController {
     @SuppressWarnings("unchecked")
     @PostMapping(value = "createPostOrComment", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     private ResponseBodyDTO createPostOrComment(@RequestPart Map<String, Object> requestBody,
-                                    @RequestPart(required = false) List<MultipartFile> files) {
+                                    @RequestPart(required = false, value = "images") List<MultipartFile> files) {
         try {
             Map<String, Object> data = new HashMap<>();
             forumService.createPostOrComment(   (Integer) requestBody.get("userId"),
