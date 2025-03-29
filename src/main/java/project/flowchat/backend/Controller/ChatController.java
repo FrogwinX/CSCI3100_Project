@@ -1,6 +1,7 @@
 package project.flowchat.backend.Controller;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,12 +34,13 @@ public class ChatController {
         return chatService.sendAndStoreMessage(message);
     }
 
+    @SuppressWarnings("unchecked")
     @PutMapping("/updateReadAt")
     public ResponseBodyDTO updateReadAt(@RequestBody Map<String, Object> requestBody) {
         try {
             Map<String, Object> data = new HashMap<>();
             chatService.updateReadAt((Integer) requestBody.get("userId"),
-                                    (Integer) requestBody.get("messageId"),
+                                    (List<Integer>) requestBody.get("messageIdList"),
                                     (String) requestBody.get("topic"));
             data.put("isSuccess", true);
             responseBodyDTO.setMessage("The message read at time is updated");
