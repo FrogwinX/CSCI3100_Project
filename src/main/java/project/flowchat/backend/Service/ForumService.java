@@ -96,14 +96,16 @@ public class ForumService {
     public void createPostOrComment(Integer userId, String title, String content, List<String> tag, List<MultipartFile> images, Integer attachTo) throws Exception {
         securityService.checkUserIdWithToken(userId);
         List<Integer> allImageId = new ArrayList<Integer>();
-        for (MultipartFile image: images) {
-            if (image.getContentType() == null || !image.getContentType().startsWith("image/")) {
-                ExceptionService.throwException(ExceptionService.FILE_NOT_IMAGE);
+        if (images != null) {
+            for (MultipartFile image: images) {
+                if (image.getContentType() == null || !image.getContentType().startsWith("image/")) {
+                    ExceptionService.throwException(ExceptionService.FILE_NOT_IMAGE);
+                }
             }
-        }
 
-        for (MultipartFile image: images) {
-            allImageId.add(imageService.saveImage(image));
+            for (MultipartFile image: images) {
+                allImageId.add(imageService.saveImage(image));
+            }
         }
 
         PostModel postOrComment;
