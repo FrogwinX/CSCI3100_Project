@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+@plugin 'tailwind-scrollbar' {
+  nocompatible: true;
+  preferredstrategy: "pseudoelements";
+}
+
 /* Override focus styles */
 *:focus-visible {
   outline: none !important;

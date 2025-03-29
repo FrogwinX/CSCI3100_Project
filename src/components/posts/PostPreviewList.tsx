@@ -48,10 +48,11 @@ export default function PostList({ filter = "latest" }: { filter?: "latest" | "r
         }
         const filteredPosts = filterPostsByTags(initialPosts);
         //store all post ids in a set to avoid duplicates
-        const newExcludedPostIds = new Set<number>(
-          filteredPosts.map((post) => Number(post.postId)).concat(Array.from(excludedPostIds))
-        );
-        setExcludedPostIds(newExcludedPostIds);
+        setExcludedPostIds((prevExcludedIds) => {
+          const newExcludedIds = new Set(prevExcludedIds);
+          filteredPosts.forEach((post) => newExcludedIds.add(Number(post.postId)));
+          return newExcludedIds;
+        });
 
         setPosts(filteredPosts);
 
@@ -115,25 +116,23 @@ export default function PostList({ filter = "latest" }: { filter?: "latest" | "r
         count: 10,
       });
 
-      if (!newPosts) {
+      if (newPosts!.length === 0) {
         setHasMore(false);
       } else {
-        if (tags.length === 0) {
-          setPosts((prevPosts) => [...prevPosts, ...newPosts]);
-        } else {
-          const filteredPosts = filterPostsByTags(newPosts);
-          if (filteredPosts.length === 0) {
-            setHasMore(false);
-          } else {
-            // Update excludedPostIds to include new posts
-            setPosts((prevPosts) => [...prevPosts, ...filteredPosts]);
-          }
-          // Update excludedPostIds to include new posts
-          const newExcludedPostIds = new Set<number>(
-            filteredPosts.map((post) => Number(post.postId)).concat(Array.from(excludedPostIds))
-          );
-          setExcludedPostIds(newExcludedPostIds);
-        }
+        //print check point
+        setExcludedPostIds((prevExcludedIds) => {
+          const newExcludedIds = new Set(prevExcludedIds);
+          newPosts!.forEach((post) => newExcludedIds.add(Number(post.postId)));
+          return newExcludedIds;
+        });
+
+        const filteredPosts = filterPostsByTags(newPosts!);
+        console.log("New Posts:", newPosts);
+        setPosts((prevPosts) => [...prevPosts, ...filteredPosts]);
+        console.log("Filtered Posts:", filteredPosts);
+
+        //print the excludedPostIds
+        console.log("Excluded Post IDs:", Array.from(excludedPostIds));
       }
     } catch (err) {
       console.error("Failed to load more posts:", err);

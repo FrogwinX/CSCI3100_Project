@@ -16,7 +16,7 @@ export default function ForumLayout({ children }: { children: React.ReactNode })
         </div>
         {/* Right column - conditionally rendered action menu */}
         <div className="hidden md:block w-1/6">
-          <div className="card bg-base-100 sticky top-16 w-64 h-screen">
+          <div className="card bg-base-100 sticky w-77 top-16 h-screen overflow-hidden">
             <SideMenu />
           </div>
         </div>
