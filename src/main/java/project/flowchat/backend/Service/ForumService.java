@@ -148,9 +148,11 @@ public class ForumService {
         postModel.setUserId(userId);
         postModel.setTitle(title);
         postModel.setContent(content);
+        postModel.setViewCount(0);
         postModel.setLikeCount(0);
         postModel.setDislikeCount(0);
         postModel.setCommentCount(0);
+        postModel.setPopularityScore(0);
         postModel.setAttachTo(attachTo);
         postModel.setIsActive(true);
         postModel.setCreatedAt(ZonedDateTime.now(ZoneId.of("Asia/Hong_Kong")));

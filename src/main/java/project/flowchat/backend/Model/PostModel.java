@@ -21,10 +21,10 @@ public class PostModel {
     private Integer userId;
     private String title;
     private String content;
+    private Integer viewCount;
     private Integer likeCount;
     private Integer dislikeCount;
     private Integer commentCount;
-    private Integer viewCount;
     private Integer popularityScore;
     private Integer attachTo;
     private Boolean isActive;
