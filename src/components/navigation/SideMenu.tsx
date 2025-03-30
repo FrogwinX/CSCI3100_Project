@@ -11,13 +11,14 @@ export default function SideMenu() {
   const [AllTags, setAllTags] = useState<Tag[]>([]);
   // New state to hold shuffled tags
   const [recommendedTags, setRecommendedTags] = useState<Tag[]>([]);
+  const [excludedPostIds, setExcludedPostIds] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     getAllTags().then((tags) => {
       setAllTags(tags);
       // Shuffle tags only once when they're loaded
-      const shuffled = [...tags].sort(() => 0.5 - Math.random()).slice(0, 30);
-      setRecommendedTags(shuffled);
+      // const shuffled = [...tags].sort(() => 0.5 - Math.random()).slice(0, 30);
+      setRecommendedTags(tags);
     });
   }, []);
 
@@ -36,8 +37,9 @@ export default function SideMenu() {
   };
 
   return (
-    <div className="card-body gap-0">
+    <div className="card-body gap-0 flex flex-col h-full">
       {/* Section 1 Create Post Button */}
+<<<<<<< HEAD:src/app/forum/SideMenu.tsx
       <div className="w-full">
         <Link href="/create-post">
           <button className="btn btn-primary w-full">
@@ -50,8 +52,19 @@ export default function SideMenu() {
       <div className="divider my-0 gap-0"></div>
       Filter By Tags
       Filter By Tags
+=======
+      <div className="w-full flex-shrink-0">
+        <button className="btn btn-primary w-full">
+          <FontAwesomeIcon icon={faPlus} />
+          Create Post
+        </button>
+        {/* TODO: Implement create post functionality */}
+      </div>
+      <div className="divider my-0 gap-0 flex-shrink-0"></div>
+      <div className="flex-shrink-0">Filter By Tags</div>
+>>>>>>> 1a851a75024d6401028f3c7ba962ace06044c778:src/components/navigation/SideMenu.tsx
       {/* Section 2 Filter and Search */}
-      <div className="flex flex-col sm:flex-row gap-2 justify-between">
+      <div className="flex flex-col sm:flex-row gap-2 justify-between flex-shrink-0">
         <div className="flex-grow w-full relative my-2">
           <input
             type="text"
@@ -66,18 +79,21 @@ export default function SideMenu() {
         </div>
       </div>
       {/* Section 3: Tags */}
-      <div className="flex flex-wrap gap-2">
-        {recommendedTags.map((tag) => {
-          return (
-            <button
-              key={tag.tagId}
-              className={`btn btn-sm ${searchTags.some((t) => t.tagId === tag.tagId) ? "btn-primary" : "btn-accent"}`}
-              onClick={() => toggleTag(tag)}
-            >
-              {tag.tagName}
-            </button>
-          );
-        })}
+      <div className="scrollbar-thumb-rounded-full scrollbar-track-rounded-full scrollbar scrollbar-thumb-slate-700 scrollbar-track-slate-300 h-screen overflow-y-scroll">
+        {/* <div className="flex-grow overflow-y-auto min-h-0"> */}
+        <div className="flex flex-wrap gap-2 p-1">
+          {recommendedTags.map((tag) => {
+            return (
+              <button
+                key={tag.tagId}
+                className={`btn btn-sm ${searchTags.some((t) => t.tagId === tag.tagId) ? "btn-primary" : "btn-accent"}`}
+                onClick={() => toggleTag(tag)}
+              >
+                {tag.tagName}
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

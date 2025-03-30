@@ -2,6 +2,8 @@
 
 import { Post } from "@/components/posts/PostPreview";
 import { getSession } from "@/utils/sessions";
+// import { count } from "console";
+// import exp from "constants";
 
 // API response type for getPost
 interface PostPreviewResponse {
@@ -99,16 +101,27 @@ export async function getAllTags(): Promise<Tag[]> {
   }
 }
 
+// sample API call
+// https://flowchatbackend.azurewebsites.net/api/Forum/
+// getLatestPostPreviewList?
+// userId=1
+// &excludingPostIdList=1
+// &excludingPostIdList=34
+// &postNum=5
 export async function getPosts(
-  options: { filter?: "latest" | "recommended" | "following"; lastPostId?: string; count?: number } = {}
-): Promise<Post[]> {
+  options: {
+    filter?: "latest" | "recommended" | "following";
+    excludingPostIdList?: number[];
+    count?: number;
+  } = {}
+): Promise<Post[] | null> {
   try {
     const session = await getSession();
     // Build the API URL based on the filter
     let apiUrl = "https://flowchatbackend.azurewebsites.net/api/Forum/";
     switch (options.filter) {
       case "latest":
-        apiUrl += `getLatestPostPreviewList?lastPostId=${options.lastPostId}&`;
+        apiUrl += `getLatestPostPreviewList?`;
         break;
       case "recommended":
         apiUrl += "getRecommendedPostPreviewList?";
@@ -119,7 +132,19 @@ export async function getPosts(
     }
 
     // Add query parameters
-    apiUrl += `userId=${session.userId}&postNum=${options.count || 10}`;
+    apiUrl += `userId=${session.userId}`; // Add userId to the URL
+
+    if (options.excludingPostIdList) {
+      while (options.excludingPostIdList.length > 0) {
+        //add all excludingPostIds to the URL
+        apiUrl += `&excludingPostIdList=${options.excludingPostIdList.shift()}`;
+      }
+    } else {
+      //default value = 0
+      apiUrl += `&excludingPostIdList=0`;
+    }
+
+    apiUrl += `&postNum=${options.count || 10}`;
 
     // Fetch data from the API
     const response = await fetch(apiUrl, {
@@ -151,6 +176,86 @@ export async function getPosts(
   } catch (error) {
     console.error("Error fetching posts:", error);
     return [];
+  }
+}
+
+// Sample API call:
+// https://flowchatbackend.azurewebsites.net/api/Forum/
+// searchPost?
+// userId=1&
+// keyword=prog&
+// excludingPostIdList=23&
+// excludingPostIdList=24&
+// searchNum=10
+export async function getSearchPosts(
+  options: {
+    keyword?: string;
+    tagIdList?: number[];
+    excludingPostIdList?: number[];
+    count?: number;
+  } = {}
+): Promise<Post[] | null> {
+  try {
+    const session = await getSession();
+
+    let apiUrl = `https://flowchatbackend.azurewebsites.net/api/Forum/searchPost?`;
+
+    // Add query parameters
+    apiUrl += `userId=${session.userId}`; // Add userId to the URL
+
+    // Add keyword if provided
+    if (options.keyword) {
+      apiUrl += `&keyword=${options.keyword}`;
+    }
+
+    if (options.excludingPostIdList) {
+      const idList = [...options.excludingPostIdList]; // Create a copy to prevent mutation
+      idList.forEach((id) => {
+        apiUrl += `&excludingPostIdList=${id}`;
+      });
+    } else {
+      //default value = 0
+      apiUrl += `&excludingPostIdList=0`;
+    }
+
+    apiUrl += `&postNum=${options.count || 10}`;
+
+    // Fetch data from the API
+    const response = await fetch(apiUrl, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${session.token}`,
+      },
+    });
+
+    if (!response.ok) {
+      console.error(`Failed to fetch search posts with status ${response.status}`);
+      return null;
+    }
+
+    const data: PostPreviewResponse = await response.json();
+
+    // Map API response to frontend Post interface
+    const posts: Post[] = data.data.postPreviewList.map((post) => ({
+      postId: post.postId,
+      username: post.username,
+      title: post.title,
+      content: post.content,
+      imageAPIList: post.imageAPIList,
+      tagNameList: post.tagNameList,
+      likeCount: post.likeCount,
+      isLiked: post.isLiked,
+      dislikeCount: post.dislikeCount,
+      isDisliked: post.isDisliked,
+      commentCount: post.commentCount,
+      updatedAt: post.updatedAt,
+      commentList: post.commentList,
+    }));
+
+    return posts;
+  } catch (error) {
+    console.error("Error fetching posts:", error);
+    return null;
   }
 }
 
