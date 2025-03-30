@@ -10,13 +10,14 @@ export default function SideMenu() {
   const [AllTags, setAllTags] = useState<Tag[]>([]);
   // New state to hold shuffled tags
   const [recommendedTags, setRecommendedTags] = useState<Tag[]>([]);
+  const [excludedPostIds, setExcludedPostIds] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     getAllTags().then((tags) => {
       setAllTags(tags);
       // Shuffle tags only once when they're loaded
-      const shuffled = [...tags].sort(() => 0.5 - Math.random()).slice(0, 30);
-      setRecommendedTags(shuffled);
+      // const shuffled = [...tags].sort(() => 0.5 - Math.random()).slice(0, 30);
+      setRecommendedTags(tags);
     });
   }, []);
 

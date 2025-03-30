@@ -35,12 +35,6 @@ interface TagResponse {
   };
 }
 
-export interface Users {
-  userId: number;
-  username: string;
-  profileImage: string;
-}
-
 export async function getAllTags(): Promise<Tag[]> {
   try {
     const session = await getSession();
@@ -155,7 +149,7 @@ export async function getPosts(
 // excludingPostIdList=23&
 // excludingPostIdList=24&
 // searchNum=10
-export async function getSeachPosts(
+export async function getSearchPosts(
   options: {
     keyword?: string;
     excludingPostIdList?: number[];
@@ -215,29 +209,6 @@ export async function getSeachPosts(
     }));
 
     return posts;
-  } catch (error) {
-    console.error("Error fetching posts:", error);
-    return null;
-  }
-}
-
-//to be implemented
-// Sample API call:
-//https://flowchatbackend.azurewebsites.net/api/Forum/searchUser?
-// userId=1&
-// keyword=c&
-// excludingUserIdList=3&
-// excludingUserIdList=5&
-// searchNum=10
-export async function getSeachUser(
-  options: {
-    keyword?: string;
-    excludingUserIdList?: number[];
-    count?: number;
-  } = {}
-): Promise<Users[] | null> {
-  try {
-    return null;
   } catch (error) {
     console.error("Error fetching posts:", error);
     return null;
