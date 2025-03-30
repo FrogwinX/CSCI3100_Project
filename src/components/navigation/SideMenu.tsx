@@ -39,7 +39,6 @@ export default function SideMenu() {
   return (
     <div className="card-body gap-0 flex flex-col h-full">
       {/* Section 1 Create Post Button */}
-<<<<<<< HEAD:src/app/forum/SideMenu.tsx
       <div className="w-full">
         <Link href="/create-post">
           <button className="btn btn-primary w-full">
@@ -52,17 +51,6 @@ export default function SideMenu() {
       <div className="divider my-0 gap-0"></div>
       Filter By Tags
       Filter By Tags
-=======
-      <div className="w-full flex-shrink-0">
-        <button className="btn btn-primary w-full">
-          <FontAwesomeIcon icon={faPlus} />
-          Create Post
-        </button>
-        {/* TODO: Implement create post functionality */}
-      </div>
-      <div className="divider my-0 gap-0 flex-shrink-0"></div>
-      <div className="flex-shrink-0">Filter By Tags</div>
->>>>>>> 1a851a75024d6401028f3c7ba962ace06044c778:src/components/navigation/SideMenu.tsx
       {/* Section 2 Filter and Search */}
       <div className="flex flex-col sm:flex-row gap-2 justify-between flex-shrink-0">
         <div className="flex-grow w-full relative my-2">

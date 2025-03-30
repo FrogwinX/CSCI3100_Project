@@ -2,8 +2,8 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useSession } from '@/hooks/useSession';
-import { getAllTags, Tag, createPost } from '@/utils/posts'; // 引入 createPost
-import { useRouter } from 'next/navigation'; // 引入 useRouter 用於跳轉
+import { getAllTags, Tag, createPost } from '@/utils/posts'; 
+import { useRouter } from 'next/navigation'; 
 
 export default function CreatePost() {
   const [title, setTitle] = useState<string>('');
@@ -13,12 +13,12 @@ export default function CreatePost() {
   const [content, setContent] = useState<string>('');
   const [textLength, setTextLength] = useState<number>(0);
   const [tagFetchError, setTagFetchError] = useState<string | null>(null);
-  const [submitError, setSubmitError] = useState<string | null>(null); // 新增：提交錯誤狀態
+  const [submitError, setSubmitError] = useState<string | null>(null); 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
   const { session, loading, refresh } = useSession();
-  const router = useRouter(); // 用於跳轉
+  const router = useRouter();
 
   useEffect(() => {
     const fetchTags = async () => {
@@ -138,7 +138,6 @@ export default function CreatePost() {
     }
   }, [content]);
 
-  // 新增：處理表單提交
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
