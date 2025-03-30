@@ -73,7 +73,6 @@ export async function getPosts(
   options: {
     filter?: "latest" | "recommended" | "following";
     excludingPostIdList?: number[];
-    lastPostId?: string;
     count?: number;
   } = {}
 ): Promise<Post[] | null> {
@@ -152,6 +151,7 @@ export async function getPosts(
 export async function getSearchPosts(
   options: {
     keyword?: string;
+    tagIdList?: number[];
     excludingPostIdList?: number[];
     count?: number;
   } = {}
@@ -164,11 +164,16 @@ export async function getSearchPosts(
     // Add query parameters
     apiUrl += `userId=${session.userId}`; // Add userId to the URL
 
+    // Add keyword if provided
+    if (options.keyword) {
+      apiUrl += `&keyword=${options.keyword}`;
+    }
+
     if (options.excludingPostIdList) {
-      while (options.excludingPostIdList.length > 0) {
-        //add all excludingPostIds to the URL
-        apiUrl += `&excludingPostIdList=${options.excludingPostIdList.shift()}`;
-      }
+      const idList = [...options.excludingPostIdList]; // Create a copy to prevent mutation
+      idList.forEach((id) => {
+        apiUrl += `&excludingPostIdList=${id}`;
+      });
     } else {
       //default value = 0
       apiUrl += `&excludingPostIdList=0`;
