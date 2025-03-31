@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faMagnifyingGlass, faPlus } from "@fortawesome/free-solid-svg-icons";
 import { getAllTags, Tag } from "@/utils/posts";
 import { useTagContext } from "@/hooks/useTags";
-import Link from 'next/link'
+import Link from "next/link";
 
 export default function SideMenu() {
   const { selectedTags: searchTags, setSelectedTags: setSearchTags } = useTagContext();
@@ -49,7 +49,6 @@ export default function SideMenu() {
         </Link>
       </div>
       <div className="divider my-0 gap-0"></div>
-      Filter By Tags
       Filter By Tags
       {/* Section 2 Filter and Search */}
       <div className="flex flex-col sm:flex-row gap-2 justify-between flex-shrink-0">

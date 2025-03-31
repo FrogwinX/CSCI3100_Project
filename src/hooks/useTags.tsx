@@ -3,17 +3,36 @@
 import React, { createContext, useState, useContext } from "react";
 import { Tag } from "@/utils/posts";
 
-type TagContextType = {
+export interface TagContextType {
   selectedTags: Tag[];
-  setSelectedTags: React.Dispatch<React.SetStateAction<Tag[]>>;
-};
+  setSelectedTags: (tags: Tag[]) => void;
+  isPostsLoading: boolean;
+  setPostsLoading: (isLoading: boolean) => void;
+}
 
-const TagContext = createContext<TagContextType | undefined>(undefined);
+export const TagContext = createContext<TagContextType>({
+  selectedTags: [],
+  setSelectedTags: () => {},
+  isPostsLoading: false,
+  setPostsLoading: () => {},
+});
 
 export function TagProvider({ children }: { children: React.ReactNode }) {
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
+  const [isPostsLoading, setPostsLoading] = useState(false);
 
-  return <TagContext.Provider value={{ selectedTags, setSelectedTags }}>{children}</TagContext.Provider>;
+  return (
+    <TagContext.Provider
+      value={{
+        selectedTags,
+        setSelectedTags,
+        isPostsLoading,
+        setPostsLoading,
+      }}
+    >
+      {children}
+    </TagContext.Provider>
+  );
 }
 
 export function useTagContext() {

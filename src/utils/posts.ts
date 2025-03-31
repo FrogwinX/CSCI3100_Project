@@ -272,35 +272,43 @@ export async function getPostById(postId: string): Promise<Post | null> {
       },
     });
 
-    const data: PostContentResponse = await response.json();
-    // Map API response to Post object
-    const post = data.data.post;
-    return {
-      postId: post.postId,
-      username: post.username,
-      title: post.title,
-      content: post.content,
-      imageAPIList: post.imageAPIList,
-      tagNameList: post.tagNameList,
-      likeCount: post.likeCount,
-      isLiked: post.isLiked,
-      dislikeCount: post.dislikeCount,
-      isDisliked: post.isDisliked,
-      commentCount: post.commentCount,
-      updatedAt: post.updatedAt,
-      commentList: post.commentList,
-    };
+    try {
+      const data: PostContentResponse = await response.json();
+      console.log("API response:", data); // Log the API response for debugging
+
+      // Check if data, data.data, or data.data.post is null/undefined
+      if (!data || !data.data || !data.data.post) {
+        console.error("API returned null or invalid data structure");
+        return null;
+      }
+
+      const post = data.data.post;
+      return {
+        postId: post.postId,
+        username: post.username,
+        title: post.title,
+        content: post.content,
+        imageAPIList: post.imageAPIList,
+        tagNameList: post.tagNameList,
+        likeCount: post.likeCount,
+        isLiked: post.isLiked,
+        dislikeCount: post.dislikeCount,
+        isDisliked: post.isDisliked,
+        commentCount: post.commentCount,
+        updatedAt: post.updatedAt,
+        commentList: post.commentList,
+      };
+    } catch (error) {
+      console.error("Error parsing JSON response:", error);
+      return null;
+    }
   } catch (error) {
     console.error("Error fetching post:", error);
     return null;
   }
 }
 
-export async function createPost(
-  title: string,
-  content: string,
-  tags: Tag[]
-): Promise<string | null> {
+export async function createPost(title: string, content: string, tags: Tag[]): Promise<string | null> {
   try {
     const session = await getSession();
 
