@@ -14,9 +14,11 @@ import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import project.flowchat.backend.DTO.ChatReceiveMessageDTO;
 import project.flowchat.backend.DTO.ChatSendMessageDTO;
+import project.flowchat.backend.DTO.ContactDTO;
 import project.flowchat.backend.Model.MessageModel;
 import project.flowchat.backend.Repository.ForumRepository;
 import project.flowchat.backend.Repository.MessageRepository;
+import project.flowchat.backend.Repository.UserAccountRepository;
 
 @AllArgsConstructor
 @Service
@@ -26,6 +28,7 @@ public class ChatService {
     private final ImageService imageService;
     private final MessageRepository messageRepository;
     private final ForumRepository forumRepository;
+    private final UserAccountRepository userAccountRepository;
     private final SecurityService securityService;
     private SimpMessagingTemplate messagingTemplate;
 
@@ -107,7 +110,7 @@ public class ChatService {
     /**
      * Update the read at time of a message
      * @param userId user id of the user who read the message
-     * @param messageId message id of the message that is read
+     * @param messageIdList message id of the message that is read
      * @param topic topic of chat room
      * @throws Exception MESSAGE_ALREADY_DELETED, MESSAGE_ALREADY_READ
      */
@@ -177,5 +180,38 @@ public class ChatService {
             messageRepository.deleteInMessageImage(imageId);
             forumRepository.deleteInImageData(imageId);
         }
+    }
+
+    public List<ContactDTO> getContactList(Integer userId, List<Integer> excludingUserIdList, Integer contactNum) throws Exception {
+        securityService.checkUserIdWithToken(userId);
+        List<ContactDTO> contactDTOList = new ArrayList<>();
+        List<MessageModel> messageModelList = messageRepository.findAllContactUsers(userId, excludingUserIdList, contactNum);
+        for (MessageModel messageModel : messageModelList) {
+            ContactDTO contactDTO = new ContactDTO();
+            contactDTO.setMessageId(messageModel.getMessageId());
+            contactDTO.setLatestMessage(messageModel.getContent());
+
+            Integer userIdFrom = messageModel.getUserIdFrom();
+            Integer userIdTo = messageModel.getUserIdTo();
+            contactDTO.setUserIdFrom(userIdFrom);
+            contactDTO.setUsernameFrom(userAccountRepository.findUsernameByUserId(userIdFrom));
+            contactDTO.setUserIdTo(userIdTo);
+            contactDTO.setUsernameTo(userAccountRepository.findUsernameByUserId(userIdTo));
+            if (userId.equals(userIdFrom)) {
+                contactDTO.setContactUsername(userAccountRepository.findUsernameByUserId(userIdTo));
+                contactDTO.setUnreadMessageCount(messageRepository.getUnreadMessageCountByUserPair(userIdTo, userId));
+            }
+            else {
+                contactDTO.setContactUsername(userAccountRepository.findUsernameByUserId(userIdFrom));
+                contactDTO.setUnreadMessageCount(messageRepository.getUnreadMessageCountByUserPair(userIdFrom, userId));
+            }
+
+            contactDTO.setSentAt(messageModel.getSentAt());
+            contactDTO.setReadAt(messageModel.getReadAt());
+
+
+            contactDTOList.add(contactDTO);
+        }
+        return contactDTOList;
     }
 }
