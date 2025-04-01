@@ -214,4 +214,9 @@ public class ChatService {
         }
         return contactDTOList;
     }
+
+    public Integer getTotalUnreadMessageCount(Integer userId) throws Exception {
+        securityService.checkUserIdWithToken(userId);
+        return messageRepository.getTotalUnreadMessageCount(userId);
+    }
 }

@@ -103,4 +103,26 @@ public class ChatController {
         }
         return responseBodyDTO;
     }
+
+    @GetMapping("getUnreadMessageCount")
+    private ResponseBodyDTO getUnreadMessageCount(@RequestParam Integer userId) {
+        try {
+            Map<String, Object> data = new HashMap<>();
+            Integer unreadMessageCount = chatService.getTotalUnreadMessageCount(userId);
+            data.put("isSuccess", true);
+            data.put("unreadMessageCount", unreadMessageCount);
+            responseBodyDTO.setMessage("The total unread message count is returned");
+            responseBodyDTO.setData(data);
+        } catch (ExceptionService e) {
+            Map<String, Object> data = new HashMap<>();
+            data.put("isSuccess", false);
+            data.put("unreadMessageCount", null);
+            responseBodyDTO.setMessage(e.getMessage());
+            responseBodyDTO.setData(data);
+        } catch (Exception e) {
+            responseBodyDTO.setMessage("Fail: " + e);
+            responseBodyDTO.setData(null);
+        }
+        return responseBodyDTO;
+    }
 }

@@ -81,4 +81,11 @@ public interface MessageRepository extends JpaRepository<MessageModel, Integer> 
             "AND user_id_from = ?1\n" +
             "AND user_id_to = ?2")
     Integer getUnreadMessageCountByUserPair(Integer userIdFrom, Integer userIdTo);
+
+    @NativeQuery("SELECT COUNT(*)\n" +
+            "FROM CHAT.Message\n" +
+            "WHERE is_active = 1\n" +
+            "AND read_at IS null\n" +
+            "AND user_id_to = ?1")
+    Integer getTotalUnreadMessageCount(Integer userId);
 }
