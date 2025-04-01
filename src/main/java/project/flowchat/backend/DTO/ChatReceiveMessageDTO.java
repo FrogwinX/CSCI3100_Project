@@ -1,6 +1,5 @@
 package project.flowchat.backend.DTO;
 
-import java.time.ZonedDateTime;
 import java.util.List;
 
 import jakarta.persistence.Id;
@@ -14,14 +13,9 @@ import lombok.NoArgsConstructor;
 @Data
 public class ChatReceiveMessageDTO {
     @Id
-    private Integer messageId;
-    private Integer userIdFrom;
-    private Integer userIdTo;
-    private String content;
-    private Integer attachTo;
-    private ZonedDateTime sentAt;
-    private ZonedDateTime readAt;
-    private List<String> imageAPIList;
+    private ChatMessageDetailsDTO message;
     private Boolean success;
+    private String errorMessage;
     private Boolean refresh;
+    private List<Integer> refreshMessageIdList;
 }
