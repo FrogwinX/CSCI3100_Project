@@ -16,7 +16,6 @@ import project.flowchat.backend.DTO.ChatReceiveMessageDTO;
 import project.flowchat.backend.DTO.ChatSendMessageDTO;
 import project.flowchat.backend.DTO.ContactDTO;
 import project.flowchat.backend.DTO.ResponseBodyDTO;
-import project.flowchat.backend.Model.MessageModel;
 import project.flowchat.backend.Service.ChatService;
 import project.flowchat.backend.Service.ExceptionService;
 
@@ -25,7 +24,7 @@ import project.flowchat.backend.Service.ExceptionService;
 @CrossOrigin(origins = {"http://localhost:3000", "https://kind-wave-0b69df000.6.azurestaticapps.net"})
 @RequestMapping("api/Chat")
 public class ChatController {
-    
+
     @Autowired
     private final ChatService chatService;
     private ResponseBodyDTO responseBodyDTO;
