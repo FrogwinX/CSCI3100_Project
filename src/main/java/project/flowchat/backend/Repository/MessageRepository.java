@@ -45,5 +45,82 @@ public interface MessageRepository extends JpaRepository<MessageModel, Integer> 
     @Transactional
     @Modifying
     @NativeQuery("DELETE FROM CHAT.Message_Image WHERE image_id = ?1")
-    void deleteInMessageImage(Integer iamgeId);
+    void deleteInMessageImage(Integer imageId);
+
+    /**
+     * Find the latest one message for some each pair of contact user and userId
+     * @param userId userId Integer
+     * @param excludingUserIdList a list of userId that have already retrieved
+     * @param userNum query number of contact user
+     * @return a list of one latest message for some each pair of contact user and userId
+     */
+    @NativeQuery("WITH Ranked_Message AS (\n" +
+            "SELECT *, ROW_NUMBER() OVER (\n" +
+            "PARTITION BY \n" +
+            "CASE \n" +
+            "WHEN user_id_from < user_id_to THEN user_id_from \n" +
+            "ELSE user_id_to \n" +
+            "END,\n" +
+            "CASE \n" +
+            "WHEN user_id_from < user_id_to THEN user_id_to \n" +
+            "ELSE user_id_from \n" +
+            "END\n" +
+            "ORDER BY sent_at DESC\n" +
+            ") AS message_order\n" +
+            "FROM CHAT.Message\n" +
+            "WHERE is_active = 1\n" +
+            "AND (user_id_from = ?1\n" +
+            "OR user_id_to = ?1)\n" +
+            ")\n" +
+            "\n" +
+            "SELECT TOP (?3) *\n" +
+            "FROM Ranked_Message\n" +
+            "WHERE message_order = 1\n" +
+            "AND user_id_from NOT IN ?2\n" +
+            "AND user_id_to NOT IN ?2\n" +
+            "ORDER BY sent_at DESC")
+    List<MessageModel> findAllContactUsers(Integer userId, List<Integer> excludingUserIdList, Integer userNum);
+
+    /**
+     * Find the number of unread message count for a pair of contact user and userId
+     * @param userIdFrom contact user
+     * @param userIdTo userId Integer
+     * @return number of unread message count
+     */
+    @NativeQuery("SELECT COUNT(*)\n" +
+            "FROM CHAT.Message\n" +
+            "WHERE is_active = 1\n" +
+            "AND read_at IS null\n" +
+            "AND user_id_from = ?1\n" +
+            "AND user_id_to = ?2")
+    Integer getUnreadMessageCountByUserPair(Integer userIdFrom, Integer userIdTo);
+
+    /**
+     * Find some messages that the user1 and user2 have exchanged before.
+     * @param userId1 userId1 Integer
+     * @param userId2 userId2 Integer
+     * @param excludingMessageIdList a list of messageId that have already retrieved
+     * @param messageNum query number of message
+     * @return MessageModel
+     */
+    @NativeQuery("SELECT TOP (?4) *\n" +
+            "FROM CHAT.Message\n" +
+            "WHERE is_active = 1\n" +
+            "AND ((user_id_from = ?1 AND user_id_to = ?2)\n" +
+            "OR (user_id_from = ?2 AND user_id_to = ?1))\n" +
+            "AND message_id NOT IN ?3\n" +
+            "ORDER BY sent_at DESC")
+    List<MessageModel> findAllMessageByUserPair(Integer userId1, Integer userId2, List<Integer> excludingMessageIdList, Integer messageNum);
+
+    /**
+     * Find the total number of unread message count for a user
+     * @param userId userId Integer
+     * @return number of unread message count
+     */
+    @NativeQuery("SELECT COUNT(*)\n" +
+            "FROM CHAT.Message\n" +
+            "WHERE is_active = 1\n" +
+            "AND read_at IS null\n" +
+            "AND user_id_to = ?1")
+    Integer getTotalUnreadMessageCount(Integer userId);
 }
