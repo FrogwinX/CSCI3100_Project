@@ -62,7 +62,7 @@ export default function PostPreview({ post }: { post: Post }) {
                 <LoadingImage
                   src={post.imageAPIList[0]}
                   alt={post.title}
-                  className=" object-contain rounded-md aspect-video"
+                  className="object-contain rounded-md aspect-video max-h-64 md:max-h-72 lg:max-h-80 mx-auto"
                 />
               </div>
             </div>

@@ -185,7 +185,7 @@ export default function NavbarWithDrawer() {
             </li>
             <li>
               <Link
-                href="/direct-messages"
+                href="/messages"
                 className={`flex items-center gap-4 ${isActive("/direct-messages") ? "bg-base-300 font-bold" : ""}`}
               >
                 <FontAwesomeIcon icon={faPaperPlane} size="xl" />

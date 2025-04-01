@@ -37,7 +37,7 @@ export default function PostDetail({ post }: { post: Post }) {
               <LoadingImage
                 src={post.imageAPIList[0]}
                 alt={post.title}
-                className=" object-contain rounded-md aspect-video"
+                className=" object-contain rounded-md aspect-video max-h-96 mx-auto"
               />
             </div>
           </div>
