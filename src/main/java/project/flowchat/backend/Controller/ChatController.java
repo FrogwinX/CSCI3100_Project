@@ -30,7 +30,7 @@ public class ChatController {
     private ResponseBodyDTO responseBodyDTO;
 
     @MessageMapping("/send/{topic}")
-    @SendTo("/topic/{topic}")
+    @SendTo("/chatroom/{topic}")
     public ChatReceiveMessageDTO sendMessage(@DestinationVariable String topic, @Payload ChatSendMessageDTO message) {
         return chatService.sendAndStoreMessage(message);
     }
