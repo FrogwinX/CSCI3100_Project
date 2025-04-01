@@ -182,6 +182,14 @@ public class ChatService {
         }
     }
 
+    /**
+     * Get a list of contact users that chatted with the userId before
+     * @param userId userId Integer
+     * @param excludingUserIdList a list of userId that have already retrieved
+     * @param contactNum query number of contact user
+     * @return List of ContactDTO
+     * @throws Exception any Exception
+     */
     public List<ContactDTO> getContactList(Integer userId, List<Integer> excludingUserIdList, Integer contactNum) throws Exception {
         securityService.checkUserIdWithToken(userId);
         List<ContactDTO> contactDTOList = new ArrayList<>();
@@ -215,6 +223,30 @@ public class ChatService {
         return contactDTOList;
     }
 
+    /**
+     * Get a list of messages that the userId chatted with the contactUserId before
+     * @param userId userId Integer
+     * @param contactUserId contactUserId Integer
+     * @param excludingMessageIdList a list of messageId that have already retrieved
+     * @param messageNum query number of message
+     * @return List of ChatReceiveMessageDTO
+     * @throws Exception any Exception
+     */
+    public List<ChatReceiveMessageDTO> getMessageHistoryList(Integer userId, Integer contactUserId, List<Integer> excludingMessageIdList, Integer messageNum) throws Exception {
+        List<ChatReceiveMessageDTO> chatReceiveMessageDTOList = new ArrayList<>();
+        List<MessageModel> findAllMessageByUserPair = messageRepository.findAllMessageByUserPair(userId, contactUserId, excludingMessageIdList, messageNum);
+        for (MessageModel messageModel : findAllMessageByUserPair) {
+            chatReceiveMessageDTOList.add(convertToDTO(messageModel, messageRepository.findImageIdByMessageId(messageModel.getMessageId())));
+        }
+        return chatReceiveMessageDTOList;
+    }
+
+    /**
+     * Get the total number of unread message count of a user
+     * @param userId userId Integer
+     * @return total number of unread message count of a user
+     * @throws Exception any Exception
+     */
     public Integer getTotalUnreadMessageCount(Integer userId) throws Exception {
         securityService.checkUserIdWithToken(userId);
         return messageRepository.getTotalUnreadMessageCount(userId);

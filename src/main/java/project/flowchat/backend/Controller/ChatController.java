@@ -16,6 +16,7 @@ import project.flowchat.backend.DTO.ChatReceiveMessageDTO;
 import project.flowchat.backend.DTO.ChatSendMessageDTO;
 import project.flowchat.backend.DTO.ContactDTO;
 import project.flowchat.backend.DTO.ResponseBodyDTO;
+import project.flowchat.backend.Model.MessageModel;
 import project.flowchat.backend.Service.ChatService;
 import project.flowchat.backend.Service.ExceptionService;
 
@@ -95,6 +96,31 @@ public class ChatController {
             Map<String, Object> data = new HashMap<>();
             data.put("isSuccess", false);
             data.put("contactList", null);
+            responseBodyDTO.setMessage(e.getMessage());
+            responseBodyDTO.setData(data);
+        } catch (Exception e) {
+            responseBodyDTO.setMessage("Fail: " + e);
+            responseBodyDTO.setData(null);
+        }
+        return responseBodyDTO;
+    }
+
+    @GetMapping("getMessageHistoryList")
+    private ResponseBodyDTO getMessageHistoryList(  @RequestParam Integer userId,
+                                                    @RequestParam Integer contactUserId,
+                                                    @RequestParam(value = "excludingMessageIdList") List<Integer> excludingMessageIdList,
+                                                    @RequestParam Integer messageNum) {
+        try {
+            Map<String, Object> data = new HashMap<>();
+            List<ChatReceiveMessageDTO> messageHistoryList = chatService.getMessageHistoryList(userId, contactUserId, excludingMessageIdList, messageNum);
+            data.put("isSuccess", true);
+            data.put("messageHistoryList", messageHistoryList);
+            responseBodyDTO.setMessage("The contact list is returned");
+            responseBodyDTO.setData(data);
+        } catch (ExceptionService e) {
+            Map<String, Object> data = new HashMap<>();
+            data.put("isSuccess", false);
+            data.put("messageHistoryList", null);
             responseBodyDTO.setMessage(e.getMessage());
             responseBodyDTO.setData(data);
         } catch (Exception e) {
