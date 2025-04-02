@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import jakarta.transaction.Transactional;
@@ -29,6 +30,7 @@ public class ChatService {
     private final ForumRepository forumRepository;
     private final UserAccountRepository userAccountRepository;
     private final SecurityService securityService;
+    private SimpMessagingTemplate messagingTemplate;
 
     public ChatReceiveMessageDTO handleMessage(ChatSendMessageDTO message) {
         if (message.getAction().equals("send")) {
@@ -80,6 +82,8 @@ public class ChatService {
         returnMessage.setSuccess(true);
         returnMessage.setMessage(convertToDTO(messageModel, message.getImageIdList()));
         returnMessage.setRefresh(false);
+
+        messagingTemplate.convertAndSend("/notification/" + message.getUserIdTo(), returnMessage);
 
         return returnMessage;
     }
