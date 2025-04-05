@@ -31,9 +31,9 @@ public class ChatController {
     private ResponseBodyDTO responseBodyDTO;
 
     @MessageMapping("/send/{topic}")
-    @SendTo("/chatroom/{topic}")
-    public ChatReceiveMessageDTO sendMessage(@DestinationVariable String topic, @Payload ChatSendMessageDTO message) {
-        return chatService.handleMessage(message);
+    @SendTo("/channel/{userId}")
+    public void sendMessage(@DestinationVariable String topic, @Payload ChatSendMessageDTO message) {
+        chatService.handleMessage(message);
     }
 
     @GetMapping("getContactList")

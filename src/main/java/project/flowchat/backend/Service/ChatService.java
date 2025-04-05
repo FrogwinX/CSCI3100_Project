@@ -32,22 +32,19 @@ public class ChatService {
     private final SecurityService securityService;
     private SimpMessagingTemplate messagingTemplate;
 
-    public ChatReceiveMessageDTO handleMessage(ChatSendMessageDTO message) {
-        if (message.getAction().equals("send")) {
-            return sendAndStoreMessage(message);
+    public void handleMessage(ChatSendMessageDTO message) {
+        ChatReceiveMessageDTO returnMessage = new ChatReceiveMessageDTO();
+        switch (message.getAction()) {
+            case "send" -> returnMessage = sendAndStoreMessage(message);
+            case "read" -> returnMessage = updateReadAt(message.getMessageIdList());
+            case "delete" -> returnMessage = deleteMessage(message.getMessageIdList());
+            default -> {
+                returnMessage.setSuccess(false);
+                returnMessage.setErrorMessage("Invalid action type");
+            }
         }
-        else if (message.getAction().equals("read")) {
-           return updateReadAt(message.getMessageIdList());
-        }
-        else if (message.getAction().equals("delete")) {
-            return  deleteMessage(message.getMessageIdList());
-        }
-        else {
-            ChatReceiveMessageDTO returnMessage = new ChatReceiveMessageDTO();
-            returnMessage.setSuccess(false);
-            returnMessage.setErrorMessage("Invalid action type");
-            return returnMessage;
-        }
+
+        messagingTemplate.convertAndSend("/channel/" + message.getUserIdTo(), returnMessage);
     }
 
 
@@ -80,10 +77,9 @@ public class ChatService {
         }
 
         returnMessage.setSuccess(true);
-        returnMessage.setMessage(convertToDTO(messageModel, message.getImageIdList()));
-        returnMessage.setRefresh(false);
-
-        messagingTemplate.convertAndSend("/notification/" + message.getUserIdTo(), returnMessage);
+        returnMessage.setMessageDetail(convertToDTO(messageModel, message.getImageIdList()));
+        returnMessage.setAction(message.getAction());
+        returnMessage.setTime(ZonedDateTime.now(ZoneId.of("Asia/Hong_Kong")));
 
         return returnMessage;
     }
@@ -143,10 +139,12 @@ public class ChatService {
             if (!messageModel.getIsActive()) {
                 returnMessage.setSuccess(false);
                 returnMessage.setErrorMessage(ExceptionService.MESSAGE_ALREADY_DELETED);
+                return returnMessage;
             }
             if (messageModel.getReadAt() != null) {
                 returnMessage.setSuccess(false);
                 returnMessage.setErrorMessage(ExceptionService.MESSAGE_ALREADY_READ);
+                return returnMessage;
             }
         }
         for (Integer messageId : messageIdList) {
@@ -156,8 +154,9 @@ public class ChatService {
         }
 
         returnMessage.setSuccess(true);
-        returnMessage.setRefresh(true);
-        returnMessage.setRefreshMessageIdList(messageIdList);
+        returnMessage.setReadOrDeleteMessageIdList(messageIdList);
+        returnMessage.setAction("read");
+        returnMessage.setTime(ZonedDateTime.now(ZoneId.of("Asia/Hong_Kong")));
 
         return returnMessage;
     }
@@ -169,27 +168,28 @@ public class ChatService {
      */
     public ChatReceiveMessageDTO deleteMessage(List<Integer> messageIdList) {
         MessageModel messageModel;
-        ChatReceiveMessageDTO returnMessage  = new ChatReceiveMessageDTO();
+        ChatReceiveMessageDTO returnMessage = new ChatReceiveMessageDTO();
 
         for (Integer messageId : messageIdList) {
             messageModel = messageRepository.findById(messageId).get();
             if (!messageModel.getIsActive()) {
                 returnMessage.setSuccess(false);
                 returnMessage.setErrorMessage(ExceptionService.MESSAGE_ALREADY_DELETED);
+                return returnMessage;
             }
         }
 
         for (Integer messageId : messageIdList) {
             messageModel = messageRepository.findById(messageId).get();
-
             messageModel.setIsActive(false);
             messageRepository.save(messageModel);
             deleteImage(messageId);
         }
 
         returnMessage.setSuccess(true);
-        returnMessage.setRefresh(true);
-        returnMessage.setRefreshMessageIdList(messageIdList);
+        returnMessage.setReadOrDeleteMessageIdList(messageIdList);
+        returnMessage.setAction("delete");
+        returnMessage.setTime(ZonedDateTime.now(ZoneId.of("Asia/Hong_Kong")));
 
         return returnMessage;
     }
