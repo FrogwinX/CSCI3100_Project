@@ -14,14 +14,10 @@ import lombok.NoArgsConstructor;
 @Data
 public class ChatReceiveMessageDTO {
     @Id
-    private Integer messageId;
-    private Integer userIdFrom;
-    private Integer userIdTo;
-    private String content;
-    private Integer attachTo;
-    private ZonedDateTime sentAt;
-    private ZonedDateTime readAt;
-    private List<String> imageAPIList;
+    private ChatMessageDetailsDTO messageDetail;
+    private List<Integer> readOrDeleteMessageIdList;
+    private String action;
+    private ZonedDateTime time;
     private Boolean success;
-    private Boolean refresh;
+    private String errorMessage;
 }

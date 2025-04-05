@@ -7,6 +7,7 @@
 /Users/edwin/Desktop/CSCI3100_Project/src/main/java/project/flowchat/backend/Controller/ChatController.java
 /Users/edwin/Desktop/CSCI3100_Project/src/main/java/project/flowchat/backend/Controller/ForumController.java
 /Users/edwin/Desktop/CSCI3100_Project/src/main/java/project/flowchat/backend/Controller/ImageController.java
+/Users/edwin/Desktop/CSCI3100_Project/src/main/java/project/flowchat/backend/DTO/ChatMessageDetailsDTO.java
 /Users/edwin/Desktop/CSCI3100_Project/src/main/java/project/flowchat/backend/DTO/ChatReceiveMessageDTO.java
 /Users/edwin/Desktop/CSCI3100_Project/src/main/java/project/flowchat/backend/DTO/ChatSendMessageDTO.java
 /Users/edwin/Desktop/CSCI3100_Project/src/main/java/project/flowchat/backend/DTO/ContactDTO.java

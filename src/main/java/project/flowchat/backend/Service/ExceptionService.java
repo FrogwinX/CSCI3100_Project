@@ -36,7 +36,6 @@ public class ExceptionService extends Exception {
     /* Chat Service Expected Exceptions */
     public static final String MESSAGE_ALREADY_READ = "This message has already been read.";
     public static final String MESSAGE_ALREADY_DELETED = "This message has already been deleted.";
-    public static final String NOT_MESSAGE_SENDER_OR_RECEIVER = "You are not the sender or receiver of this message.";
 
     public ExceptionService(String message) {
         super(message);

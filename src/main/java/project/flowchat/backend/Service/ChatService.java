@@ -4,7 +4,6 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -12,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
+import project.flowchat.backend.DTO.ChatMessageDetailsDTO;
 import project.flowchat.backend.DTO.ChatReceiveMessageDTO;
 import project.flowchat.backend.DTO.ChatSendMessageDTO;
 import project.flowchat.backend.DTO.ContactDTO;
@@ -32,6 +32,22 @@ public class ChatService {
     private final SecurityService securityService;
     private SimpMessagingTemplate messagingTemplate;
 
+    public void handleMessage(ChatSendMessageDTO message) {
+        ChatReceiveMessageDTO returnMessage = new ChatReceiveMessageDTO();
+        switch (message.getAction()) {
+            case "send" -> returnMessage = sendAndStoreMessage(message);
+            case "read" -> returnMessage = updateReadAt(message.getMessageIdList());
+            case "delete" -> returnMessage = deleteMessage(message.getMessageIdList());
+            default -> {
+                returnMessage.setSuccess(false);
+                returnMessage.setErrorMessage("Invalid action type");
+            }
+        }
+
+        messagingTemplate.convertAndSend("/channel/" + message.getUserIdTo(), returnMessage);
+    }
+
+
     /**
      * Send message and store it in database
      * @param message message to be sent
@@ -48,10 +64,10 @@ public class ChatService {
         messageModel.setSentAt(ZonedDateTime.now(ZoneId.of("Asia/Hong_Kong")));
         messageModel.setReadAt(null);
 
+        ChatReceiveMessageDTO returnMessage = new ChatReceiveMessageDTO();
         if (!connectImageAndMessage(message.getImageIdList())) {
-            ChatReceiveMessageDTO returnMessage = new ChatReceiveMessageDTO();
             returnMessage.setSuccess(false);
-            returnMessage.setContent("Invalid image id list");
+            returnMessage.setErrorMessage("Invalid image id list");
             return returnMessage;
         }
         messageModel = messageRepository.save(messageModel);
@@ -60,7 +76,12 @@ public class ChatService {
             messageRepository.connectMessageWithImage(messageModel.getMessageId(), imageId);
         }
 
-        return convertToDTO(messageModel, message.getImageIdList());
+        returnMessage.setSuccess(true);
+        returnMessage.setMessageDetail(convertToDTO(messageModel, message.getImageIdList()));
+        returnMessage.setAction(message.getAction());
+        returnMessage.setTime(ZonedDateTime.now(ZoneId.of("Asia/Hong_Kong")));
+
+        return returnMessage;
     }
 
     /**
@@ -79,13 +100,13 @@ public class ChatService {
     }
 
     /**
-     * Convert MessageModel to ChatReceiveMessageDTO, generate link for images
+     * Convert MessageModel to ChatMessageDetailsDTO, generate link for images
      * @param messageModel message record in database
      * @param imageIdList list of image id that need to be converted to image API
-     * @return ChatReceiveMessageDTO with image API list
+     * @return ChatMessageDetailsDTO with image API list
      */
-    private ChatReceiveMessageDTO convertToDTO(MessageModel messageModel, List<Integer> imageIdList) {
-        ChatReceiveMessageDTO messageDTO = new ChatReceiveMessageDTO();
+    private ChatMessageDetailsDTO convertToDTO(MessageModel messageModel, List<Integer> imageIdList) {
+        ChatMessageDetailsDTO messageDTO = new ChatMessageDetailsDTO();
         messageDTO.setMessageId(messageModel.getMessageId());
         messageDTO.setUserIdFrom(messageModel.getUserIdFrom());
         messageDTO.setUserIdTo(messageModel.getUserIdTo());
@@ -93,8 +114,6 @@ public class ChatService {
         messageDTO.setAttachTo(messageModel.getAttachTo());
         messageDTO.setSentAt(messageModel.getSentAt());
         messageDTO.setReadAt(messageModel.getReadAt());
-        messageDTO.setRefresh(false);
-        messageDTO.setSuccess(true);
 
         if (imageIdList != null && imageIdList.size() > 0) {
             List<String> imageAPIList = new ArrayList<>();
@@ -108,22 +127,24 @@ public class ChatService {
     }
 
     /**
-     * Update the read at time of a message
-     * @param userId user id of the user who read the message
-     * @param messageIdList message id of the message that is read
-     * @param topic topic of chat room
-     * @throws Exception MESSAGE_ALREADY_DELETED, MESSAGE_ALREADY_READ
+     * Update the read at time of a message, and return the message id list of the messages that are read.
+     * May have error in message: MESSAGE_ALREADY_DELETED, MESSAGE_ALREADY_READ
+     * @param messageIdList message id list of message being read
      */
-    public void updateReadAt(Integer userId, List<Integer> messageIdList, String topic) throws Exception {
-        securityService.checkUserIdWithToken(userId);
+    public ChatReceiveMessageDTO updateReadAt(List<Integer> messageIdList){
         MessageModel messageModel;
+        ChatReceiveMessageDTO returnMessage  = new ChatReceiveMessageDTO();
         for (Integer messageId : messageIdList) {
             messageModel = messageRepository.findById(messageId).get();
             if (!messageModel.getIsActive()) {
-                ExceptionService.throwException(ExceptionService.MESSAGE_ALREADY_DELETED);
+                returnMessage.setSuccess(false);
+                returnMessage.setErrorMessage(ExceptionService.MESSAGE_ALREADY_DELETED);
+                return returnMessage;
             }
             if (messageModel.getReadAt() != null) {
-                ExceptionService.throwException(ExceptionService.MESSAGE_ALREADY_READ);
+                returnMessage.setSuccess(false);
+                returnMessage.setErrorMessage(ExceptionService.MESSAGE_ALREADY_READ);
+                return returnMessage;
             }
         }
         for (Integer messageId : messageIdList) {
@@ -132,42 +153,45 @@ public class ChatService {
             messageRepository.save(messageModel);
         }
 
-        ChatReceiveMessageDTO refreshMessaage = new ChatReceiveMessageDTO();
-        refreshMessaage.setSuccess(true);
-        refreshMessaage.setRefresh(true);
-        String messageIdListString = messageIdList.stream().map(String::valueOf).collect(Collectors.joining(", "));
-        refreshMessaage.setContent(messageIdListString);
+        returnMessage.setSuccess(true);
+        returnMessage.setReadOrDeleteMessageIdList(messageIdList);
+        returnMessage.setAction("read");
+        returnMessage.setTime(ZonedDateTime.now(ZoneId.of("Asia/Hong_Kong")));
 
-        messagingTemplate.convertAndSend("/topic/" + topic, refreshMessaage);
+        return returnMessage;
     }
 
     /**
      * Mark message as inactive and delete all images that are connected to the message
-     * @param userId user id of the user who wants to delete the message
-     * @param messageId message id of the message to be deleted
-     * @param topic topic of chat room
-     * @throws Exception MESSAGE_ALREADY_DELETED, NOT_MESSAGE_SENDER_OR_RECEIVER
+     * May have error in message: MESSAGE_ALREADY_DELETED
+     * @param messageIdList message id list of the messages to be deleted
      */
-    public void deleteMessage(Integer userId, Integer messageId, String topic) throws Exception {
-        securityService.checkUserIdWithToken(userId);
-        MessageModel messageModel = messageRepository.findById(messageId).get();
-        if (!messageModel.getIsActive()) {
-            ExceptionService.throwException(ExceptionService.MESSAGE_ALREADY_DELETED);
+    public ChatReceiveMessageDTO deleteMessage(List<Integer> messageIdList) {
+        MessageModel messageModel;
+        ChatReceiveMessageDTO returnMessage = new ChatReceiveMessageDTO();
+
+        for (Integer messageId : messageIdList) {
+            messageModel = messageRepository.findById(messageId).get();
+            if (!messageModel.getIsActive()) {
+                returnMessage.setSuccess(false);
+                returnMessage.setErrorMessage(ExceptionService.MESSAGE_ALREADY_DELETED);
+                return returnMessage;
+            }
         }
-        if (messageModel.getUserIdFrom() != userId || messageModel.getUserIdTo() != userId) {
-            ExceptionService.throwException(ExceptionService.NOT_MESSAGE_SENDER_OR_RECEIVER);
+
+        for (Integer messageId : messageIdList) {
+            messageModel = messageRepository.findById(messageId).get();
+            messageModel.setIsActive(false);
+            messageRepository.save(messageModel);
+            deleteImage(messageId);
         }
-        messageModel.setIsActive(false);
-        messageRepository.save(messageModel);
 
-        deleteImage(messageId);
+        returnMessage.setSuccess(true);
+        returnMessage.setReadOrDeleteMessageIdList(messageIdList);
+        returnMessage.setAction("delete");
+        returnMessage.setTime(ZonedDateTime.now(ZoneId.of("Asia/Hong_Kong")));
 
-        ChatReceiveMessageDTO refreshMessaage = new ChatReceiveMessageDTO();
-        refreshMessaage.setSuccess(true);
-        refreshMessaage.setRefresh(true);
-        refreshMessaage.setContent(messageId.toString());
-
-        messagingTemplate.convertAndSend("/topic/" + topic, refreshMessaage);
+        return returnMessage;
     }
 
     /**
@@ -229,16 +253,16 @@ public class ChatService {
      * @param contactUserId contactUserId Integer
      * @param excludingMessageIdList a list of messageId that have already retrieved
      * @param messageNum query number of message
-     * @return List of ChatReceiveMessageDTO
+     * @return List of ChatMessageDetailsDTO
      * @throws Exception any Exception
      */
-    public List<ChatReceiveMessageDTO> getMessageHistoryList(Integer userId, Integer contactUserId, List<Integer> excludingMessageIdList, Integer messageNum) throws Exception {
-        List<ChatReceiveMessageDTO> chatReceiveMessageDTOList = new ArrayList<>();
+    public List<ChatMessageDetailsDTO> getMessageHistoryList(Integer userId, Integer contactUserId, List<Integer> excludingMessageIdList, Integer messageNum) throws Exception {
+        List<ChatMessageDetailsDTO> chatMessageDetailsDTOList = new ArrayList<>();
         List<MessageModel> findAllMessageByUserPair = messageRepository.findAllMessageByUserPair(userId, contactUserId, excludingMessageIdList, messageNum);
         for (MessageModel messageModel : findAllMessageByUserPair) {
-            chatReceiveMessageDTOList.add(convertToDTO(messageModel, messageRepository.findImageIdByMessageId(messageModel.getMessageId())));
+            chatMessageDetailsDTOList.add(convertToDTO(messageModel, messageRepository.findImageIdByMessageId(messageModel.getMessageId())));
         }
-        return chatReceiveMessageDTOList;
+        return chatMessageDetailsDTOList;
     }
 
     /**

@@ -16,4 +16,6 @@ public class ChatSendMessageDTO {
     private String content;
     private Integer attachTo;
     private List<Integer> imageIdList;
+    private String action;
+    private List<Integer> messageIdList;
 }
