@@ -274,7 +274,6 @@ export async function getPostById(postId: string): Promise<Post | null> {
 
     try {
       const data: PostContentResponse = await response.json();
-      console.log("API response:", data); // Log the API response for debugging
 
       // Check if data, data.data, or data.data.post is null/undefined
       if (!data || !data.data || !data.data.post) {

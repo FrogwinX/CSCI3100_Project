@@ -23,11 +23,11 @@ export default function PostDetail({ post }: { post: Post }) {
         {post.imageAPIList && (
           <div className="relative w-full overflow-hidden rounded-xl bg-base-300">
             {/* Blurred background image */}
-            <div className="absolute inset-0 w-full h-full opacity-60 scale-200">
+            <div className="absolute inset-0 w-full h-full opacity-60">
               <Image
                 src={post.imageAPIList[0]}
                 alt="Blurred background"
-                className="object-cover blur-xl w-full h-full"
+                className="object-cover blur-3xl w-full h-full"
                 width={500}
                 height={500}
               />
@@ -37,7 +37,7 @@ export default function PostDetail({ post }: { post: Post }) {
               <LoadingImage
                 src={post.imageAPIList[0]}
                 alt={post.title}
-                className=" object-contain rounded-md aspect-video max-h-96 mx-auto"
+                className=" object-contain rounded-md max-h-96 mx-auto"
               />
             </div>
           </div>

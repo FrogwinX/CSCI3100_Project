@@ -48,11 +48,11 @@ export default function PostPreview({ post }: { post: Post }) {
           {post.imageAPIList && post.content.trim().length < 50 && (
             <div className="relative w-full overflow-hidden rounded-xl bg-base-300 ">
               {/* Blurred background image */}
-              <div className="absolute inset-0 w-full h-full opacity-60 scale-200">
+              <div className="absolute inset-0 w-full h-full opacity-60">
                 <Image
                   src={post.imageAPIList[0]}
                   alt="Blurred Background"
-                  className="object-cover blur-xl w-full h-full aspect-video"
+                  className="object-cover blur-3xl w-full h-full aspect-video"
                   width={500}
                   height={500}
                 />
@@ -62,7 +62,7 @@ export default function PostPreview({ post }: { post: Post }) {
                 <LoadingImage
                   src={post.imageAPIList[0]}
                   alt={post.title}
-                  className="object-contain rounded-md aspect-video max-h-64 md:max-h-72 lg:max-h-80 mx-auto"
+                  className="object-contain rounded-md max-h-64 md:max-h-72 lg:max-h-80 mx-auto"
                 />
               </div>
             </div>
