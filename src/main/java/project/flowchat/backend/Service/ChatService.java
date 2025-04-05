@@ -45,6 +45,7 @@ public class ChatService {
         }
 
         messagingTemplate.convertAndSend("/channel/" + message.getUserIdTo(), returnMessage);
+        messagingTemplate.convertAndSend("/channel/" + message.getUserIdFrom(), returnMessage);
     }
 
 
