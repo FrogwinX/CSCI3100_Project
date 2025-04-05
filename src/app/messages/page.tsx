@@ -1,6 +1,6 @@
 "use client";
 
-import { faEllipsis, faFlag, faUser } from "@fortawesome/free-solid-svg-icons";
+import { faEllipsis, faFlag } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -135,7 +135,7 @@ export default function DirectMessagePage() {
       <div className="bg-base-100 min-h-full flex flex-grow w-6/8">
         {/* Contact List (Left)*/}
         <div className="w-1/3 flex flex-col bg-base-100">
-          <div className="flex items-end p-2 h-14 text-2xl font-bold">Contacts</div>
+          <div className="flex items-end p-2 h-24 text-2xl font-bold">Contacts</div>
           <ul className="list overflow-y-auto">
             {contacts.map((contact) => (
               <li
@@ -192,7 +192,11 @@ export default function DirectMessagePage() {
               {/* Messages */}
               <div className="flex-grow space-y-4 p-4">
                 {messages.map((message) => (
-                  <ChatMessage isOwner={message.userIdFrom === session.userId} message={message} />
+                  <ChatMessage
+                    key={message.messageId}
+                    isOwner={message.userIdFrom === session.userId}
+                    message={message}
+                  />
                 ))}
               </div>
               {/* Message input */}
