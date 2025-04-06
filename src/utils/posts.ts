@@ -274,6 +274,7 @@ export async function getPostById(postId: string): Promise<Post | null> {
 
     try {
       const data: PostContentResponse = await response.json();
+      console.log("API response:", data); // Log the API response for debugging
 
       // Check if data, data.data, or data.data.post is null/undefined
       if (!data || !data.data || !data.data.post) {
@@ -323,7 +324,7 @@ export async function createPost(title: string, content: string, tags: Tag[], im
     }
 
     // Validate userId
-    const userId = parseInt(session.userId, 10);
+    const userId = parseInt(session.userId?.toString() || "0", 10);
     if (isNaN(userId)) {
       throw new Error("Invalid userId");
     }

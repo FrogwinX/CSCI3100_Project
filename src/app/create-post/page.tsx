@@ -4,6 +4,8 @@ import { useState, useRef, useEffect } from 'react';
 import { useSession } from '@/hooks/useSession';
 import { getAllTags, Tag, createPost } from '@/utils/posts'; 
 import { useRouter } from 'next/navigation'; 
+import { faChevronLeft } from "@fortawesome/free-solid-svg-icons"; // Import FontAwesome icon
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"; // Import FontAwesome component
 
 export default function CreatePost() {
   // State variables
@@ -209,122 +211,138 @@ export default function CreatePost() {
     }
   };
 
+  // Handle click on the back button
+  const handleBack = () => {
+    router.back();
+  };
+
   return (
-    <div className="container max-w-3xl mx-auto">
-      <div className="bg-white rounded-lg shadow h-[100vh] overflow-y-hidden m-0">
-        <div className="p-6 overflow-y-auto h-full">
-          <h1 className="text-4xl font-bold mb-6">Create Post</h1>
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            <div className="form-control">
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                maxLength={100}
-                placeholder="Title"
-                className="input input-bordered w-full rounded-lg"
-              />
-              <div className="flex justify-end">
-                <span className="text-sm text-gray-500 mt-1">
-                  {title.length}/100
-                </span>
-              </div>
-            </div>
-            <div className="form-control">
-              <div className="flex items-center space-x-2 flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={handleAddTag}
-                  className="btn btn-outline btn-primary rounded-lg"
-                >
-                  {isTagMenuOpen ? 'Close Tags' : 'Add Tags'}
-                </button>
-                <div className="flex flex-wrap gap-2">
-                  {tags.map((tag) => (
-                    <span key={tag.tagId} className="badge badge-primary">
-                      {tag.tagName}
+    <div className="relative">
+      <div className="container max-w-3xl mx-auto">
+        {/* Back button positioned just to the left of the white box */}
+        <div className="relative">
+          <button
+            onClick={handleBack}
+            className="absolute top-4 -left-18 btn btn-circle btn-lg bg-base-100 z-10"
+          >
+            <FontAwesomeIcon icon={faChevronLeft} className="w-4 h-4" />
+          </button>
+          <div className="bg-white rounded-lg shadow h-[100vh] overflow-y-hidden m-0">
+            <div className="p-6 overflow-y-auto h-full">
+              <h1 className="text-4xl font-bold mb-6">Create Post</h1>
+              <form className="space-y-6" onSubmit={handleSubmit}>
+                <div className="form-control">
+                  <input
+                    type="text"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    maxLength={100}
+                    placeholder="Title"
+                    className="input input-bordered w-full rounded-lg"
+                  />
+                  <div className="flex justify-end">
+                    <span className="text-sm text-gray-500 mt-1">
+                      {title.length}/100
                     </span>
-                  ))}
+                  </div>
                 </div>
-              </div>
-              {isTagMenuOpen && (
-                <div className="mt-2 p-4 bg-gray-100 rounded-lg shadow max-h-60 overflow-y-auto">
-                  {loading ? (
-                    <p>Loading tags...</p>
-                  ) : tagFetchError ? (
-                    <p className="text-red-500">{tagFetchError}</p>
-                  ) : session?.isLoggedIn ? (
-                    allTags.length > 0 ? (
-                      <div className="flex flex-wrap gap-2">
-                        {allTags.map((tag) => (
-                          <button
-                            key={tag.tagId}
-                            type="button"
-                            onClick={() => toggleTag(tag)}
-                            className={`btn btn-sm ${
-                              tags.some((t) => t.tagId === tag.tagId) ? 'btn-primary' : 'btn-accent'
-                            }`}
-                          >
-                            {tag.tagName}
-                          </button>
-                        ))}
-                      </div>
-                    ) : (
-                      <p>No tags available</p>
-                    )
-                  ) : (
-                    <p>Please log in to select tags</p>
+                <div className="form-control">
+                  <div className="flex items-center space-x-2 flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={handleAddTag}
+                      className="btn btn-outline btn-primary rounded-lg"
+                    >
+                      {isTagMenuOpen ? 'Close Tags' : 'Add Tags'}
+                    </button>
+                    <div className="flex flex-wrap gap-2">
+                      {tags.map((tag) => (
+                        <span key={tag.tagId} className="badge badge-primary">
+                          {tag.tagName}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  {isTagMenuOpen && (
+                    <div className="mt-2 p-4 bg-gray-100 rounded-lg shadow max-h-60 overflow-y-auto">
+                      {loading ? (
+                        <p>Loading tags...</p>
+                      ) : tagFetchError ? (
+                        <p className="text-red-500">{tagFetchError}</p>
+                      ) : session?.isLoggedIn ? (
+                        allTags.length > 0 ? (
+                          <div className="flex flex-wrap gap-2">
+                            {allTags.map((tag) => (
+                              <button
+                                key={tag.tagId}
+                                type="button"
+                                onClick={() => toggleTag(tag)}
+                                className={`btn btn-sm ${
+                                  tags.some((t) => t.tagId === tag.tagId) ? 'btn-primary' : 'btn-accent'
+                                }`}
+                              >
+                                {tag.tagName}
+                              </button>
+                            ))}
+                          </div>
+                        ) : (
+                          <p>No tags available</p>
+                        )
+                      ) : (
+                        <p>Please log in to select tags</p>
+                      )}
+                    </div>
                   )}
                 </div>
-              )}
-            </div>
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Post Content</span>
-              </label>
-              <div className="border border-gray-300 rounded-t-lg">
-                <div className="bg-gray-100 p-2 flex space-x-1 border-b border-gray-300">
-                  <button type="button" className="btn btn-ghost btn-xs text-gray-600">
-                    <span className="font-bold">B</span>
-                  </button>
-                  <button type="button" className="btn btn-ghost btn-xs text-gray-600">
-                    <span className="italic">I</span>
-                  </button>
-                  <button type="button" className="btn btn-ghost btn-xs text-gray-600">
-                    <span className="underline">U</span>
-                  </button>
-                  <button type="button" className="btn btn-ghost btn-xs text-gray-600" onClick={handleClipClick}>
-                    <span>📎</span>
-                  </button>
-                  <input
-                    type="file"
-                    accept="image/png,image/jpeg"
-                    ref={fileInputRef}
-                    onChange={handleImageUpload}
-                    className="hidden"
-                  />
+                <div className="form-control">
+                  <label className="label">
+                    <span className="label-text">Post Content</span>
+                  </label>
+                  <div className="border border-gray-300 rounded-t-lg">
+                    <div className="bg-gray-100 p-2 flex space-x-1 border-b border-gray-300">
+                      <button type="button" className="btn btn-ghost btn-xs text-gray-600">
+                        <span className="font-bold">B</span>
+                      </button>
+                      <button type="button" className="btn btn-ghost btn-xs text-gray-600">
+                        <span className="italic">I</span>
+                      </button>
+                      <button type="button" className="btn btn-ghost btn-xs text-gray-600">
+                        <span className="underline">U</span>
+                      </button>
+                      <button type="button" className="btn btn-ghost btn-xs text-gray-600" onClick={handleClipClick}>
+                        <span>📎</span>
+                      </button>
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg"
+                        ref={fileInputRef}
+                        onChange={handleImageUpload}
+                        className="hidden"
+                      />
+                    </div>
+                    <div
+                      ref={contentRef}
+                      contentEditable
+                      onInput={handleContentChange}
+                      className="w-full p-2 border border-gray-300 rounded-b-lg focus:outline-none"
+                      style={{ minHeight: '10rem', overflowY: 'auto' }}
+                    />
+                  </div>
+                  <div className="flex justify-end">
+                    <span className="text-sm text-gray-500 mt-1">
+                      {textLength}/1000
+                    </span>
+                  </div>
                 </div>
-                <div
-                  ref={contentRef}
-                  contentEditable
-                  onInput={handleContentChange}
-                  className="w-full p-2 border border-gray-300 rounded-b-lg focus:outline-none"
-                  style={{ minHeight: '10rem', overflowY: 'auto' }}
-                />
-              </div>
-              <div className="flex justify-end">
-                <span className="text-sm text-gray-500 mt-1">
-                  {textLength}/1000
-                </span>
-              </div>
+                {submitError && (
+                  <p className="text-red-500">{submitError}</p>
+                )}
+                <button type="submit" className="btn bg-[#A3DFFA] text-[#1A3C34] hover:bg-[#8CCFF7] float-right rounded-lg">
+                  Post
+                </button>
+              </form>
             </div>
-            {submitError && (
-              <p className="text-red-500">{submitError}</p>
-            )}
-            <button type="submit" className="btn bg-[#A3DFFA] text-[#1A3C34] hover:bg-[#8CCFF7] float-right rounded-lg">
-              Post
-            </button>
-          </form>
+          </div>
         </div>
       </div>
     </div>
