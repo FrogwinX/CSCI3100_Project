@@ -40,7 +40,7 @@ export default function SideMenu() {
     <div className="card-body gap-0 flex flex-col h-full">
       {/* Section 1 Create Post Button */}
       <div className="w-full">
-        <Link href="/create-post">
+        <Link href="/forum/create-post">
           <button className="btn btn-primary w-full">
             <FontAwesomeIcon icon={faPlus} />
             Create Post
