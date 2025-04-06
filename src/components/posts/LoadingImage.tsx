@@ -7,10 +7,12 @@ export default function LoadingImage({
   src,
   alt = "",
   className = "",
+  priority = false,
 }: {
   src: string;
   alt?: string;
   className?: string;
+  priority?: boolean;
 }) {
   const [isLoading, setIsLoading] = useState(true);
 
@@ -29,6 +31,7 @@ export default function LoadingImage({
         onLoad={() => setIsLoading(false)}
         width={500}
         height={500}
+        priority={priority}
       />
     </div>
   );

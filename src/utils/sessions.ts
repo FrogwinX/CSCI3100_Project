@@ -8,6 +8,7 @@ export interface SessionData {
   roles?: string;
   isLoggedIn: boolean;
   token?: string;
+  profileImage?: string;
 }
 
 // Default session state when not logged in
@@ -15,9 +16,11 @@ export const defaultSession: SessionData = {
   isLoggedIn: false,
 };
 
-// Session configuration (use env variables in production)
+// Session configuration
 export const sessionOptions: SessionOptions = {
-  password: process.env.SESSION_SECRET!,
+  password:
+    process.env.SESSION_SECRET ||
+    (process.env.NODE_ENV === "development" ? "FALLBACK_DEVELOPMENT_SECRET_KEY_IF_NO_ENV_FILE" : ""),
   cookieName: "flowchat_session",
   cookieOptions: {
     // secure should be true in production
