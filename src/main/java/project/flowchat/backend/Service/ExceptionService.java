@@ -32,8 +32,10 @@ public class ExceptionService extends Exception {
 
     /* Image Service Expected Exceptions */
     public static final String FILE_NOT_IMAGE = "The file is not an image";
+    public static final String IMAGE_ALREADY_USED = "This image has been used";
 
     /* Chat Service Expected Exceptions */
+    public static final String INVALID_ACTION_TYPE = "This action type is invalid.";
     public static final String MESSAGE_ALREADY_READ = "This message has already been read.";
     public static final String MESSAGE_ALREADY_DELETED = "This message has already been deleted.";
 
