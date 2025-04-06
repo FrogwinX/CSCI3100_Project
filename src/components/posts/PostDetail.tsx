@@ -12,9 +12,9 @@ export default function PostDetail({ post }: { post: Post }) {
 
         {/** Body */}
         <div className="flex gap-4">
-          <div className="flex-1">
-            <h3 className="card-title text-2xl font-bold">{post.title}</h3>
-            <p className="text-base-content text-md my-2 whitespace-pre-wrap">{post.content}</p>
+          <div className="flex-1 overflow-hidden">
+            <h3 className="card-title text-2xl font-bold break-words">{post.title}</h3>
+            <p className="text-base-content text-md my-2 whitespace-pre-wrap break-words">{post.content}</p>
           </div>
         </div>
 

@@ -28,9 +28,9 @@ export default function PostPreview({ post }: { post: Post }) {
           <PostHeader postId={post.postId} postUsername={post.username} postUpdatedAt={post.updatedAt} />
           {/** Body */}
           <div className="flex gap-4">
-            <div className="flex-1">
-              <h3 className="card-title text-lg font-bold line-clamp-2">{post.title}</h3>
-              <p className="text-base-content text-md my-2 line-clamp-3 md:line-clamp-6">{post.content}</p>
+            <div className="flex-1 overflow-hidden">
+              <h3 className="card-title text-lg font-bold line-clamp-2 break-words">{post.title}</h3>
+              <p className="text-base-content text-md my-2 line-clamp-3 md:line-clamp-6 break-words">{post.content}</p>
             </div>
             {/* Image on the right side, conditionally rendered */}
             {post.imageAPIList && post.content.trim().length >= 50 && (
