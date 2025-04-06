@@ -6,47 +6,41 @@ import { getAllTags, Tag, createPost } from '@/utils/posts';
 import { useRouter } from 'next/navigation'; 
 
 export default function CreatePost() {
-  const [title, setTitle] = useState<string>('');
-  const [tags, setTags] = useState<Tag[]>([]);
-  const [allTags, setAllTags] = useState<Tag[]>([]);
-  const [isTagMenuOpen, setIsTagMenuOpen] = useState<boolean>(false);
-  const [content, setContent] = useState<string>('');
-  const [textLength, setTextLength] = useState<number>(0);
-  const [tagFetchError, setTagFetchError] = useState<string | null>(null);
-  const [submitError, setSubmitError] = useState<string | null>(null); 
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
+  // State variables
+  const [title, setTitle] = useState<string>(''); // Post title
+  const [tags, setTags] = useState<Tag[]>([]); // Selected tags
+  const [allTags, setAllTags] = useState<Tag[]>([]); // All available tags from server
+  const [isTagMenuOpen, setIsTagMenuOpen] = useState<boolean>(false); // Toggle for tag selection menu
+  const [content, setContent] = useState<string>(''); // Post content (plain text)
+  const [textLength, setTextLength] = useState<number>(0); // Length of the content text
+  const [tagFetchError, setTagFetchError] = useState<string | null>(null); // Error message for tag fetching
+  const [submitError, setSubmitError] = useState<string | null>(null); // Error message for post submission
+  const [images, setImages] = useState<File[]>([]); // Uploaded image files
+  const fileInputRef = useRef<HTMLInputElement>(null); // Reference to file input for image upload
+  const contentRef = useRef<HTMLDivElement>(null); // Reference to content editable div
 
   const { session, loading, refresh } = useSession();
   const router = useRouter();
 
+  // Fetch all tags when the component mounts or session changes
   useEffect(() => {
     const fetchTags = async () => {
-      if (loading) {
-        console.log('Session is still loading, waiting...');
-        return;
-      }
+      if (loading) return; // Wait for session to load
 
       if (!session?.isLoggedIn || !session?.token) {
-        console.log('User is not logged in or token is not available');
         setTagFetchError('Please log in to load tags');
         return;
       }
 
       try {
-        console.log('Fetching tags with token:', session.token);
         const tags = await getAllTags();
-        console.log('Received tags:', tags);
-
         if (tags.length === 0) {
-          console.warn('No tags returned from API');
           setTagFetchError('No tags available from server');
         } else {
           setAllTags(tags);
           setTagFetchError(null);
         }
       } catch (error) {
-        console.error('Error fetching tags:', error);
         setTagFetchError('Failed to load tags');
         setAllTags([]);
       }
@@ -55,6 +49,7 @@ export default function CreatePost() {
     fetchTags();
   }, [session, loading]);
 
+  // Toggle the tag selection menu
   const handleAddTag = () => {
     if (loading) return;
 
@@ -66,6 +61,7 @@ export default function CreatePost() {
     setIsTagMenuOpen((prev) => !prev);
   };
 
+  // Add or remove a tag from the selected tags
   const toggleTag = (tag: Tag) => {
     if (tags.some((t) => t.tagId === tag.tagId)) {
       setTags(tags.filter((t) => t.tagId !== tag.tagId));
@@ -74,42 +70,78 @@ export default function CreatePost() {
     }
   };
 
+  // Handle image upload
   const handleImageUpload = () => {
     const file = fileInputRef.current?.files?.[0];
-    if (file && contentRef.current) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const imgSrc = event.target?.result as string;
-        const imgElement = document.createElement('img');
-        imgElement.src = imgSrc;
-        imgElement.alt = 'Uploaded Image';
-        imgElement.style.maxWidth = '100%';
-        imgElement.style.height = 'auto';
+    if (file) {
+      // Validate file type (only PNG and JPEG allowed)
+      if (!file.type.match('image/(png|jpeg)')) {
+        setSubmitError('Only PNG and JPEG formats are supported');
+        return;
+      }
+
+      // Validate file size (max 5MB)
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      if (file.size > maxSize) {
+        setSubmitError('Image file is too large, maximum limit is 5MB');
+        return;
+      }
+
+      // Rename file using a simple format
+      const extension = file.name.split('.').pop();
+      const newFileName = `image-${images.length + 1}.${extension}`;
+      const renamedFile = new File([file], newFileName, { type: file.type });
+
+      // Add the image to the images state
+      setImages((prevImages) => [...prevImages, renamedFile]);
+
+      // Display the image in the editor using a temporary URL and insert a placeholder
+      const imgSrc = URL.createObjectURL(file);
+      const imgElement = document.createElement('img');
+      imgElement.src = imgSrc;
+      imgElement.alt = 'Uploaded Image';
+      imgElement.dataset.fileName = newFileName;
+      imgElement.style.maxWidth = '100%';
+      imgElement.style.height = 'auto';
+      if (contentRef.current) {
         contentRef.current.appendChild(imgElement);
         contentRef.current.appendChild(document.createElement('br'));
-        setContent(contentRef.current.innerHTML);
-      };
-      reader.readAsDataURL(file);
+      }
     }
   };
 
+  // Trigger file input click for image upload
   const handleClipClick = () => {
     fileInputRef.current?.click();
   };
 
-  const getTextLength = (html: string) => {
-    const div = document.createElement('div');
-    div.innerHTML = html;
-    return div.textContent?.length || 0;
+  // Calculate the length of the plain text content
+  const getTextLength = (text: string) => {
+    return text.length || 0;
   };
 
+  // Handle changes in the content editable div
   const handleContentChange = () => {
     if (contentRef.current) {
-      const newContent = contentRef.current.innerHTML;
-      setContent(newContent);
+      // Extract plain text content and replace images with placeholders
+      const div = document.createElement('div');
+      div.innerHTML = contentRef.current.innerHTML;
+      const images = div.querySelectorAll('img');
+      images.forEach((img) => {
+        const fileName = img.dataset.fileName || '';
+        if (fileName) {
+          const placeholder = `[image:${fileName}]`;
+          const textNode = document.createTextNode(placeholder);
+          img.parentNode?.replaceChild(textNode, img);
+        }
+      });
+      const cleanContent = div.textContent || '';
+      setContent(cleanContent);
+      setTextLength(getTextLength(cleanContent));
     }
   };
 
+  // Adjust the height of the content editor dynamically
   useEffect(() => {
     if (contentRef.current) {
       contentRef.current.style.height = 'auto';
@@ -122,14 +154,14 @@ export default function CreatePost() {
     }
   }, [content]);
 
+  // Limit the content length to 1000 characters
   useEffect(() => {
     if (contentRef.current) {
-      const newContent = contentRef.current.innerHTML;
-      const length = getTextLength(newContent);
+      const textContent = contentRef.current.textContent || '';
+      const length = getTextLength(textContent);
       if (length > 1000) {
-        const text = contentRef.current.textContent || '';
-        const truncatedText = text.substring(0, 1000);
-        contentRef.current.innerHTML = truncatedText;
+        const truncatedText = textContent.substring(0, 1000);
+        contentRef.current.textContent = truncatedText;
         setContent(truncatedText);
         setTextLength(1000);
       } else {
@@ -138,26 +170,42 @@ export default function CreatePost() {
     }
   }, [content]);
 
+  // Handle form submission to create a post
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Check if user is logged in
     if (!session?.isLoggedIn) {
-      alert('請先登入');
+      setSubmitError('Please log in first');
       return;
     }
 
+    // Validate title and content
     if (!title || !content) {
-      setSubmitError('標題和內容不能為空');
+      setSubmitError('Title and content cannot be empty');
       return;
     }
 
     setSubmitError(null);
 
-    const postId = await createPost(title, content, tags);
-    if (postId) {
-      router.push(`/posts/${postId}`);
-    } else {
-      setSubmitError('創建貼文失敗，請稍後再試');
+    try {
+      const postId = await createPost(title, content, tags, images);
+      if (postId) {
+        router.push(`/posts/${postId}`);
+      } else {
+        setSubmitError('Failed to create post, unable to retrieve post ID');
+      }
+    } catch (error: any) {
+      if (error.message.includes("Authentication failed")) {
+        setSubmitError("Authentication failed, please log in again");
+        refresh();
+      } else if (error.message.includes("Unsupported media type")) {
+        setSubmitError("Unsupported request format, please contact the administrator");
+      } else if (error.message.includes("Server error")) {
+        setSubmitError("Server error, please contact the administrator");
+      } else {
+        setSubmitError(error.message || 'Failed to create post, please try again later');
+      }
     }
   };
 
@@ -250,7 +298,7 @@ export default function CreatePost() {
                   </button>
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/png,image/jpeg"
                     ref={fileInputRef}
                     onChange={handleImageUpload}
                     className="hidden"

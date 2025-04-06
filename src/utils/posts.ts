@@ -308,30 +308,49 @@ export async function getPostById(postId: string): Promise<Post | null> {
   }
 }
 
-export async function createPost(title: string, content: string, tags: Tag[]): Promise<string | null> {
+interface CreatePostResponse {
+  message: string;
+  data: any; // Can be a string or an object depending on backend response
+}
+
+// Create a new post with the given title, content, tags, and images
+export async function createPost(title: string, content: string, tags: Tag[], images: File[]): Promise<string | null> {
   try {
     const session = await getSession();
 
+    // Validate session
     if (!session?.isLoggedIn || !session?.token) {
-      throw new Error("用戶未登入或 token 不可用");
+      throw new Error("User is not logged in or token is unavailable");
     }
 
-    const { cleanContent, images } = extractImagesFromContent(content);
+    // Validate userId
+    const userId = parseInt(session.userId, 10);
+    if (isNaN(userId)) {
+      throw new Error("Invalid userId");
+    }
 
+    // Construct request body for the backend
     const requestBody = {
+      userId,
       title,
-      content: cleanContent,
-      tagIdList: tags.map((tag) => tag.tagId),
+      content: content.replace(/<[^>]+>/g, ''), // Remove HTML tags from content
+      tag: tags.map((tag) => tag.tagName),
+      attachTo: 0,
     };
 
+    // Create FormData for multipart/form-data request
     const formData = new FormData();
-    formData.append("requestBody", JSON.stringify(requestBody));
-    images.forEach((image, index) => {
-      formData.append(`images[${index}]`, image);
-    });
+    const requestBodyBlob = new Blob([JSON.stringify(requestBody)], { type: 'application/json' });
+    formData.append("requestBody", requestBodyBlob);
+
+    // Append images to imageList if any
+    if (images.length > 0) {
+      images.forEach((image) => {
+        formData.append("imageList", image);
+      });
+    }
 
     const apiUrl = "https://flowchatbackend.azurewebsites.net/api/Forum/createPostOrComment";
-
     const response = await fetch(apiUrl, {
       method: "POST",
       headers: {
@@ -340,18 +359,57 @@ export async function createPost(title: string, content: string, tags: Tag[]): P
       body: formData,
     });
 
+    // Check response status
     if (!response.ok) {
-      throw new Error(`創建貼文失敗，狀態碼：${response.status}`);
+      if (response.status === 415) {
+        throw new Error("Unsupported media type, please check request format");
+      }
+      if (response.status === 401) {
+        throw new Error("Authentication failed, please log in again");
+      }
+      if (response.status === 500) {
+        throw new Error("Server error, please contact the administrator");
+      }
+      throw new Error(`Failed to create post, status code: ${response.status}`);
     }
 
+    // Parse response
     const data: CreatePostResponse = await response.json();
-    if (!data.data.isSuccess) {
-      throw new Error(data.message || "創建貼文失敗");
+    let postId: string | null = null;
+    let isSuccess: boolean = false;
+
+    // Handle different response formats
+    if (typeof data.data === 'string') {
+      // Legacy format: data.data is a string like "48 success: true"
+      const dataString = data.data as string;
+      const [id, successPart] = dataString.split(" success: ");
+      postId = id;
+      isSuccess = successPart === "true";
+    } else if (data.data && typeof data.data === 'object' && 'isSuccess' in data.data) {
+      // New format: data.data is an object like { isSuccess: true }
+      isSuccess = (data.data as { isSuccess: boolean }).isSuccess;
+      if (isSuccess) {
+        // Backend did not return postId, fetch the latest post
+        const latestPosts = await getPosts({ filter: "latest", count: 1 });
+        if (!latestPosts || latestPosts.length === 0) {
+          throw new Error("Unable to fetch the latest post for navigation");
+        }
+        postId = latestPosts[0].postId;
+      }
+    } else {
+      throw new Error("Unexpected response format from backend");
     }
 
-    return data.data.postId;
+    if (!isSuccess) {
+      throw new Error(data.message || "Failed to create post");
+    }
+
+    if (!postId) {
+      throw new Error("Unable to retrieve post ID for navigation");
+    }
+
+    return postId;
   } catch (error) {
-    console.error("創建貼文時發生錯誤：", error);
-    return null;
+    throw error;
   }
 }
