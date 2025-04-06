@@ -175,25 +175,25 @@ export default function CreatePost() {
   // Handle form submission to create a post
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+  
     // Check if user is logged in
     if (!session?.isLoggedIn) {
       setSubmitError('Please log in first');
       return;
     }
-
+  
     // Validate title and content
     if (!title || !content) {
       setSubmitError('Title and content cannot be empty');
       return;
     }
-
+  
     setSubmitError(null);
-
+  
     try {
       const postId = await createPost(title, content, tags, images);
       if (postId) {
-        router.push(`/posts/${postId}`);
+        router.push('/forum/latest');
       } else {
         setSubmitError('Failed to create post, unable to retrieve post ID');
       }
