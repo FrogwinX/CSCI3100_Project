@@ -7,9 +7,13 @@ import { useRouter, usePathname } from "next/navigation";
 export default function BackButton() {
   const router = useRouter();
   const pathname = usePathname();
-  const isPostDetailPage = pathname?.includes("/forum/post/");
+  const shouldHide =
+    pathname?.includes("/forum/latest") ||
+    pathname?.includes("/forum/recommended") ||
+    pathname?.includes("/forum/search-results") ||
+    pathname?.includes("/forum/following");
 
-  if (!isPostDetailPage) return null;
+  if (shouldHide) return null;
 
   return (
     <button onClick={() => router.back()} className="btn btn-circle btn-lg bg-base-100">

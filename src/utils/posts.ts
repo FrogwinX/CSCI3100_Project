@@ -274,7 +274,6 @@ export async function getPostById(postId: string): Promise<Post | null> {
 
     try {
       const data: PostContentResponse = await response.json();
-      console.log("API response:", data); // Log the API response for debugging
 
       // Check if data, data.data, or data.data.post is null/undefined
       if (!data || !data.data || !data.data.post) {
@@ -333,14 +332,14 @@ export async function createPost(title: string, content: string, tags: Tag[], im
     const requestBody = {
       userId,
       title,
-      content: content.replace(/<[^>]+>/g, ''), // Remove HTML tags from content
+      content: content.replace(/<[^>]+>/g, ""), // Remove HTML tags from content
       tag: tags.map((tag) => tag.tagName),
       attachTo: 0,
     };
 
     // Create FormData for multipart/form-data request
     const formData = new FormData();
-    const requestBodyBlob = new Blob([JSON.stringify(requestBody)], { type: 'application/json' });
+    const requestBodyBlob = new Blob([JSON.stringify(requestBody)], { type: "application/json" });
     formData.append("requestBody", requestBodyBlob);
 
     // Append images to imageList if any
@@ -379,13 +378,13 @@ export async function createPost(title: string, content: string, tags: Tag[], im
     let isSuccess: boolean = false;
 
     // Handle different response formats
-    if (typeof data.data === 'string') {
+    if (typeof data.data === "string") {
       // Legacy format: data.data is a string like "48 success: true"
       const dataString = data.data as string;
       const [id, successPart] = dataString.split(" success: ");
       postId = id;
       isSuccess = successPart === "true";
-    } else if (data.data && typeof data.data === 'object' && 'isSuccess' in data.data) {
+    } else if (data.data && typeof data.data === "object" && "isSuccess" in data.data) {
       // New format: data.data is an object like { isSuccess: true }
       isSuccess = (data.data as { isSuccess: boolean }).isSuccess;
       if (isSuccess) {

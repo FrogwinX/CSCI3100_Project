@@ -1,7 +1,6 @@
 import PostHeader from "@/components/posts/PostHeader";
 import PostFooter from "@/components/posts/PostFooter";
 import { Post } from "@/components/posts/PostPreview";
-import Image from "next/image";
 import LoadingImage from "@/components/posts/LoadingImage";
 
 export default function PostDetail({ post }: { post: Post }) {
@@ -21,26 +20,11 @@ export default function PostDetail({ post }: { post: Post }) {
 
         {/** Image */}
         {post.imageAPIList && (
-          <div className="relative w-full overflow-hidden rounded-xl bg-base-300">
-            {/* Blurred background image */}
-            <div className="absolute inset-0 w-full h-full opacity-60">
-              <Image
-                src={post.imageAPIList[0]}
-                alt="Blurred background"
-                className="object-cover blur-3xl w-full h-full"
-                width={500}
-                height={500}
-              />
-            </div>
-            {/* Main image */}
-            <div className="relative w-full h-full items-center justify-center">
-              <LoadingImage
-                src={post.imageAPIList[0]}
-                alt={post.title}
-                className=" object-contain rounded-md max-h-96 mx-auto"
-              />
-            </div>
-          </div>
+          <LoadingImage
+            src={post.imageAPIList[0]}
+            alt={post.title}
+            className="object-contain rounded-md max-h-96 mx-auto"
+          />
         )}
 
         {/** Tags */}
