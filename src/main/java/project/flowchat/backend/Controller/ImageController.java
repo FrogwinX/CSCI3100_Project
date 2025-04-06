@@ -34,7 +34,7 @@ public class ImageController {
             Integer imageId = imageService.saveImage(file);
             data.put("isSuccess", true);
             data.put("imageId", imageId);
-            data.put("imageAPI", imageService.deploymentGetImageAPI + imageId);
+            data.put("imageAPI", imageService.getImageAPI(imageId));
             responseBodyDTO.setData(data);
             responseBodyDTO.setMessage("The image is saved");
         } catch (ExceptionService e) {
@@ -50,16 +50,38 @@ public class ImageController {
         return responseBodyDTO;
     }
 
+    @GetMapping("getImage")
+    private ResponseEntity<byte[]> getImage(@RequestParam String image) {
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            Optional<ImageModel> imageModel = imageService.getImageByEncodedImageId(image);
+            if (imageModel.isPresent()) {
+                switch (imageModel.get().getImageFormat()) {
+                    case "image/png" -> headers.setContentType(MediaType.IMAGE_PNG);
+                    case "image/gif" -> headers.setContentType(MediaType.IMAGE_GIF);
+                    default -> headers.setContentType(MediaType.IMAGE_JPEG);
+                }
+
+                return new ResponseEntity<>(imageModel.get().getImageData(), headers, HttpStatus.OK);
+            }
+        } catch (ExceptionService e) {
+
+        } catch (Exception e) {
+
+        }
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    }
+
     @GetMapping("getImageByImageId")
     private ResponseEntity<byte[]> getImageByImageId(@RequestParam Integer imageId) {
         try {
             HttpHeaders headers = new HttpHeaders();
-            Optional<ImageModel> image = imageService.getImage(imageId);
+            Optional<ImageModel> image = imageService.getImageByImageId(imageId);
             if (image.isPresent()) {
                 switch (image.get().getImageFormat()) {
-                    case "image/png": headers.setContentType(MediaType.IMAGE_PNG); break;
-                    case "image/gif": headers.setContentType(MediaType.IMAGE_GIF); break;
-                    default: headers.setContentType(MediaType.IMAGE_JPEG);
+                    case "image/png" -> headers.setContentType(MediaType.IMAGE_PNG);
+                    case "image/gif" -> headers.setContentType(MediaType.IMAGE_GIF);
+                    default -> headers.setContentType(MediaType.IMAGE_JPEG);
                 }
 
                 return new ResponseEntity<>(image.get().getImageData(), headers, HttpStatus.OK);

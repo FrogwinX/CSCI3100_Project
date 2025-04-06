@@ -5,14 +5,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import jakarta.transaction.Transactional;
 import project.flowchat.backend.Model.ImageModel;
 import project.flowchat.backend.Repository.ImageRepository;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
+import java.nio.ByteBuffer;
+import java.util.Base64;
 import java.util.Optional;
+import java.util.Random;
 
 import net.coobird.thumbnailator.Thumbnails;
 
@@ -23,8 +25,8 @@ public class ImageService {
     @Autowired
     private final ImageRepository imageRepository;
 
-    public final String deploymentGetImageAPI = "https://flowchatbackend.azurewebsites.net/api/Image/getImageByImageId?imageId=";
-    public final String localhostGetImageAPI = "http://localhost:8080/api/Image/getImageByImageId?imageId=";
+    private static final String deploymentGetImageAPI = "https://flowchatbackend.azurewebsites.net/api/Image/getImage?image=";
+    private static final String localhostGetImageAPI = "http://localhost:8080/api/Image/getImage?image=";
     private static final long MAX_IMAGE_SIZE = 1 * 1024 * 1024; // 1MB
 
     private static byte[] compressImage(MultipartFile file) throws Exception {
@@ -68,8 +70,33 @@ public class ImageService {
         }
     }
 
-    public Optional<ImageModel> getImage(Integer imageId) throws Exception {
+    public String getImageAPI(Integer imageId) {
+        return (deploymentGetImageAPI + encodeImageId(imageId));
+    }
+
+    public Optional<ImageModel> getImageByEncodedImageId(String encodedImageId) throws Exception {
+        return imageRepository.findById(decodeInteger(encodedImageId));
+    }
+
+    public Optional<ImageModel> getImageByImageId(Integer imageId) throws Exception {
         return imageRepository.findById(imageId);
+    }
+
+    public String encodeImageId(int imageId) {
+        Random random = new Random();
+        int randomInt = 16;
+        ByteBuffer buffer = ByteBuffer.allocate(4 + randomInt*2);
+        buffer.putInt(imageId);
+        for (int i=0; i<randomInt; i++) {
+            buffer.putChar((char) ('A' + random.nextInt(56)));
+        }
+        return Base64.getEncoder().encodeToString(buffer.array());
+    }
+
+    public Integer decodeInteger(String encodedImageId) {
+        byte[] bytes = Base64.getDecoder().decode(encodedImageId);
+        ByteBuffer buffer = ByteBuffer.wrap(bytes);
+        return buffer.getInt();
     }
 
     /**

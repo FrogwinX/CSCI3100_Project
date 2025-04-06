@@ -59,7 +59,7 @@ public class ForumService {
         if (!imageIdList.isEmpty()) {
             List<String> imageAPIList = new ArrayList<>();
             for (Integer imageId : imageIdList) {
-                imageAPIList.add(imageService.deploymentGetImageAPI + imageId);
+                imageAPIList.add(imageService.getImageAPI(imageId));
             }
             postDTO.setImageAPIList(imageAPIList);
         }
