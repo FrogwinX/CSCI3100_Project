@@ -40,7 +40,7 @@ public class ChatService {
             case "delete" -> returnMessage = deleteMessage(message.getMessageIdList());
             default -> {
                 returnMessage.setSuccess(false);
-                returnMessage.setErrorMessage("Invalid action type");
+                returnMessage.setErrorMessage(ExceptionService.INVALID_ACTION_TYPE);
             }
         }
 
@@ -68,7 +68,7 @@ public class ChatService {
         ChatReceiveMessageDTO returnMessage = new ChatReceiveMessageDTO();
         if (!connectImageAndMessage(message.getImageIdList())) {
             returnMessage.setSuccess(false);
-            returnMessage.setErrorMessage("Invalid image id list");
+            returnMessage.setErrorMessage(ExceptionService.IMAGE_ALREADY_USED);
             return returnMessage;
         }
         messageModel = messageRepository.save(messageModel);
@@ -119,7 +119,7 @@ public class ChatService {
         if (imageIdList != null && imageIdList.size() > 0) {
             List<String> imageAPIList = new ArrayList<>();
             for (Integer imageId : imageIdList) {
-                imageAPIList.add(imageService.deploymentGetImageAPI + imageId);
+                imageAPIList.add(imageService.getImageAPI(imageId));
             }
             messageDTO.setImageAPIList(imageAPIList);
         }

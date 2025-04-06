@@ -30,6 +30,13 @@ public class ForumService {
     private final ImageService imageService;
     private final SecurityService securityService;
 
+    public static final String INTERACTION_VIEW = "view";
+    public static final String INTERACTION_LIKE = "like";
+    public static final String INTERACTION_DISLIKE = "dislike";
+    public static final String INTERACTION_UNLIKE = "unlike";
+    public static final String INTERACTION_UNDISLIKE = "undislike";
+    public static final String INTERACTION_COMMENT = "comment";
+    public static final String INTERACTION_POST = "post";
     /**
      * Convert post data from database (PostModel) to Java Object (PostDTO)
      * @param post post data from database (PostModel)
@@ -52,7 +59,7 @@ public class ForumService {
         if (!imageIdList.isEmpty()) {
             List<String> imageAPIList = new ArrayList<>();
             for (Integer imageId : imageIdList) {
-                imageAPIList.add(imageService.deploymentGetImageAPI + imageId);
+                imageAPIList.add(imageService.getImageAPI(imageId));
             }
             postDTO.setImageAPIList(imageAPIList);
         }
@@ -98,9 +105,7 @@ public class ForumService {
         List<Integer> allImageId = new ArrayList<Integer>();
         if (images != null) {
             for (MultipartFile image: images) {
-                if (image.getContentType() == null || !image.getContentType().startsWith("image/")) {
-                    ExceptionService.throwException(ExceptionService.FILE_NOT_IMAGE);
-                }
+                imageService.checkIsImage(image);
             }
 
             for (MultipartFile image: images) {
@@ -113,12 +118,12 @@ public class ForumService {
             // Post
             postOrComment = addPostOrCommentToDatabase(userId, title, content, attachTo);
             addTag(postOrComment.getPostId(), tag);
-            updateRecommendationScore(postOrComment.getPostId(), userId, "post");
+            updateRecommendationScore(postOrComment.getPostId(), userId, INTERACTION_POST);
         }
         else {
             // Comment
             postOrComment = addPostOrCommentToDatabase(userId, null, content, attachTo);
-            updateRecommendationScore(attachTo, userId, "comment");
+            updateRecommendationScore(attachTo, userId, INTERACTION_COMMENT);
             forumRepository.addCommentCountByOne(attachTo);
             PostModel parent = forumRepository.findById(attachTo).get();
             while (parent.getAttachTo() != 0) {
@@ -236,9 +241,7 @@ public class ForumService {
                 // Save new images
                 List<Integer> allImageId = new ArrayList<Integer>();
                 for (MultipartFile image: images) {
-                    if (image.getContentType() == null || !image.getContentType().startsWith("image/")) {
-                        ExceptionService.throwException(ExceptionService.FILE_NOT_IMAGE);
-                    }
+                    imageService.checkIsImage(image);
                 }
         
                 for (MultipartFile image: images) {
@@ -433,7 +436,7 @@ public class ForumService {
         if (forumRepository.isPostView(postId, userId) == null) {
             forumRepository.addViewRelationship(postId, userId);
             forumRepository.addViewCount(postId);
-            updateRecommendationScore(postId, userId, "view");
+            updateRecommendationScore(postId, userId, INTERACTION_VIEW);
         }
         return createPostDTO(post, userId);
     }
@@ -510,15 +513,15 @@ public class ForumService {
         if (forumRepository.postOrCommentIsActive(postId) == false) {
             ExceptionService.throwException(ExceptionService.POST_DELETED);
         }
-        if (action.equals("like")) {
+        if (action.equals(INTERACTION_LIKE)) {
             forumRepository.addLikeRelationship(postId, userId);
             forumRepository.addLikeCount(postId);
-            updateRecommendationScore(postId, userId, "like");
+            updateRecommendationScore(postId, userId, INTERACTION_LIKE);
         }
-        else if (action.equals("dislike")) {
+        else if (action.equals(INTERACTION_DISLIKE)) {
             forumRepository.addDislikeRelationship(postId, userId);
             forumRepository.addDislikeCount(postId);
-            updateRecommendationScore(postId, userId, "dislike");
+            updateRecommendationScore(postId, userId, INTERACTION_DISLIKE);
         }
         else {
             ExceptionService.throwException(ExceptionService.INVALID_POST_OPTION);
@@ -537,21 +540,21 @@ public class ForumService {
         if (forumRepository.postOrCommentIsActive(postId) == false) {
             ExceptionService.throwException(ExceptionService.POST_DELETED);
         }
-        if (action.equals("unlike")) {
+        if (action.equals(INTERACTION_UNLIKE)) {
             if (forumRepository.isLikeClick(postId, userId) == null) {
                 ExceptionService.throwException(ExceptionService.POST_NOT_LIKED);
             }
             forumRepository.removeLikeRelationship(postId, userId);
             forumRepository.minusLikeCount(postId);
-            updateRecommendationScore(postId, userId, "unlike");
+            updateRecommendationScore(postId, userId, INTERACTION_UNLIKE);
         }
-        else if (action.equals("undislike")) {
+        else if (action.equals(INTERACTION_UNDISLIKE)) {
             if (forumRepository.isDislikeClick(postId, userId) == null) {
                 ExceptionService.throwException(ExceptionService.POST_NOT_DISLIKED);
             }
             forumRepository.removeDislikeRelationship(postId, userId);
             forumRepository.minusDislikeCount(postId);
-            updateRecommendationScore(postId, userId, "undislike");
+            updateRecommendationScore(postId, userId, INTERACTION_UNDISLIKE);
         }
         else {
             ExceptionService.throwException(ExceptionService.INVALID_POST_OPTION);
@@ -615,7 +618,7 @@ public class ForumService {
      * Update recommendation score by different interaction types
      * @param postId postId Integer
      * @param userId userId Integer
-     * @param interactionType including "view", "like", "dislike", "unlike", "undislike", "comment", "post"
+     * @param interactionType INTERACTION_XXX
      */
     @Async
     public void updateRecommendationScore(Integer postId, Integer userId, String interactionType) {
@@ -623,13 +626,13 @@ public class ForumService {
         for (Integer tagId : tagIdList) {
             int score = forumRepository.findRecommendationScore(userId, tagId);
             score = switch (interactionType) {
-                case "view" -> min(Integer.MAX_VALUE, score + 10);
-                case "like" -> min(Integer.MAX_VALUE, score + 30);
-                case "dislike" -> max(0, score - 10);
-                case "unlike" -> min(Integer.MAX_VALUE, score - 30);
-                case "undislike" -> max(0, score + 10);
-                case "comment" -> min(Integer.MAX_VALUE, score + 50);
-                case "post" -> min(Integer.MAX_VALUE, score + 100);
+                case INTERACTION_VIEW -> min(Integer.MAX_VALUE, score + 10);
+                case INTERACTION_LIKE -> min(Integer.MAX_VALUE, score + 30);
+                case INTERACTION_DISLIKE -> max(0, score - 10);
+                case INTERACTION_UNLIKE -> min(Integer.MAX_VALUE, score - 30);
+                case INTERACTION_UNDISLIKE -> max(0, score + 10);
+                case INTERACTION_COMMENT -> min(Integer.MAX_VALUE, score + 50);
+                case INTERACTION_POST -> min(Integer.MAX_VALUE, score + 100);
                 default -> score;
             };
             forumRepository.updateRecommendationTime(userId, tagId);
