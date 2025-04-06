@@ -98,9 +98,7 @@ public class ForumService {
         List<Integer> allImageId = new ArrayList<Integer>();
         if (images != null) {
             for (MultipartFile image: images) {
-                if (image.getContentType() == null || !image.getContentType().startsWith("image/")) {
-                    ExceptionService.throwException(ExceptionService.FILE_NOT_IMAGE);
-                }
+                imageService.checkIsImage(image);
             }
 
             for (MultipartFile image: images) {
@@ -236,9 +234,7 @@ public class ForumService {
                 // Save new images
                 List<Integer> allImageId = new ArrayList<Integer>();
                 for (MultipartFile image: images) {
-                    if (image.getContentType() == null || !image.getContentType().startsWith("image/")) {
-                        ExceptionService.throwException(ExceptionService.FILE_NOT_IMAGE);
-                    }
+                    imageService.checkIsImage(image);
                 }
         
                 for (MultipartFile image: images) {

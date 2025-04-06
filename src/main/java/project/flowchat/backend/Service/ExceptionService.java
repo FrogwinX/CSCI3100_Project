@@ -31,8 +31,9 @@ public class ExceptionService extends Exception {
     public static final String INVALID_POST_OPTION = "Invalid post action.";
 
     /* Image Service Expected Exceptions */
-    public static final String FILE_NOT_IMAGE = "The file is not an image";
-    public static final String IMAGE_ALREADY_USED = "This image has been used";
+    public static final String FILE_NOT_IMAGE = "The file is not an image.";
+    public static final String IMAGE_ALREADY_USED = "This image has been used.";
+    public static final String IMAGE_COMPRESSION_ERROR = "This image cannot be compressed under 5MB.";
 
     /* Chat Service Expected Exceptions */
     public static final String INVALID_ACTION_TYPE = "This action type is invalid.";

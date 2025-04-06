@@ -41,16 +41,14 @@ public class ImageService {
             compressedImage = byteArrayOutputStream.toByteArray();
             quality -= 0.1f;
             if (quality <= 0) {
-                throw new ExceptionService("The image cannot be compressed under 5MB");
+                ExceptionService.throwException(ExceptionService.IMAGE_COMPRESSION_ERROR);
             }
         } while (compressedImage.length > MAX_IMAGE_SIZE);
         return compressedImage;
     }
 
     public Integer saveImage(MultipartFile file) throws Exception {
-        if (file.getContentType() == null || !file.getContentType().startsWith("image/")) {
-            throw new ExceptionService("The file is not an image");
-        }
+        checkIsImage(file);
         ImageModel imageModel = new ImageModel();
         if (file.getSize() > MAX_IMAGE_SIZE) {
             imageModel.setImageData(compressImage(file));
@@ -64,6 +62,12 @@ public class ImageService {
         return imageModel.getImageId();
     }
 
+    public void checkIsImage(MultipartFile file) throws Exception {
+        if (file.getContentType() == null || !file.getContentType().startsWith("image/")) {
+            ExceptionService.throwException(ExceptionService.FILE_NOT_IMAGE);
+        }
+    }
+
     public Optional<ImageModel> getImage(Integer imageId) throws Exception {
         return imageRepository.findById(imageId);
     }
@@ -73,7 +77,7 @@ public class ImageService {
      * @param file new file of the image
      * @param imageId image id of the record
      * @throws Exception
-     */
+
     @Transactional
     public void changeImage(MultipartFile file, int imageId) throws Exception {
         if (file.getContentType() == null || !file.getContentType().startsWith("image/")) {
@@ -89,6 +93,7 @@ public class ImageService {
         }
         imageModel.setImageName(file.getOriginalFilename());
         imageModel.setImageFormat(file.getContentType());
-        imageRepository.save(imageModel);        
+        imageRepository.save(imageModel);
     }
+    */
 }

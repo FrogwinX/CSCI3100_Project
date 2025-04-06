@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.*;
 
 import lombok.AllArgsConstructor;
 import project.flowchat.backend.DTO.ChatMessageDetailsDTO;
-import project.flowchat.backend.DTO.ChatReceiveMessageDTO;
 import project.flowchat.backend.DTO.ChatSendMessageDTO;
 import project.flowchat.backend.DTO.ContactDTO;
 import project.flowchat.backend.DTO.ResponseBodyDTO;
