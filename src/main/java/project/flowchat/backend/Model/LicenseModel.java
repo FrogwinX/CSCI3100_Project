@@ -12,13 +12,13 @@ import java.time.ZonedDateTime;
 
 @Data
 @Entity
-@Table(schema = "ACCOUNT", name = "License")
+@Table(schema = "ACCOUNT", name = "Authentication")
 public class LicenseModel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer licenseId;
+    private Integer keyId;
 
-    private String licenseKey;
+    private String keyCode;
     private String email;
     private ZonedDateTime createdAt;
     private ZonedDateTime expiresAt;

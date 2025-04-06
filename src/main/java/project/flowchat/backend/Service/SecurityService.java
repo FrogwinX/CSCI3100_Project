@@ -188,7 +188,7 @@ public class SecurityService {
      */
     protected void saveKey(String email, String key, KeyType keyType) {
         LicenseModel licenseModel = new LicenseModel();
-        licenseModel.setLicenseKey(key);
+        licenseModel.setKeyCode(key);
         licenseModel.setEmail(email);
         licenseModel.setCreatedAt(ZonedDateTime.now(ZoneId.of("Asia/Hong_Kong")));
         switch (keyType) {
