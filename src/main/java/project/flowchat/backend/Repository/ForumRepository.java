@@ -315,7 +315,7 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
      */
     @Modifying
     @Transactional
-    @NativeQuery("DELETE FROM FORUM.Image_Data WHERE image_id = ?1")
+    @NativeQuery("DELETE FROM [Image].[Image_Data] WHERE image_id = ?1")
     void deleteInImageData(Integer imageId);
 
     /**

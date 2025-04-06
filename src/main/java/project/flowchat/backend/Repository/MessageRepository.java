@@ -17,7 +17,7 @@ public interface MessageRepository extends JpaRepository<MessageModel, Integer> 
      * Get the list of image_id that are not connected to any message or post
      * @return list of image_id
      */
-    @NativeQuery("SELECT image_id FROM FORUM.Image_Data EXCEPT (SELECT image_id FROM CHAT.Message_Image UNION SELECT image_id FROM FORUM.Post_Image)")
+    @NativeQuery("SELECT image_id FROM [Image].[Image_Data] EXCEPT (SELECT image_id FROM CHAT.Message_Image UNION SELECT image_id FROM FORUM.Post_Image)")
     List<Integer> getUnconnectImageList();
 
     /**
