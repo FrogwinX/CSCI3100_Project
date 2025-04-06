@@ -66,7 +66,7 @@ export default function SideMenu() {
         </div>
       </div>
       {/* Section 3: Tags */}
-      <div className="scrollbar-thumb-rounded-full scrollbar-track-rounded-full scrollbar scrollbar-thumb-slate-700 scrollbar-track-slate-300 h-screen overflow-y-scroll">
+      <div className="scrollbar-thumb-rounded-full scrollbar-track-rounded-full scrollbar scrollbar-thumb-slate-700 scrollbar-track-slate-300 h-full overflow-y-scroll">
         {/* <div className="flex-grow overflow-y-auto min-h-0"> */}
         <div className="flex flex-wrap gap-2 p-1">
           {recommendedTags.map((tag) => {

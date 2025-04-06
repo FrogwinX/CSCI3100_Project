@@ -31,9 +31,9 @@ export default function RootLayout({
     <html lang="en" className={inter.className}>
       <body className="font-semibold">
         <SessionProvider>
-          <div className="flex flex-col bg-base-200 text-base-content min-h-screen">
+          <div className="flex flex-col bg-base-200 text-base-content h-screen">
             <NavbarWithDrawer />
-            {children}
+            <main className="flex-1 overflow-auto">{children}</main>
           </div>
         </SessionProvider>
       </body>

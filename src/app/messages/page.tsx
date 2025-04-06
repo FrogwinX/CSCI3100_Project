@@ -128,7 +128,7 @@ export default function DirectMessagePage() {
   };
 
   return (
-    <div className="flex flex-grow">
+    <div className="flex h-full">
       {/* Left column */}
       <div className="hidden lg:block w-1/8"></div>
       {/* Middle column - Direct message content */}

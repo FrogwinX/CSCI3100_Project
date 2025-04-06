@@ -5,9 +5,9 @@ import { TagProvider } from "@/hooks/useTags";
 export default function ForumLayout({ children }: { children: React.ReactNode }) {
   return (
     <TagProvider>
-      <div className="flex flex-grow w-full gap-x-2 md:px-32">
+      <div className="flex h-full w-full gap-x-2 md:px-32">
         {/* Left column - conditionally rendered back button */}
-        <div className="hidden lg:flex w-1/6 flex-col items-end pt-4 pr-4 sticky top-16 h-fit">
+        <div className="hidden lg:flex w-1/6 flex-col items-end pt-4 pr-4 sticky h-fit">
           <BackButton />
         </div>
         {/* Middle column - main content */}
@@ -16,7 +16,7 @@ export default function ForumLayout({ children }: { children: React.ReactNode })
         </div>
         {/* Right column - conditionally rendered action menu */}
         <div className="hidden md:block w-1/6">
-          <div className="card bg-base-100 sticky w-77 top-16 h-screen overflow-hidden">
+          <div className="card bg-base-100 fixed w-77 h-full overflow-hidden">
             <SideMenu />
           </div>
         </div>

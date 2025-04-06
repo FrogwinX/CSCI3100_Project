@@ -33,10 +33,9 @@ export default async function PostDetailPage(props: { params: Params }) {
       <PostDetail post={post} />
 
       {/** Comments section */}
-      <p id="comments" className="card bg-base-100 p-4 scroll-mt-16 min-h-screen">
-        @Boscode31415 Please create a comment section here, label the component id=&quot;comments&quot; and add
-        classname=&quot;scroll-mt-16&quot; so my comment button can navigate to the comment section without navbar
-        blocking
+      <p id="comments" className="card bg-base-100 p-4 min-h-screen">
+        @Boscode31415 Please create a comment section here, label the component id=&quot;comments&quot; so my comment
+        button can navigate to the comment section without navbar blocking
       </p>
     </div>
   );
