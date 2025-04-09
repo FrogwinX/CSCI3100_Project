@@ -12,8 +12,8 @@ export default function ChatMessage({ isOwner, message }: { isOwner: boolean; me
         {message.content}
       </div>
       <div className="chat-footer opacity-50">
-        <div className="font-bold">{message.success ? "Success" : "Failed"}</div>
-        {new Date(message.sentAt).toLocaleTimeString("en", { hour: "numeric", minute: "numeric" })}
+        <div className="font-bold">{message.readAt ? "Seen" : "Sent"}</div>
+        {new Date(message.readAt).toLocaleTimeString("en", { hour: "numeric", minute: "numeric" })}
       </div>
     </div>
   );

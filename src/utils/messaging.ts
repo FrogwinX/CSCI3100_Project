@@ -1,13 +1,25 @@
 import SockJS from "sockjs-client";
-import { Client, Message, Frame } from "@stomp/stompjs";
+import { Client, Message } from "@stomp/stompjs";
+import { getSession } from "@/utils/sessions";
 
 // Message types
 export interface OutgoingMessage {
   userIdFrom: number;
   userIdTo: number;
-  content: string;
-  attachTo: number;
-  imageIdList: number[];
+  content: string | null;
+  attachTo: number | null;
+  imageIdList: number[] | null;
+  action: string;
+  messageIdList: number[] | null;
+}
+
+export interface ReceivedMessage {
+  success: boolean;
+  errorMessage: string | null;
+  action: string;
+  time: string;
+  readOrDeleteMessageIdList: number[] | null;
+  messageDetail: IncomingMessage;
 }
 
 export interface IncomingMessage {
@@ -15,11 +27,31 @@ export interface IncomingMessage {
   userIdFrom: number;
   userIdTo: number;
   content: string;
-  attachTo: number;
+  attachTo: number | null;
   sentAt: string;
+  readAt: string | null;
   imageAPIList: string[] | null;
-  success: boolean;
-  refresh: boolean;
+}
+
+export interface Contact {
+  messageId: number;
+  contactUsername: string;
+  latestMessage: string;
+  userIdFrom: number;
+  usernameFrom: string;
+  userIdTo: number;
+  usernameTo: string;
+  sentAt: string;
+  readAt: string;
+  unreadMessageCount: number;
+}
+
+interface ContactListResponse {
+  message: string;
+  data: {
+    contactList: Contact[];
+    isSuccess: boolean;
+  };
 }
 
 // Connection status
@@ -67,7 +99,10 @@ export class MessagingService {
       this.updateStatus(ConnectionStatus.CONNECTING);
 
       try {
-        const socket = new SockJS("https://flowchatbackend.azurewebsites.net/chat");
+        const socket = new SockJS("https://flowchatbackend.azurewebsites.net/chat", null, {
+          transports: ["websocket", "xhr-streaming", "xhr-polling"],
+          debug: false,
+        });
 
         this.client = new Client({
           webSocketFactory: () => socket,
@@ -75,8 +110,8 @@ export class MessagingService {
             Authorization: `Bearer ${token}`,
           },
           reconnectDelay: 5000,
-          heartbeatIncoming: 4000,
-          heartbeatOutgoing: 4000,
+          heartbeatIncoming: 10000,
+          heartbeatOutgoing: 10000,
         });
 
         this.client.onConnect = () => {
@@ -108,17 +143,17 @@ export class MessagingService {
     }
   }
 
-  // Subscribe to a topic (conversation)
-  public subscribe(topic: string, callback: (message: IncomingMessage) => void): void {
+  // Subscribe to user channel
+  public subscribe(channel: string, callback: (message: IncomingMessage) => void): void {
     if (!this.client || !this.client.connected) {
       throw new Error("Not connected to WebSocket server");
     }
 
     // Unsubscribe if already subscribed
-    this.unsubscribe(topic);
+    this.unsubscribe(channel);
 
-    // Subscribe to new topic
-    const subscription = this.client.subscribe(`/topic/${topic}`, (message: Message) => {
+    // Subscribe to the channel
+    const subscription = this.client.subscribe(`/channel/${channel}`, (message: Message) => {
       try {
         const parsedMessage = JSON.parse(message.body);
         callback(parsedMessage);
@@ -128,7 +163,7 @@ export class MessagingService {
     });
 
     // Store subscription
-    this.subscriptions.set(topic, {
+    this.subscriptions.set(channel, {
       id: subscription.id,
       callback,
     });
@@ -144,25 +179,58 @@ export class MessagingService {
   }
 
   // Send a message
-  public sendMessage(topic: string, message: OutgoingMessage): void {
+  public sendMessage(channel: string, message: OutgoingMessage): void {
     if (!this.client || !this.client.connected) {
       throw new Error("Not connected to WebSocket server");
     }
 
     this.client.publish({
-      destination: `/app/send/${topic}`,
+      destination: `/app/send/${channel}`,
       body: JSON.stringify(message),
     });
   }
+}
 
-  // Create a topic name from two user IDs
-  public static createTopicName(userId1: number, userId2: number): string {
-    return `user${Math.min(userId1, userId2)}-user${Math.max(userId1, userId2)}`;
+export async function getContactsList(count: number): Promise<Contact[]> {
+  try {
+    const session = await getSession();
+
+    let apiUrl = `https://flowchatbackend.azurewebsites.net/api/Chat/getContactList?userId=${session.userId}&contactNum=${count}`;
+
+    apiUrl += `&excludingUserIdList=0`;
+
+    // Fetch data from the API
+    const response = await fetch(apiUrl, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${session.token}`,
+      },
+    });
+
+    if (!response.ok) {
+      console.error(`API error: ${response.status} ${response.statusText}`);
+      return [];
+    }
+
+    const data = await response.json();
+
+    // Safer property access with detailed logging
+    if (!data) {
+      console.error("Empty response from API");
+      return [];
+    }
+
+    if (!data.data) {
+      console.error("Response missing data property:", data);
+      return [];
+    }
+
+    return data.data.contactList;
+  } catch (error) {
+    console.error("Error fetching contact list:", error);
+    return [];
   }
 }
 
 // Create a singleton instance
 export const messagingService = new MessagingService();
-
-// Export default for easier imports
-export default messagingService;
