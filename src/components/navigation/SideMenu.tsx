@@ -7,11 +7,11 @@ import { useTagContext } from "@/hooks/useTags";
 import Link from "next/link";
 
 export default function SideMenu() {
-  const { selectedTags: searchTags, setSelectedTags: setSearchTags } = useTagContext();
+  const { selectedTags: searchTags, setSelectedTags: setSearchTags, isPostsLoading } = useTagContext();
   const [AllTags, setAllTags] = useState<Tag[]>([]);
   // New state to hold shuffled tags
   const [recommendedTags, setRecommendedTags] = useState<Tag[]>([]);
-  const [excludedPostIds, setExcludedPostIds] = useState<Set<number>>(new Set());
+  // const [excludedPostIds, setExcludedPostIds] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     getAllTags().then((tags) => {
@@ -23,6 +23,8 @@ export default function SideMenu() {
   }, []);
 
   const toggleTag = (tag: Tag) => {
+    if (isPostsLoading) return;
+
     if (searchTags.some((t) => t.tagId === tag.tagId)) {
       setSearchTags(searchTags.filter((t) => t.tagId !== tag.tagId));
     } else {
@@ -45,7 +47,6 @@ export default function SideMenu() {
             <FontAwesomeIcon icon={faPlus} />
             Create Post
           </button>
-          {/* TODO: Implement create post functionality */}
         </Link>
       </div>
       <div className="divider my-0 gap-0"></div>
@@ -75,6 +76,7 @@ export default function SideMenu() {
                 key={tag.tagId}
                 className={`btn btn-sm ${searchTags.some((t) => t.tagId === tag.tagId) ? "btn-primary" : "btn-accent"}`}
                 onClick={() => toggleTag(tag)}
+                disabled={isPostsLoading}
               >
                 {tag.tagName}
               </button>
