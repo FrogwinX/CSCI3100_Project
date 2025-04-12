@@ -45,6 +45,7 @@ public class ExceptionService extends Exception {
     public static final String CANNOT_FOLLOW_YOURSELF = "Cannot follow yourself.";
     public static final String USER_DELETED = "The user has been deleted.";
     public static final String USER_ALREADY_FOLLOWED = "Have already followed this user.";
+    public static final String USER_NOT_FOLLOWED = "Have not followed this user before.";
 
     public ExceptionService(String message) {
         super(message);

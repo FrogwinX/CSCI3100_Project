@@ -36,4 +36,18 @@ public class ProfileService {
         }
         userProfileRepository.followUser(userIdFrom, userIdTo);
     }
+
+    /**
+     * Unfollow a user
+     * @param userIdFrom userIdFrom Integer
+     * @param userIdTo userIdTo Integer
+     * @throws Exception USER_NOT_FOLLOWED
+     */
+    public void unfollowUser(Integer userIdFrom, Integer userIdTo) throws Exception {
+        securityService.checkUserIdWithToken(userIdFrom);
+        if (userProfileRepository.checkIfUserFollowed(userIdFrom, userIdTo) == null) {
+            ExceptionService.throwException(ExceptionService.USER_NOT_FOLLOWED);
+        }
+        userProfileRepository.unfollowUser(userIdFrom, userIdTo);
+    }
 }

@@ -40,4 +40,24 @@ public class ProfileController {
         }
         return responseBodyDTO;
     }
+
+    @DeleteMapping("unfollowUser")
+    private ResponseBodyDTO unfollowUser(@RequestBody Map<String, Integer> requestBody) {
+        try {
+            Map<String, Object> data = new HashMap<>();
+            profileService.unfollowUser(requestBody.get("userIdFrom"), requestBody.get("userIdTo"));
+            data.put("isSuccess", true);
+            responseBodyDTO.setMessage("The user is unfollowed");
+            responseBodyDTO.setData(data);
+        } catch (ExceptionService e) {
+            responseBodyDTO.setMessage(e.getMessage());
+            Map<String, Object> data = new HashMap<>();
+            data.put("isSuccess", false);
+            responseBodyDTO.setData(data);
+        } catch (Exception e) {
+            responseBodyDTO.setMessage("Fail: " + e);
+            responseBodyDTO.setData(null);
+        }
+        return responseBodyDTO;
+    }
 }

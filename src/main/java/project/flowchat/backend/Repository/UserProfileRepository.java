@@ -31,4 +31,14 @@ public interface UserProfileRepository extends JpaRepository<UserProfileModel, I
     @Transactional
     @NativeQuery("INSERT INTO PROFILE.Follow (user_id_from, user_id_to) VALUES (?1, ?2)")
     void followUser(Integer userIdFrom, Integer userIdTo);
+
+    /**
+     * Delete a record from the PROFILE.Follow table
+     * @param userIdFrom userIdFrom Integer
+     * @param userIdTo userIdTo Integer
+     */
+    @Modifying
+    @Transactional
+    @NativeQuery("DELETE FROM PROFILE.Follow WHERE user_id_from = ?1 AND user_id_to = ?2")
+    void unfollowUser(Integer userIdFrom, Integer userIdTo);
 }
