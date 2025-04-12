@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import PostPreview, { Post } from "./PostPreview";
 import { getPosts } from "@/utils/posts";
 import { useTagContext } from "@/hooks/useTags";
+import LoadingPostPreview from "@/components/posts/LoadingPostPreview";
 
 export default function PostList({ filter = "latest" }: { filter?: "latest" | "recommended" | "following" }) {
   const { selectedTags: tags, setPostsLoading } = useTagContext();
@@ -186,9 +187,7 @@ export default function PostList({ filter = "latest" }: { filter?: "latest" | "r
           </div>
         </>
       ) : isLoading ? (
-        <div className="flex justify-center py-4">
-          <span className="loading loading-spinner loading-xl"></span>
-        </div>
+        [1, 2, 3, 4].map((i) => <LoadingPostPreview key={i} />)
       ) : (
         <div className="text-center text-lg text-base-content/50 my-4">No posts available</div>
       )}
