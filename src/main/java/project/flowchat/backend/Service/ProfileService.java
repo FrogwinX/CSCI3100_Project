@@ -1,6 +1,10 @@
 package project.flowchat.backend.Service;
 
 import lombok.AllArgsConstructor;
+
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -84,4 +88,19 @@ public class ProfileService {
         }
         userProfileRepository.unblockUser(userIdFrom, userIdTo);
     }
+    /**
+     * Add a new user profile to the database
+     * @param userId userId Integer
+     * @param username username String
+     */
+    public void addNewUserProfile(Integer userId, String username) {
+        UserProfileModel userProfileModel = new UserProfileModel();
+        userProfileModel.setUserId(userId);
+        userProfileModel.setUsername(username);
+        userProfileModel.setDescription("");
+        userProfileModel.setAvatarId(null);
+        userProfileModel.setUpdatedAt(ZonedDateTime.now(ZoneId.of("Asia/Hong_Kong")));
+        userProfileRepository.save(userProfileModel);
+    }
+
 }

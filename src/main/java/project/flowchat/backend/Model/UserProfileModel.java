@@ -15,7 +15,6 @@ import java.time.ZonedDateTime;
 @Table(schema = "PROFILE", name = "UserProfile")
 public class UserProfileModel {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer userId;
 
     private String username;
