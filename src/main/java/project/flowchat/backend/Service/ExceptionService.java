@@ -48,6 +48,7 @@ public class ExceptionService extends Exception {
     public static final String USER_NOT_FOLLOWED = "Have not followed this user before.";
     public static final String CANNOT_BLOCK_YOURSELF = "Cannot block yourself.";
     public static final String USER_ALREADY_BLOCKED = "Have already blocked this user.";
+    public static final String USER_NOT_BLOCKED = "Have not blocked this user before.";
 
     public ExceptionService(String message) {
         super(message);

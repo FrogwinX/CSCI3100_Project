@@ -60,4 +60,15 @@ public interface UserProfileRepository extends JpaRepository<UserProfileModel, I
     @Transactional
     @NativeQuery("INSERT INTO PROFILE.Block (user_id_from, user_id_to) VALUES (?1, ?2)")
     void blockUser(Integer userIdFrom, Integer userIdTo);
+
+    /**
+     * Delete a record from the PROFILE.Block table
+     * @param userIdFrom userIdFrom Integer
+     * @param userIdTo userIdTo Integer
+     * @return userIdFrom Integer if a record is found, otherwise null
+     */
+    @Modifying
+    @Transactional
+    @NativeQuery("DELETE FROM PROFILE.Block WHERE user_id_from = ?1 AND user_id_to = ?2")
+    Integer unblockUser(Integer userIdFrom, Integer userIdTo);
 }

@@ -70,4 +70,18 @@ public class ProfileService {
         }
         userProfileRepository.blockUser(userIdFrom, userIdTo);
     }
+
+    /**
+     * Unblock a user
+     * @param userIdFrom userIdFrom Integer
+     * @param userIdTo userIdTo Integer
+     * @throws Exception USER_NOT_BLOCKED
+     */
+    public void unblockUser(Integer userIdFrom, Integer userIdTo) throws Exception {
+        securityService.checkUserIdWithToken(userIdFrom);
+        if (userProfileRepository.checkIfUserBlocked(userIdFrom, userIdTo) == null) {
+            ExceptionService.throwException(ExceptionService.USER_NOT_BLOCKED);
+        }
+        userProfileRepository.unblockUser(userIdFrom, userIdTo);
+    }
 }
