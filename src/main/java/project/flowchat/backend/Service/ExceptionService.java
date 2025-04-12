@@ -40,6 +40,12 @@ public class ExceptionService extends Exception {
     public static final String MESSAGE_ALREADY_READ = "This message has already been read.";
     public static final String MESSAGE_ALREADY_DELETED = "This message has already been deleted.";
 
+
+    /* Profile Service Expected Exceptions */
+    public static final String CANNOT_FOLLOW_YOURSELF = "Cannot follow yourself.";
+    public static final String USER_DELETED = "The user has been deleted.";
+    public static final String USER_ALREADY_FOLLOWED = "Have already followed this user.";
+
     public ExceptionService(String message) {
         super(message);
     }

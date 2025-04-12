@@ -13,4 +13,22 @@ import java.util.List;
 @Repository
 public interface UserProfileRepository extends JpaRepository<UserProfileModel, Integer> {
 
+    /**
+     * Check if a user have followed another user before
+     * @param userIdFrom userIdFrom Integer
+     * @param userIdTo userIdTo Integer
+     * @return userIdFrom Integer if a record is found, otherwise null
+     */
+    @NativeQuery("SELECT user_id_from FROM PROFILE.Follow WHERE user_id_from = ?1 AND user_id_to = ?2")
+    Integer checkIfUserFollowed(Integer userIdFrom, Integer userIdTo);
+
+    /**
+     * Add a record to the PROFILE.Follow table
+     * @param userIdFrom userIdFrom Integer
+     * @param userIdTo userIdTo Integer
+     */
+    @Modifying
+    @Transactional
+    @NativeQuery("INSERT INTO PROFILE.Follow (user_id_from, user_id_to) VALUES (?1, ?2)")
+    void followUser(Integer userIdFrom, Integer userIdTo);
 }
