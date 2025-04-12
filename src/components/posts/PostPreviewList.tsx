@@ -6,7 +6,7 @@ import { getPosts } from "@/utils/posts";
 import { useTagContext } from "@/hooks/useTags";
 
 export default function PostList({ filter = "latest" }: { filter?: "latest" | "recommended" | "following" }) {
-  const { selectedTags: tags } = useTagContext();
+  const { selectedTags: tags, setPostsLoading } = useTagContext();
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hasMore, setHasMore] = useState(true);
@@ -14,6 +14,11 @@ export default function PostList({ filter = "latest" }: { filter?: "latest" | "r
   const [excludedPostIds, setExcludedPostIds] = useState<Set<number>>(new Set());
   const [fetchAttempts, setFetchAttempts] = useState(0);
   const MAX_ATTEMPTS = 10; // Limit fetch attempts to prevent infinite loops
+
+  // Synchronize local loading state with the global tag context loading state
+  useEffect(() => {
+    setPostsLoading(isLoading);
+  }, [isLoading, setPostsLoading]);
 
   const filterPostsByTags = (postsToFilter: Post[]) => {
     if (tags.length === 0) {
@@ -83,7 +88,7 @@ export default function PostList({ filter = "latest" }: { filter?: "latest" | "r
       setFetchAttempts((prev) => prev + 1);
       loadMorePosts();
     }
-  }, [posts, isLoading, hasMore, fetchAttempts]);
+  }, [posts, hasMore, fetchAttempts]);
 
   // Infinite scrolling setup
   useEffect(() => {
