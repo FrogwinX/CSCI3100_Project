@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faMagnifyingGlass, faPlus } from "@fortawesome/free-solid-svg-icons";
 import { getAllTags, Tag } from "@/utils/posts";
@@ -9,21 +9,47 @@ import Link from "next/link";
 export default function SideMenu() {
   const { selectedTags: searchTags, setSelectedTags: setSearchTags, isPostsLoading } = useTagContext();
   const [AllTags, setAllTags] = useState<Tag[]>([]);
-  // New state to hold shuffled tags
   const [recommendedTags, setRecommendedTags] = useState<Tag[]>([]);
-  // const [excludedPostIds, setExcludedPostIds] = useState<Set<number>>(new Set());
+  // Add debounced loading state to prevent flickering
+  const [debouncedLoading, setDebouncedLoading] = useState(isPostsLoading);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Debounce the loading state changes
+  useEffect(() => {
+    // When loading starts, update immediately
+    if (isPostsLoading) {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+      setDebouncedLoading(true);
+    } else {
+      // When loading ends, delay the update by 500ms
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+      timerRef.current = setTimeout(() => {
+        setDebouncedLoading(false);
+      }, 500);
+    }
+
+    // Clean up
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+    };
+  }, [isPostsLoading]);
 
   useEffect(() => {
     getAllTags().then((tags) => {
       setAllTags(tags);
-      // Shuffle tags only once when they're loaded
-      // const shuffled = [...tags].sort(() => 0.5 - Math.random()).slice(0, 30);
       setRecommendedTags(tags);
     });
   }, []);
 
   const toggleTag = (tag: Tag) => {
-    if (isPostsLoading) return;
+    if (debouncedLoading) return;
 
     if (searchTags.some((t) => t.tagId === tag.tagId)) {
       setSearchTags(searchTags.filter((t) => t.tagId !== tag.tagId));
@@ -75,8 +101,12 @@ export default function SideMenu() {
               <button
                 key={tag.tagId}
                 className={`btn btn-sm ${searchTags.some((t) => t.tagId === tag.tagId) ? "btn-primary" : "btn-accent"}`}
-                onClick={() => toggleTag(tag)}
-                disabled={isPostsLoading}
+                //if debouncedLoading is true do not toggle tag
+                onClick={() => {
+                  if (!debouncedLoading) {
+                    toggleTag(tag);
+                  }
+                }}
               >
                 {tag.tagName}
               </button>

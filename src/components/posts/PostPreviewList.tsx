@@ -37,6 +37,7 @@ export default function PostList({ filter = "latest" }: { filter?: "latest" | "r
   };
 
   useEffect(() => {
+    setIsLoading(true);
     // Reset states when tags change
     setPosts([]);
     setExcludedPostIds(new Set());
@@ -44,7 +45,6 @@ export default function PostList({ filter = "latest" }: { filter?: "latest" | "r
     setFetchAttempts(0);
 
     const fetchInitialPosts = async () => {
-      setIsLoading(true);
       try {
         const initialPosts = await getPosts({ filter });
 
