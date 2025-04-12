@@ -273,14 +273,8 @@ export async function getPostById(postId: string): Promise<Post | null> {
     });
 
     try {
-      const data: PostContentResponse = await response.json();
-
-      // Check if data, data.data, or data.data.post is null/undefined
-      if (!data || !data.data || !data.data.post) {
-        console.error("API returned null or invalid data structure");
-        return null;
-      }
-
+      const json = await response.json();
+      const data: PostContentResponse = json;
       const post = data.data.post;
       return {
         postId: post.postId,

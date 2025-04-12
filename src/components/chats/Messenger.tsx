@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 import { useSession } from "@/hooks/useSession";
 import { ConnectionStatus, IncomingMessage, messagingService, Contact } from "@/utils/messaging";
 import ChatMessage from "@/components/chats/ChatMessage";
+import LoadingContact from "@/components/chats/LoadingContact";
 
 export default function Messenger({ initialContacts }: { initialContacts: Contact[] }) {
   const { session } = useSession();
@@ -137,35 +138,37 @@ export default function Messenger({ initialContacts }: { initialContacts: Contac
       {/* Left column */}
       <div className="hidden lg:block w-1/8"></div>
       {/* Middle column - Direct message content */}
-      <div className="bg-base-100 min-h-full flex flex-grow w-6/8">
+      <div className="bg-base-200 min-h-full flex flex-grow w-6/8 shadow-lg">
         {/* Contact List (Left)*/}
         <div className="w-1/3 flex flex-col bg-base-100">
-          <div className="flex items-end p-2 h-24 text-2xl font-bold">Contacts</div>
+          <div className="flex items-end p-2 h-24 text-2xl font-bold ">Contacts</div>
           <ul className="list overflow-y-auto">
             {/* Please create a contact component */}
-            {initialContacts.map((contact) => (
-              <li
-                key={getContactUserId(contact)}
-                className={`list-row cursor-pointer hover:bg-base-200 ${
-                  selectedContact && getContactUserId(selectedContact) === getContactUserId(contact)
-                    ? "bg-base-200"
-                    : ""
-                }`}
-                onClick={() => setSelectedContact(contact)}
-              >
-                <div className="bg-neutral text-neutral-content place-content-center rounded-full w-10 h-10">
-                  {/* <FontAwesomeIcon icon={faUser} /> */}
-                </div>
-                <div>
-                  <div>{contact.contactUsername}</div>
-                </div>
-                <p className="list-col-wrap text-xs">{contact.latestMessage}</p>
-              </li>
-            ))}
+            {connectionStatus !== ConnectionStatus.CONNECTED
+              ? [1, 2, 3, 4, 5, 6].map((item) => <LoadingContact key={item} />)
+              : initialContacts.map((contact) => (
+                  <li
+                    key={getContactUserId(contact)}
+                    className={`list-row cursor-pointer hover:bg-base-200 ${
+                      selectedContact && getContactUserId(selectedContact) === getContactUserId(contact)
+                        ? "bg-base-200"
+                        : ""
+                    }`}
+                    onClick={() => setSelectedContact(contact)}
+                  >
+                    <div className="bg-neutral text-neutral-content place-content-center rounded-full w-10 h-10">
+                      {/* <FontAwesomeIcon icon={faUser} /> */}
+                    </div>
+                    <div>
+                      <div>{contact.contactUsername}</div>
+                    </div>
+                    <p className="list-col-wrap text-xs">{contact.latestMessage}</p>
+                  </li>
+                ))}
           </ul>
         </div>
         {/* Conversation (Right) */}
-        <div className="w-2/3 flex flex-col bg-base-200 ">
+        <div className="w-2/3 flex flex-col">
           {selectedContact ? (
             <div className="overflow-y-auto flex flex-col flex-grow">
               <div className="flex h-14 justify-between items-center bg-base-100 shadow-md p-2">
@@ -195,7 +198,7 @@ export default function Messenger({ initialContacts }: { initialContacts: Contac
                 </div>
               </div>
               {/* Messages */}
-              <div className="flex-grow space-y-4 p-4 inset-shadow-sm">
+              <div className="flex-grow space-y-4 p-4">
                 {messages.map((message) => (
                   <ChatMessage
                     key={message.messageId}
@@ -204,7 +207,7 @@ export default function Messenger({ initialContacts }: { initialContacts: Contac
                   />
                 ))}
               </div>
-              {/* Message input */}
+              {/* Please create a custom input field component with image input */}
               <div className="flex p-2 gap-2">
                 <input
                   type="text"
@@ -217,7 +220,7 @@ export default function Messenger({ initialContacts }: { initialContacts: Contac
               </div>
             </div>
           ) : (
-            <div className="flex h-full items-center justify-center inset-shadow-sm">
+            <div className="flex h-full items-center justify-center">
               <div className="text-center text-base-content/50">
                 <p>
                   {connectionStatus !== ConnectionStatus.CONNECTED ? (

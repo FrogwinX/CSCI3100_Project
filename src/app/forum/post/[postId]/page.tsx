@@ -1,12 +1,17 @@
 import { getPostById } from "@/utils/posts";
 import { notFound } from "next/navigation";
 import PostDetail from "@/components/posts/PostDetail";
+import { cache } from "react";
 
 type Params = Promise<{ postId: string }>;
 
+const getPost = cache((postId: string) => {
+  return getPostById(postId);
+});
+
 export async function generateMetadata(props: { params: Params }) {
   const params = await props.params;
-  const post = await getPostById(params.postId);
+  const post = await getPost(params.postId);
 
   if (!post) {
     return {
@@ -22,7 +27,7 @@ export async function generateMetadata(props: { params: Params }) {
 
 export default async function PostDetailPage(props: { params: Params }) {
   const params = await props.params;
-  const post = await getPostById(params.postId);
+  const post = await getPost(params.postId);
 
   if (!post) {
     notFound();
