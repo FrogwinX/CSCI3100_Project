@@ -50,4 +50,24 @@ public class ProfileService {
         }
         userProfileRepository.unfollowUser(userIdFrom, userIdTo);
     }
+
+    /**
+     * Block a user
+     * @param userIdFrom userIdFrom Integer
+     * @param userIdTo userIdTo Integer
+     * @throws Exception CANNOT_BLOCK_YOURSELF, USER_DELETED, USER_ALREADY_BLOCKED
+     */
+    public void blockUser(Integer userIdFrom, Integer userIdTo) throws Exception {
+        securityService.checkUserIdWithToken(userIdFrom);
+        if (userIdFrom == userIdTo) {
+            ExceptionService.throwException(ExceptionService.CANNOT_BLOCK_YOURSELF);
+        }
+        if (!userAccountRepository.findIfUserActive(userIdTo)) {
+            ExceptionService.throwException(ExceptionService.USER_DELETED);
+        }
+        if (userProfileRepository.checkIfUserBlocked(userIdFrom, userIdTo) != null) {
+            ExceptionService.throwException(ExceptionService.USER_ALREADY_BLOCKED);
+        }
+        userProfileRepository.blockUser(userIdFrom, userIdTo);
+    }
 }

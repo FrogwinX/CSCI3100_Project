@@ -46,6 +46,8 @@ public class ExceptionService extends Exception {
     public static final String USER_DELETED = "The user has been deleted.";
     public static final String USER_ALREADY_FOLLOWED = "Have already followed this user.";
     public static final String USER_NOT_FOLLOWED = "Have not followed this user before.";
+    public static final String CANNOT_BLOCK_YOURSELF = "Cannot block yourself.";
+    public static final String USER_ALREADY_BLOCKED = "Have already blocked this user.";
 
     public ExceptionService(String message) {
         super(message);

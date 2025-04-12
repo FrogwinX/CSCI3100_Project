@@ -60,4 +60,24 @@ public class ProfileController {
         }
         return responseBodyDTO;
     }
+
+    @PostMapping("blockUser")
+    private ResponseBodyDTO blockUser(@RequestBody Map<String, Integer> requestBody) {
+        try {
+            Map<String, Object> data = new HashMap<>();
+            profileService.blockUser(requestBody.get("userIdFrom"), requestBody.get("userIdTo"));
+            data.put("isSuccess", true);
+            responseBodyDTO.setMessage("The user is blocked");
+            responseBodyDTO.setData(data);
+        } catch (ExceptionService e) {
+            responseBodyDTO.setMessage(e.getMessage());
+            Map<String, Object> data = new HashMap<>();
+            data.put("isSuccess", false);
+            responseBodyDTO.setData(data);
+        } catch (Exception e) {
+            responseBodyDTO.setMessage("Fail: " + e);
+            responseBodyDTO.setData(null);
+        }
+        return responseBodyDTO;
+    }
 }

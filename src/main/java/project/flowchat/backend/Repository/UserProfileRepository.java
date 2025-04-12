@@ -41,4 +41,23 @@ public interface UserProfileRepository extends JpaRepository<UserProfileModel, I
     @Transactional
     @NativeQuery("DELETE FROM PROFILE.Follow WHERE user_id_from = ?1 AND user_id_to = ?2")
     void unfollowUser(Integer userIdFrom, Integer userIdTo);
+
+    /**
+     * Check if a user have blocked another user before
+     * @param userIdFrom userIdFrom Integer
+     * @param userIdTo userIdTo Integer
+     * @return userIdFrom Integer if a record is found, otherwise null
+     */
+    @NativeQuery("SELECT user_id_from FROM PROFILE.Block WHERE user_id_from = ?1 AND user_id_to = ?2")
+    Integer checkIfUserBlocked(Integer userIdFrom, Integer userIdTo);
+
+    /**
+     * Add a record to the PROFILE.Block table
+     * @param userIdFrom userIdFrom Integer
+     * @param userIdTo userIdTo Integer
+     */
+    @Modifying
+    @Transactional
+    @NativeQuery("INSERT INTO PROFILE.Block (user_id_from, user_id_to) VALUES (?1, ?2)")
+    void blockUser(Integer userIdFrom, Integer userIdTo);
 }
