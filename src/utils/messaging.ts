@@ -99,10 +99,7 @@ export class MessagingService {
       this.updateStatus(ConnectionStatus.CONNECTING);
 
       try {
-        const socket = new SockJS("https://flowchatbackend.azurewebsites.net/chat", null, {
-          transports: ["websocket", "xhr-streaming", "xhr-polling"],
-          debug: false,
-        });
+        const socket = new SockJS("https://flowchatbackend.azurewebsites.net/chat");
 
         this.client = new Client({
           webSocketFactory: () => socket,
@@ -110,8 +107,8 @@ export class MessagingService {
             Authorization: `Bearer ${token}`,
           },
           reconnectDelay: 5000,
-          heartbeatIncoming: 10000,
-          heartbeatOutgoing: 10000,
+          heartbeatIncoming: 15000,
+          heartbeatOutgoing: 15000,
         });
 
         this.client.onConnect = () => {
@@ -120,6 +117,14 @@ export class MessagingService {
         };
 
         this.client.activate();
+
+        // Add timeout to avoid hanging connections
+        setTimeout(() => {
+          if (this.status === ConnectionStatus.CONNECTING) {
+            this.updateStatus(ConnectionStatus.ERROR);
+            reject(new Error("Connection timed out"));
+          }
+        }, 5000);
       } catch (error) {
         console.error("Failed to connect:", error);
       }

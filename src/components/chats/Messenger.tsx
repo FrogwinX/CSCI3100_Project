@@ -1,9 +1,10 @@
 "use client";
 
-import { faEllipsis, faFlag } from "@fortawesome/free-solid-svg-icons";
+import { faEllipsis, faFlag, faCheckSquare as faCheckedSquare, faTrashAlt } from "@fortawesome/free-solid-svg-icons";
+import { faCheckSquare } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSession } from "@/hooks/useSession";
 import { ConnectionStatus, IncomingMessage, messagingService, Contact } from "@/utils/messaging";
 import ChatMessage from "@/components/chats/ChatMessage";
@@ -16,6 +17,14 @@ export default function Messenger({ initialContacts }: { initialContacts: Contac
   const [messages, setMessages] = useState<IncomingMessage[]>([]);
   const [messageText, setMessageText] = useState("");
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>(messagingService.getStatus());
+  const [inSelection, setInSelection] = useState(false);
+  const [selectedMessages, setSelectedMessages] = useState<Set<number>>(new Set());
+
+  // Keep a ref of the selected contact such that it can be used in the message subscription callback
+  const selectedContactRef = useRef<Contact | undefined>(undefined);
+  useEffect(() => {
+    selectedContactRef.current = selectedContact;
+  }, [selectedContact]);
 
   const getContactUserId = (contact: Contact) => {
     if (contact.usernameFrom === contact.contactUsername) {
@@ -31,15 +40,30 @@ export default function Messenger({ initialContacts }: { initialContacts: Contac
     if (!session.isLoggedIn || !session.token) return;
 
     const unsubscribeStatus = messagingService.onStatusChange(setConnectionStatus);
+    let retryCount = 0;
+    let retryTimeout: NodeJS.Timeout;
 
-    if (messagingService.getStatus() !== ConnectionStatus.CONNECTED) {
-      messagingService.connect(session.token).catch((error) => {
-        console.error("Failed to connect to messaging service:", error);
-      });
-    }
+    const connectWithRetry = async () => {
+      if (messagingService.getStatus() === ConnectionStatus.CONNECTED) return;
+
+      try {
+        await messagingService.connect(session.token);
+      } catch (error) {
+        if (retryCount < 3) {
+          console.log(`Retrying connection (${retryCount + 1}/3)...`);
+          retryCount++;
+          retryTimeout = setTimeout(connectWithRetry, 3000);
+        } else {
+          console.log("Max retries reached");
+        }
+      }
+    };
+
+    connectWithRetry();
 
     return () => {
       unsubscribeStatus();
+      clearTimeout(retryTimeout);
     };
   }, [session]);
 
@@ -53,27 +77,50 @@ export default function Messenger({ initialContacts }: { initialContacts: Contac
     try {
       messagingService.subscribe(`${session.userId}`, (message) => {
         const messageDetail = message.messageDetail;
-        if (
-          selectedContact &&
-          (messageDetail.userIdFrom === getContactUserId(selectedContact) ||
-            messageDetail.userIdTo === getContactUserId(selectedContact))
-        ) {
-          // Check if this is a message we sent
-          if (messageDetail.userIdFrom === session.userId) {
-            // Replace the temporary version with the server version which have the messageId)
-            setMessages((prev) =>
-              prev.map((m) =>
-                // Use timestamp-based matching since temp messages won't have real IDs
-                m.userIdFrom === session.userId &&
-                m.content === messageDetail.content &&
-                !m.messageId.toString().includes(".")
-                  ? messageDetail
-                  : m
-              )
-            );
-          } else {
-            // For messages from other users, just add them
-            setMessages((prev) => [...prev, messageDetail]);
+        const currentContact = selectedContactRef.current;
+        console.log("Received message:", message);
+        if (currentContact) {
+          switch (message.action) {
+            case "send":
+              if (
+                messageDetail.userIdFrom === getContactUserId(currentContact) ||
+                messageDetail.userIdTo === getContactUserId(currentContact)
+              ) {
+                // Check if this is a message we sent
+                if (messageDetail.userIdFrom === session.userId) {
+                  // Replace the temporary version with the server version which have the messageId)
+                  setMessages((prev) =>
+                    prev.map((m) =>
+                      m.userIdFrom === session.userId && m.content === messageDetail.content && m.messageId === -1
+                        ? messageDetail
+                        : m
+                    )
+                  );
+                } else {
+                  // For messages from other users, just add them
+                  setMessages((prev) => [...prev, messageDetail]);
+
+                  // Mark new message as read immediately if this conversation is active
+                  if (selectedContact) {
+                    readMessages([messageDetail]);
+                  }
+                }
+              }
+              break;
+            case "read":
+              // Update the read status of messages
+              setMessages((prev) =>
+                prev.map((m) =>
+                  message.readOrDeleteMessageIdList?.includes(m.messageId)
+                    ? { ...m, readAt: new Date().toISOString() }
+                    : m
+                )
+              );
+              break;
+            case "delete":
+              // Remove deleted messages from the UI
+              setMessages((prev) => prev.filter((m) => !message.readOrDeleteMessageIdList?.includes(m.messageId)));
+              break;
           }
         }
       });
@@ -88,6 +135,13 @@ export default function Messenger({ initialContacts }: { initialContacts: Contac
     };
   }, [session.userId, connectionStatus]);
 
+  // Mark messages as read when contact is selected or when new messages arrive
+  useEffect(() => {
+    if (selectedContact && messages.length > 0 && connectionStatus === ConnectionStatus.CONNECTED) {
+      readMessages(messages);
+    }
+  }, [selectedContact, messages]);
+
   // Send message function
   const sendMessage = () => {
     if (!messageText.trim() || !session.userId || !selectedContact) return;
@@ -95,7 +149,7 @@ export default function Messenger({ initialContacts }: { initialContacts: Contac
     try {
       // Create a temporary message object for immediate display
       const tempMessage: IncomingMessage = {
-        messageId: Date.now(), // Temporary ID
+        messageId: -1, // Temporary ID
         userIdFrom: session.userId,
         userIdTo: getContactUserId(selectedContact),
         content: messageText,
@@ -108,7 +162,6 @@ export default function Messenger({ initialContacts }: { initialContacts: Contac
       // Add to UI immediately
       setMessages((prev) => [...prev, tempMessage]);
 
-      console.log("Sending message:", tempMessage);
       // Send to server
       messagingService.sendMessage(`${session.userId}`, {
         userIdFrom: session.userId,
@@ -126,6 +179,79 @@ export default function Messenger({ initialContacts }: { initialContacts: Contac
     }
   };
 
+  const readMessages = (messages: IncomingMessage[]) => {
+    if (!session.userId || !selectedContact) return;
+
+    // Filter unread messages received from the other user
+    const unreadMessages = messages.filter(
+      (msg) => !msg.readAt && msg.userIdFrom === getContactUserId(selectedContact) && msg.userIdTo === session.userId
+    );
+
+    if (unreadMessages.length === 0) return;
+
+    // Extract message IDs
+    const messageIds = unreadMessages.map((msg) => msg.messageId);
+
+    try {
+      messagingService.sendMessage(`${session.userId}`, {
+        userIdFrom: session.userId,
+        userIdTo: getContactUserId(selectedContact),
+        content: null,
+        attachTo: null,
+        imageIdList: null,
+        action: "read",
+        messageIdList: messageIds,
+      });
+    } catch (error) {
+      console.error("Failed to mark messages as read:", error);
+    }
+  };
+
+  const deleteMessages = () => {
+    if (selectedMessages.size === 0 || !session.userId || !selectedContact) return;
+
+    try {
+      messagingService.sendMessage(`${session.userId}`, {
+        userIdFrom: session.userId,
+        userIdTo: getContactUserId(selectedContact),
+        content: null,
+        attachTo: null,
+        imageIdList: null,
+        action: "delete",
+        messageIdList: Array.from(selectedMessages),
+      });
+
+      // Update UI immediately for better user experience
+      setMessages((prev) => prev.filter((msg) => !selectedMessages.has(msg.messageId)));
+
+      // Exit selection mode
+      setInSelection(false);
+      setSelectedMessages(new Set());
+    } catch (error) {
+      console.error("Failed to delete messages:", error);
+    }
+  };
+
+  const toggleSelection = (messageId: number) => {
+    if (!inSelection) return;
+
+    setSelectedMessages((prev) => {
+      const newSelection = new Set(prev);
+      if (newSelection.has(messageId)) {
+        newSelection.delete(messageId);
+      } else {
+        newSelection.add(messageId);
+      }
+      return newSelection;
+    });
+  };
+
+  // Exit selection mode
+  const cancelSelection = () => {
+    setIsSelectionMode(false);
+    setSelectedMessages(new Set());
+  };
+
   // Handle pressing Enter in the input field
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
@@ -140,31 +266,37 @@ export default function Messenger({ initialContacts }: { initialContacts: Contac
       {/* Middle column - Direct message content */}
       <div className="bg-base-200 min-h-full flex flex-grow w-6/8 shadow-lg">
         {/* Contact List (Left)*/}
-        <div className="w-1/3 flex flex-col bg-base-100">
+        <div className="w-1/3 flex flex-col bg-base-100 shadow-md">
           <div className="flex items-end p-2 h-24 text-2xl font-bold ">Contacts</div>
           <ul className="list overflow-y-auto">
             {/* Please create a contact component */}
-            {connectionStatus !== ConnectionStatus.CONNECTED
-              ? [1, 2, 3, 4, 5, 6].map((item) => <LoadingContact key={item} />)
-              : initialContacts.map((contact) => (
-                  <li
-                    key={getContactUserId(contact)}
-                    className={`list-row cursor-pointer hover:bg-base-200 ${
-                      selectedContact && getContactUserId(selectedContact) === getContactUserId(contact)
-                        ? "bg-base-200"
-                        : ""
-                    }`}
-                    onClick={() => setSelectedContact(contact)}
-                  >
-                    <div className="bg-neutral text-neutral-content place-content-center rounded-full w-10 h-10">
-                      {/* <FontAwesomeIcon icon={faUser} /> */}
-                    </div>
-                    <div>
-                      <div>{contact.contactUsername}</div>
-                    </div>
-                    <p className="list-col-wrap text-xs">{contact.latestMessage}</p>
-                  </li>
-                ))}
+            {connectionStatus !== ConnectionStatus.CONNECTED ? (
+              [1, 2, 3, 4, 5, 6].map((item) => <LoadingContact key={item} />)
+            ) : initialContacts.length === 0 ? (
+              <p className="text-base-content/50 text-center mt-4 break-words text-wrap mx-16">
+                Start a new conversation with someone to get started
+              </p>
+            ) : (
+              initialContacts.map((contact) => (
+                <li
+                  key={getContactUserId(contact)}
+                  className={`list-row cursor-pointer hover:bg-base-200 ${
+                    selectedContact && getContactUserId(selectedContact) === getContactUserId(contact)
+                      ? "bg-base-200"
+                      : ""
+                  }`}
+                  onClick={() => setSelectedContact(contact)}
+                >
+                  <div className="bg-neutral text-neutral-content place-content-center rounded-full w-10 h-10">
+                    {/* <FontAwesomeIcon icon={faUser} /> */}
+                  </div>
+                  <div>
+                    <div>{contact.contactUsername}</div>
+                  </div>
+                  <p className="list-col-wrap text-xs">{contact.latestMessage}</p>
+                </li>
+              ))
+            )}
           </ul>
         </div>
         {/* Conversation (Right) */}
@@ -180,13 +312,36 @@ export default function Messenger({ initialContacts }: { initialContacts: Contac
                     <span className="text-md">{selectedContact.contactUsername}</span>
                   </div>
                 </Link>
-                <div className="flex gap-1">
+                <div className="flex gap-1 place-items-center">
+                  {inSelection && (
+                    <div className="badge badge-outline badge-primary">Selected ({selectedMessages.size})</div>
+                  )}
+
                   {/* Options menu */}
                   <div className="dropdown dropdown-end">
                     <div tabIndex={0} role="button" className={`btn btn-ghost btn-circle btn-md`}>
                       <FontAwesomeIcon icon={faEllipsis} size="xl" />
                     </div>
                     <ul tabIndex={0} className="dropdown-content menu bg-base-100 rounded-box z-10 shadow-lg w-26">
+                      {/* Selection mode toggle */}
+                      <li>
+                        <a onClick={() => setInSelection(!inSelection)}>
+                          <FontAwesomeIcon icon={inSelection ? faCheckedSquare : faCheckSquare} />
+                          <span>{inSelection ? "Cancel" : "Select"}</span>
+                        </a>
+                      </li>
+
+                      {/* Delete option - only visible when in selection mode and messages selected */}
+                      {inSelection && selectedMessages.size > 0 && (
+                        <li>
+                          <a onClick={deleteMessages}>
+                            <FontAwesomeIcon icon={faTrashAlt} />
+                            <span>Delete</span>
+                          </a>
+                        </li>
+                      )}
+
+                      {/* Report option */}
                       <li>
                         <a>
                           <FontAwesomeIcon icon={faFlag} />
@@ -197,13 +352,16 @@ export default function Messenger({ initialContacts }: { initialContacts: Contac
                   </div>
                 </div>
               </div>
+
               {/* Messages */}
-              <div className="flex-grow space-y-4 p-4">
+              <div className="flex-grow">
                 {messages.map((message) => (
                   <ChatMessage
                     key={message.messageId}
                     isOwner={message.userIdFrom === session.userId}
                     message={message}
+                    isSelected={selectedMessages.has(message.messageId)}
+                    onMessageClick={toggleSelection}
                   />
                 ))}
               </div>
@@ -224,16 +382,12 @@ export default function Messenger({ initialContacts }: { initialContacts: Contac
               <div className="text-center text-base-content/50">
                 <p>
                   {connectionStatus !== ConnectionStatus.CONNECTED ? (
-                    connectionStatus === ConnectionStatus.CONNECTING ? (
-                      <span className="flex items-center gap-1">
-                        Connecting
-                        <span className="loading loading-dots loading-sm"></span>
-                      </span>
-                    ) : (
-                      <span>Connection unavailable</span>
-                    )
+                    <span className="flex items-center gap-1">
+                      Connecting
+                      <span className="loading loading-dots loading-sm"></span>
+                    </span>
                   ) : (
-                    <span>Select a contact on the left to get started</span>
+                    <span>Send direct messages to users on FlowChat</span>
                   )}
                 </p>
               </div>
