@@ -47,8 +47,8 @@ export default function Messenger({ initialContacts }: { initialContacts: Contac
       if (messagingService.getStatus() === ConnectionStatus.CONNECTED) return;
 
       try {
-        await messagingService.connect(session.token);
-      } catch (error) {
+        await messagingService.connect(session.token!);
+      } catch {
         if (retryCount < 3) {
           console.log(`Retrying connection (${retryCount + 1}/3)...`);
           retryCount++;
@@ -248,7 +248,7 @@ export default function Messenger({ initialContacts }: { initialContacts: Contac
 
   // Exit selection mode
   const cancelSelection = () => {
-    setIsSelectionMode(false);
+    setInSelection(false);
     setSelectedMessages(new Set());
   };
 

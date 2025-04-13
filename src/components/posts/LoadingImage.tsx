@@ -19,7 +19,7 @@ export default function LoadingImage({
   src,
   alt = "",
   className = "",
-  priority = false,
+  priority = true,
 }: {
   src: string;
   alt?: string;
@@ -40,6 +40,7 @@ export default function LoadingImage({
           className="object-cover blur-3xl w-full h-full"
           width={500}
           height={500}
+          priority={priority}
         />
       </div>
       {/* Main image */}

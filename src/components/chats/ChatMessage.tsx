@@ -36,7 +36,7 @@ export default function ChatMessage({
         {message.content}
       </div>
       <div className="chat-footer opacity-50">
-        <div className="font-bold">{message.readAt ? "Seen" : message.messageid === -1 ? "Sending" : "Sent"}</div>
+        <div className="font-bold">{message.readAt ? "Seen" : message.messageId === -1 ? "Sending" : "Sent"}</div>
         {new Date(message.sentAt).toLocaleTimeString("en", { hour: "numeric", minute: "numeric" })}
       </div>
     </div>

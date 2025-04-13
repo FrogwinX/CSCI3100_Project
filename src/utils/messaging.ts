@@ -65,7 +65,7 @@ export enum ConnectionStatus {
 // Messaging service
 export class MessagingService {
   private client: Client | null = null;
-  private subscriptions = new Map<string, { id: string; callback: (message: IncomingMessage) => void }>();
+  private subscriptions = new Map<string, { id: string; callback: (message: ReceivedMessage) => void }>();
   private status: ConnectionStatus = ConnectionStatus.DISCONNECTED;
   private statusListeners: ((status: ConnectionStatus) => void)[] = [];
 
@@ -99,7 +99,10 @@ export class MessagingService {
       this.updateStatus(ConnectionStatus.CONNECTING);
 
       try {
-        const socket = new SockJS("https://flowchatbackend.azurewebsites.net/chat");
+        const socket = new SockJS("https://flowchatbackend.azurewebsites.net/chat", null, {
+          // Specify preferred transports to avoid unnecessary fallback attempts
+          transports: ["websocket", "xhr-streaming", "xhr-polling"],
+        });
 
         this.client = new Client({
           webSocketFactory: () => socket,
@@ -149,7 +152,7 @@ export class MessagingService {
   }
 
   // Subscribe to user channel
-  public subscribe(channel: string, callback: (message: IncomingMessage) => void): void {
+  public subscribe(channel: string, callback: (message: ReceivedMessage) => void): void {
     if (!this.client || !this.client.connected) {
       throw new Error("Not connected to WebSocket server");
     }
@@ -217,7 +220,7 @@ export async function getContactsList(count: number): Promise<Contact[]> {
       return [];
     }
 
-    const data = await response.json();
+    const data: ContactListResponse = await response.json();
 
     // Safer property access with detailed logging
     if (!data) {
