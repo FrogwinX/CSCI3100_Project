@@ -7,8 +7,11 @@ import java.time.ZonedDateTime;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import project.flowchat.backend.Model.UserAccountModel;
 import project.flowchat.backend.Model.UserProfileModel;
+import project.flowchat.backend.Repository.ImageRepository;
 import project.flowchat.backend.Repository.UserAccountRepository;
 import project.flowchat.backend.Repository.UserProfileRepository;
 
@@ -18,8 +21,11 @@ public class ProfileService {
 
     @Autowired
     private final UserProfileRepository userProfileRepository;
-    private final SecurityService securityService;
     private final UserAccountRepository userAccountRepository;
+    private final ImageRepository imageRepository;
+    private final SecurityService securityService;
+    private final ImageService imageService;
+
 
     /**
      * Follow a user
@@ -88,6 +94,7 @@ public class ProfileService {
         }
         userProfileRepository.unblockUser(userIdFrom, userIdTo);
     }
+    
     /**
      * Add a new user profile to the database
      * @param userId userId Integer
@@ -103,4 +110,68 @@ public class ProfileService {
         userProfileRepository.save(userProfileModel);
     }
 
+    /**
+     * Update the personal profile of a user, set the value to null if user does not want to update it
+     * @param userId userId of the user
+     * @param username new username
+     * @param description new description
+     * @param avatar new avatar, empty file if user wants to delete it
+     * @throws Exception
+     */
+    public void updatePersonalProfile(Integer userId, String username, String description, MultipartFile avatar) throws Exception {
+        securityService.checkUserIdWithToken(userId);
+        UserProfileModel userProfileModel = userProfileRepository.findById(userId).get();
+        if (username != null) {
+            if (isUsernameUnique(username)) {
+                userProfileModel.setUsername(username);
+                UserAccountModel userAccountModel = userAccountRepository.findById(userId).get();
+                userAccountModel.setUsername(username);
+                userAccountModel.setUpdatedAt(ZonedDateTime.now(ZoneId.of("Asia/Hong_Kong")));
+                userAccountRepository.save(userAccountModel);
+            }
+        }
+        if (description != null) {
+            userProfileModel.setDescription(description);
+        }
+        if (avatar != null) {
+            if (userProfileModel.getAvatarId() != null) {
+                Integer avatarId = userProfileModel.getAvatarId();
+                userProfileModel.setAvatarId(null);
+                imageRepository.deleteById(avatarId);
+            }
+            if (!avatar.isEmpty()) {
+                // Set new avatar
+                imageService.checkIsImage(avatar);
+                userProfileModel.setAvatarId(imageService.saveImage(avatar));
+            }
+        }
+        userProfileModel.setUpdatedAt(ZonedDateTime.now(ZoneId.of("Asia/Hong_Kong")));
+        userProfileRepository.save(userProfileModel);
+    }
+
+    /**
+     * Check if the input username is correct in format and unique by counting all the usernames in database
+     * @param username username string
+     * @return true if username is unique, else false
+     * @throws ExceptionService INVALID_USERNAME_FORMAT, USERNAME_NOT_UNIQUE
+     */
+    private Boolean isUsernameUnique(String username) throws Exception {
+        checkUsernameFormat(username);
+        Integer countUser = userAccountRepository.countAllUsersByUsername(username);
+        if (countUser > 0) {
+            ExceptionService.throwException(ExceptionService.USERNAME_NOT_UNIQUE);
+        }
+        return true;
+    }
+
+    /**
+     * Check if the username contains invalid characters
+     * @param username username String
+     * @throws ExceptionService INVALID_USERNAME_FORMAT if there is any invalid characters
+     */
+    private void checkUsernameFormat(String username) throws Exception {
+        if (username == null || username.isEmpty() || username.contains(";") || username.contains("@")) {
+            ExceptionService.throwException(ExceptionService.INVALID_USERNAME_FORMAT);
+        }
+    }
 }

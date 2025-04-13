@@ -6,7 +6,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
 import project.flowchat.backend.DTO.ResponseBodyDTO;
 import project.flowchat.backend.Service.ExceptionService;
 import project.flowchat.backend.Service.ProfileService;
@@ -88,6 +91,29 @@ public class ProfileController {
             profileService.unblockUser(requestBody.get("userIdFrom"), requestBody.get("userIdTo"));
             data.put("isSuccess", true);
             responseBodyDTO.setMessage("The user is unblocked");
+            responseBodyDTO.setData(data);
+        } catch (ExceptionService e) {
+            responseBodyDTO.setMessage(e.getMessage());
+            Map<String, Object> data = new HashMap<>();
+            data.put("isSuccess", false);
+            responseBodyDTO.setData(data);
+        } catch (Exception e) {
+            responseBodyDTO.setMessage("Fail: " + e);
+            responseBodyDTO.setData(null);
+        }
+        return responseBodyDTO;
+    }
+    @PutMapping(value = "updatePersonalProfile", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    private ResponseBodyDTO updatePersonalProfile(@RequestPart Map<String, Object> requestBody,
+                                                @RequestPart(required = false, value = "avatar") MultipartFile avatar) {
+        try {
+            Map<String, Object> data = new HashMap<>();
+            profileService.updatePersonalProfile((Integer) requestBody.get("userId"), 
+                                                (String) requestBody.get("username"), 
+                                                (String) requestBody.get("description"), 
+                                                avatar);
+            data.put("isSuccess", true);
+            responseBodyDTO.setMessage("The user personal profile is updated");
             responseBodyDTO.setData(data);
         } catch (ExceptionService e) {
             responseBodyDTO.setMessage(e.getMessage());
