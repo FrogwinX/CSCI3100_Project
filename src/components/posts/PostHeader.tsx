@@ -28,7 +28,7 @@ export default function PostHeader({
 
   const handleEdit = (e: MouseEvent) => {
     e.stopPropagation();
-    router.push(`/post/edit/${postId}`);
+    router.push(`/forum/post/${postId}/edit`);
   };
 
   const handleDelete = async (e: MouseEvent) => {

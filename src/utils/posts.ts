@@ -406,3 +406,108 @@ export async function createPost(title: string, content: string, tags: Tag[], im
     throw error;
   }
 }
+
+export async function updatePost(
+  postId: string,
+  title: string,
+  content: string,
+  tags: Tag[],
+  images: File[],
+  existingImages: string[]
+): Promise<string | null> {
+  try {
+    const session = await getSession();
+
+    // 驗證 session
+    if (!session?.isLoggedIn || !session?.token) {
+      throw new Error("User is not logged in or token is unavailable");
+    }
+
+    // 驗證 userId
+    const userId = parseInt(session.userId?.toString() || "0", 10);
+    if (isNaN(userId)) {
+      throw new Error("Invalid userId");
+    }
+
+    // 構造 requestBody，與 createPost 保持一致
+    const requestBody = {
+      postId: parseInt(postId, 10),
+      userId,
+      title,
+      content: content.replace(/<[^>]+>/g, ""), // 移除 HTML 標籤
+      tag: tags.map((tag) => tag.tagName),
+      attachTo: 0, // 如果需要更新父貼文 ID，這裡可以設置
+      imageAPIList: existingImages, // 傳遞現有圖片的 URL
+    };
+
+    // 創建 FormData 用於 multipart/form-data 請求
+    const formData = new FormData();
+    const requestBodyBlob = new Blob([JSON.stringify(requestBody)], { type: "application/json" });
+    formData.append("requestBody", requestBodyBlob);
+
+    // 如果有新圖片，添加到 imageList
+    if (images.length > 0) {
+      images.forEach((image) => {
+        formData.append("imageList", image);
+      });
+    }
+
+    const apiUrl = "https://flowchatbackend.azurewebsites.net/api/Forum/updatePostOrComment"; // 更新為正確的 API 端點
+    const response = await fetch(apiUrl, {
+      method: "PUT", // 使用 PUT 方法進行更新
+      headers: {
+        Authorization: `Bearer ${session.token}`,
+      },
+      body: formData,
+    });
+
+    // 檢查響應狀態
+    if (!response.ok) {
+      if (response.status === 415) {
+        throw new Error("Unsupported media type, please check request format");
+      }
+      if (response.status === 401) {
+        throw new Error("Authentication failed, please log in again");
+      }
+      if (response.status === 500) {
+        throw new Error("Server error, please contact the administrator");
+      }
+      throw new Error(`Failed to update post, status code: ${response.status}`);
+    }
+
+    // 解析響應
+    const data: CreatePostResponse = await response.json();
+    let updatedPostId: string | null = null;
+    let isSuccess: boolean = false;
+
+    // 處理不同的響應格式，與 createPost 一致
+    if (typeof data.data === "string") {
+      // 舊格式：data.data 是字符串，例如 "48 success: true"
+      const dataString = data.data as string;
+      const [id, successPart] = dataString.split(" success: ");
+      updatedPostId = id;
+      isSuccess = successPart === "true";
+    } else if (data.data && typeof data.data === "object" && "isSuccess" in data.data) {
+      // 新格式：data.data 是物件，例如 { isSuccess: true }
+      isSuccess = (data.data as { isSuccess: boolean }).isSuccess;
+      if (isSuccess) {
+        // 後端未返回 postId，使用傳入的 postId
+        updatedPostId = postId;
+      }
+    } else {
+      throw new Error("Unexpected response format from backend");
+    }
+
+    if (!isSuccess) {
+      throw new Error(data.message || "Failed to update post");
+    }
+
+    if (!updatedPostId) {
+      throw new Error("Unable to retrieve post ID for navigation");
+    }
+
+    return updatedPostId;
+  } catch (error) {
+    throw error;
+  }
+}
