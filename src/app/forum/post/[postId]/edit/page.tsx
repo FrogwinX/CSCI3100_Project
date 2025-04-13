@@ -6,6 +6,7 @@ import { getAllTags, Tag, getPostById, updatePost } from "@/utils/posts";
 import { useRouter } from "next/navigation";
 import { getProxyImageUrl } from "@/utils/imageUtils";
 
+// Define the interface for a Post
 interface Post {
   id: string;
   title: string;
@@ -14,24 +15,27 @@ interface Post {
   imageAPIList: string[];
 }
 
+// EditPost component for editing an existing post
 export default function EditPost({ params: paramsPromise }: { params: Promise<{ postId: string }> }) {
-  const [postId, setPostId] = useState<string | null>(null);
-  const [title, setTitle] = useState<string>("");
-  const [tags, setTags] = useState<Tag[]>([]);
-  const [allTags, setAllTags] = useState<Tag[]>([]);
-  const [isTagMenuOpen, setIsTagMenuOpen] = useState<boolean>(false);
-  const [content, setContent] = useState<string>("");
-  const [textLength, setTextLength] = useState<number>(0);
-  const [tagFetchError, setTagFetchError] = useState<string | null>(null);
-  const [submitError, setSubmitError] = useState<string | null>(null);
-  const [images, setImages] = useState<File[]>([]);
-  const [existingImages, setExistingImages] = useState<string[]>([]);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
+  // State variables
+  const [postId, setPostId] = useState<string | null>(null); // Post ID
+  const [title, setTitle] = useState<string>(""); // Post title
+  const [tags, setTags] = useState<Tag[]>([]); // Selected tags
+  const [allTags, setAllTags] = useState<Tag[]>([]); // All available tags from the server
+  const [isTagMenuOpen, setIsTagMenuOpen] = useState<boolean>(false); // Toggle for tag selection menu
+  const [content, setContent] = useState<string>(""); // Post content (HTML string with placeholders)
+  const [textLength, setTextLength] = useState<number>(0); // Length of plain text content
+  const [tagFetchError, setTagFetchError] = useState<string | null>(null); // Error message for tag fetching
+  const [submitError, setSubmitError] = useState<string | null>(null); // Error message for post submission
+  const [images, setImages] = useState<File[]>([]); // New images uploaded by the user
+  const [existingImages, setExistingImages] = useState<string[]>([]); // Existing image URLs from the post
+  const fileInputRef = useRef<HTMLInputElement>(null); // Reference to file input for image upload
+  const contentRef = useRef<HTMLDivElement>(null); // Reference to content editable div
 
   const { session, loading, refresh } = useSession();
   const router = useRouter();
 
+  // Fetch the post ID from params when the component mounts
   useEffect(() => {
     const fetchParams = async () => {
       const params = await paramsPromise;
@@ -40,30 +44,34 @@ export default function EditPost({ params: paramsPromise }: { params: Promise<{ 
     fetchParams();
   }, [paramsPromise]);
 
+  // Fetch tags and post data when the component mounts or session changes
   useEffect(() => {
     const fetchData = async () => {
       if (loading || !postId) return;
 
       if (!session?.isLoggedIn || !session?.token) {
-        setTagFetchError("請先登入以加載標籤");
+        setTagFetchError("Please log in to load tags");
         return;
       }
 
       try {
+        // Fetch all available tags
         const allTags = await getAllTags();
         if (allTags.length === 0) {
-          setTagFetchError("伺服器無可用標籤");
+          setTagFetchError("No tags available from server");
         } else {
           setAllTags(allTags);
           setTagFetchError(null);
         }
 
+        // Fetch the post data by ID
         const post: Post | null = await getPostById(postId);
         console.log("Fetched post data:", post);
 
         if (post) {
           setTitle(post.title);
 
+          // Convert tag names to Tag objects
           const tagNameList = post.tagNameList || [];
           const postTags = tagNameList
             .map((tagName) => {
@@ -74,33 +82,37 @@ export default function EditPost({ params: paramsPromise }: { params: Promise<{ 
           setTags(postTags);
           console.log("Converted tags:", postTags);
 
+          // Set existing images from the post
           setExistingImages(post.imageAPIList || []);
           console.log("Post images:", post.imageAPIList);
 
+          // Prepare the post content for the contentEditable div
           let newContent = post.content || "";
           newContent = newContent.replace(/\n/g, "<br>");
           const div = document.createElement("div");
           div.innerHTML = newContent;
 
+          // Add placeholders for existing images
           if (post.imageAPIList && post.imageAPIList.length > 0) {
             post.imageAPIList.forEach((imageUrl, index) => {
               const wrapper = document.createElement("div");
               wrapper.className = "relative w-full my-2";
               wrapper.dataset.imageUrl = imageUrl;
-              wrapper.dataset.fileName = `image-${index + 1}`;
+              // Use the image URL as a unique identifier
+              wrapper.dataset.imageId = imageUrl;
               wrapper.innerHTML = `<div class="image-placeholder-${index}"></div><br>`;
               div.appendChild(wrapper);
             });
           }
 
           if (!contentRef.current) {
-            console.error("contentRef 未準備好");
+            console.error("contentRef is not ready");
             return;
           }
           contentRef.current.innerHTML = div.innerHTML;
           setContent(div.innerHTML);
 
-          // 動態渲染圖片，使用代理路由
+          // Dynamically render images using proxy URLs
           if (post.imageAPIList && post.imageAPIList.length > 0) {
             post.imageAPIList.forEach((imageUrl, index) => {
               const placeholder = contentRef.current?.querySelector(`.image-placeholder-${index}`);
@@ -111,13 +123,12 @@ export default function EditPost({ params: paramsPromise }: { params: Promise<{ 
                 imgWrapper.innerHTML = `
                   <div class="image-container">
                     <div class="skeleton w-full h-48"></div>
-                    <img src="${proxyImageUrl}" alt="Existing Image" style="max-width: 100%; height: auto; display: none;" data-file-name="image-${index + 1}" />
-                    <p class="text-red-500" style="display: none;">無法加載圖片: 伺服器錯誤</p>
+                    <img src="${proxyImageUrl}" alt="Existing Image" style="max-width: 100%; height: auto; display: none;" data-image-id="${imageUrl}" />
+                    <p class="text-red-500" style="display: none;">Failed to load image: Server error</p>
                   </div>
                 `;
                 placeholder.replaceWith(imgWrapper);
 
-                // 添加事件監聽器處理圖片加載和錯誤
                 const img = imgWrapper.querySelector("img");
                 const skeleton = imgWrapper.querySelector(".skeleton");
                 const errorMessage = imgWrapper.querySelector("p.text-red-500");
@@ -137,7 +148,7 @@ export default function EditPost({ params: paramsPromise }: { params: Promise<{ 
                   img.addEventListener("load", onLoadHandler);
                   img.addEventListener("error", onErrorHandler);
 
-                  // 清理事件監聽器，避免重複添加
+                  // Clean up event listeners to avoid duplicates
                   return () => {
                     img.removeEventListener("load", onLoadHandler);
                     img.removeEventListener("error", onErrorHandler);
@@ -150,11 +161,11 @@ export default function EditPost({ params: paramsPromise }: { params: Promise<{ 
           const cleanText = div.textContent || "";
           setTextLength(getTextLength(cleanText));
         } else {
-          setTagFetchError("找不到貼文");
+          setTagFetchError("Post not found");
         }
       } catch (error) {
-        console.error("加載資料失敗:", error);
-        setTagFetchError("無法加載資料");
+        console.error("Failed to load data:", error);
+        setTagFetchError("Failed to load data");
         setAllTags([]);
       }
     };
@@ -162,6 +173,7 @@ export default function EditPost({ params: paramsPromise }: { params: Promise<{ 
     fetchData();
   }, [session, loading, postId]);
 
+  // Toggle the tag selection menu
   const handleAddTag = () => {
     if (loading) return;
 
@@ -173,6 +185,7 @@ export default function EditPost({ params: paramsPromise }: { params: Promise<{ 
     setIsTagMenuOpen((prev) => !prev);
   };
 
+  // Add or remove a tag from the selected tags
   const toggleTag = (tag: Tag) => {
     if (tags.some((t) => t.tagId === tag.tagId)) {
       setTags(tags.filter((t) => t.tagId !== tag.tagId));
@@ -181,31 +194,37 @@ export default function EditPost({ params: paramsPromise }: { params: Promise<{ 
     }
   };
 
+  // Handle image upload
   const handleImageUpload = () => {
     const file = fileInputRef.current?.files?.[0];
     if (file) {
+      // Validate file type (only PNG and JPEG allowed)
       if (!file.type.match("image/(png|jpeg)")) {
         setSubmitError("Only PNG and JPEG formats are supported");
         return;
       }
 
+      // Validate file size (max 5MB)
       const maxSize = 5 * 1024 * 1024;
       if (file.size > maxSize) {
         setSubmitError("Image file is too large, maximum limit is 5MB");
         return;
       }
 
+      // Rename file using a unique format
       const extension = file.name.split(".").pop();
-      const newFileName = `image-${images.length + existingImages.length + 1}.${extension}`;
+      const newFileName = `new-image-${images.length + existingImages.length + 1}.${extension}`;
       const renamedFile = new File([file], newFileName, { type: file.type });
 
+      // Add the image to the images state
       setImages((prevImages) => [...prevImages, renamedFile]);
 
+      // Display the image in the editor using a temporary URL and insert a placeholder
       const imgSrc = URL.createObjectURL(file);
       const imgElement = document.createElement("img");
       imgElement.src = imgSrc;
       imgElement.alt = "Uploaded Image";
-      imgElement.dataset.fileName = newFileName;
+      imgElement.dataset.imageId = newFileName;
       imgElement.style.maxWidth = "100%";
       imgElement.style.height = "auto";
       if (contentRef.current) {
@@ -215,37 +234,57 @@ export default function EditPost({ params: paramsPromise }: { params: Promise<{ 
     }
   };
 
+  // Trigger file input click for image upload
   const handleClipClick = () => {
     fileInputRef.current?.click();
   };
 
+  // Calculate the length of the plain text content (excluding image placeholders)
   const getTextLength = (text: string) => {
     const cleanText = text.replace(/\[image:[^\]]+\]/g, "");
     return cleanText.length || 0;
   };
 
+  // Handle changes in the content editable div
   const handleContentChange = () => {
     if (contentRef.current) {
       const div = document.createElement("div");
       div.innerHTML = contentRef.current.innerHTML;
       const images = div.querySelectorAll("img");
+      const remainingImageIds: string[] = [];
+
+      // Replace images with placeholders and collect remaining image IDs
       images.forEach((img) => {
-        const fileName = img.dataset.fileName || "";
-        if (fileName) {
-          const placeholder = `[image:${fileName}]`;
+        const imageId = img.dataset.imageId || "";
+        if (imageId) {
+          const placeholder = `[image:${imageId}]`;
           const textNode = document.createTextNode(placeholder);
           img.parentNode?.replaceChild(textNode, img);
+          remainingImageIds.push(imageId);
         }
       });
 
+      // Update content state with the formatted HTML
       const formattedContent = div.innerHTML;
       setContent(formattedContent);
 
+      // Calculate the text length (excluding image placeholders)
       const cleanText = div.textContent || "";
       setTextLength(getTextLength(cleanText));
+
+      // Update existingImages to only include images still present in the content
+      setExistingImages((prevImages) => {
+        return prevImages.filter((imageUrl) => remainingImageIds.includes(imageUrl));
+      });
+
+      // Update images to only include new uploads still present in the content
+      setImages((prevImages) => {
+        return prevImages.filter((image) => remainingImageIds.includes(image.name));
+      });
     }
   };
 
+  // Adjust the height of the content editor dynamically
   useEffect(() => {
     if (contentRef.current) {
       contentRef.current.style.height = "auto";
@@ -258,11 +297,13 @@ export default function EditPost({ params: paramsPromise }: { params: Promise<{ 
     }
   }, [content]);
 
+  // Limit the content length to 1000 characters (excluding image placeholders)
   useEffect(() => {
     if (contentRef.current) {
       const textContent = contentRef.current.textContent || "";
       const length = getTextLength(textContent);
       if (length > 1000) {
+        // Truncate the text while preserving the HTML structure
         const div = document.createElement("div");
         div.innerHTML = contentRef.current.innerHTML;
         let currentLength = 0;
@@ -299,14 +340,17 @@ export default function EditPost({ params: paramsPromise }: { params: Promise<{ 
     }
   }, [content]);
 
+  // Handle form submission to update the post
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Check if user is logged in
     if (!session?.isLoggedIn) {
       setSubmitError("Please log in first");
       return;
     }
 
+    // Validate title and content
     if (!title || !content) {
       setSubmitError("Title and content cannot be empty");
       return;
@@ -314,6 +358,7 @@ export default function EditPost({ params: paramsPromise }: { params: Promise<{ 
 
     setSubmitError(null);
 
+    // Check if post ID is available
     if (!postId) {
       setSubmitError("Post ID is not available");
       return;
