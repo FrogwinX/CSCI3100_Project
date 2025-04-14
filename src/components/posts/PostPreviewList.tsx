@@ -6,7 +6,10 @@ import { getPosts } from "@/utils/posts";
 import { useTagContext } from "@/hooks/useTags";
 import LoadingPostPreview from "@/components/posts/LoadingPostPreview";
 
-export default function PostList({ filter = "latest" }: { filter?: "latest" | "recommended" | "following" }) {
+export default function PostList(
+  { filter = "latest" }: { filter?: "latest" | "recommended" | "following" },
+
+) {
   const { selectedTags: tags, setPostsLoading } = useTagContext();
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);

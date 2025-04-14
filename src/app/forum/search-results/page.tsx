@@ -20,7 +20,11 @@ export default function SearchResultsPage({ searchInput }: { searchInput: string
       </div>
 
       {/* Content based on active tab */}
-      {activeTab === "posts" ? <PostList filter="latest" /> : <UserList searchKeyword={searchInput} />}
+      {activeTab === "posts" ? (
+        PostList({ filter: "latest" }, { keyword: searchInput })
+      ) : (
+        <UserList searchKeyword={searchInput} />
+      )}
     </div>
   );
 }
