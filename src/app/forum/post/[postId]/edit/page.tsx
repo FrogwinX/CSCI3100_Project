@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useSession } from "@/hooks/useSession";
 import { getAllTags, Tag, getPostById, updatePost } from "@/utils/posts";
 import { useRouter } from "next/navigation";
-import { getProxyImageUrl } from "@/utils/imageUtils";
+import { getProxyImageUrl } from "@/utils/images";
 
 // Define the interface for a Post
 interface Post {
@@ -401,11 +401,7 @@ export default function EditPost({ params: paramsPromise }: { params: Promise<{ 
         </div>
         <div className="form-control">
           <div className="flex items-center space-x-2 flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={handleAddTag}
-              className="btn btn-outline btn-primary rounded-lg"
-            >
+            <button type="button" onClick={handleAddTag} className="btn btn-outline btn-primary rounded-lg">
               {isTagMenuOpen ? "Close Tags" : "Add Tags"}
             </button>
             <div className="flex flex-wrap gap-2">
@@ -466,11 +462,7 @@ export default function EditPost({ params: paramsPromise }: { params: Promise<{ 
               <button type="button" className="btn btn-ghost btn-xs text-gray-600">
                 <span className="underline">U</span>
               </button>
-              <button
-                type="button"
-                className="btn btn-ghost btn-xs text-gray-600"
-                onClick={handleClipClick}
-              >
+              <button type="button" className="btn btn-ghost btn-xs text-gray-600" onClick={handleClipClick}>
                 <span>📎</span>
               </button>
               <input
@@ -494,10 +486,7 @@ export default function EditPost({ params: paramsPromise }: { params: Promise<{ 
           </div>
         </div>
         {submitError && <p className="text-red-500">{submitError}</p>}
-        <button
-          type="submit"
-          className="btn bg-[#A3DFFA] text-[#1A3C34] hover:bg-[#8CCFF7] float-right rounded-lg"
-        >
+        <button type="submit" className="btn bg-[#A3DFFA] text-[#1A3C34] hover:bg-[#8CCFF7] float-right rounded-lg">
           Save
         </button>
       </form>
