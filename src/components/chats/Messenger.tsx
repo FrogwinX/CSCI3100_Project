@@ -1,6 +1,12 @@
 "use client";
 
-import { faEllipsis, faFlag, faCheckSquare as faCheckedSquare, faTrashAlt } from "@fortawesome/free-solid-svg-icons";
+import {
+  faEllipsis,
+  faFlag,
+  faCheckSquare as faCheckedSquare,
+  faTrashAlt,
+  faMagnifyingGlass,
+} from "@fortawesome/free-solid-svg-icons";
 import { faCheckSquare } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Link from "next/link";
@@ -19,6 +25,7 @@ export default function Messenger({ initialContacts }: { initialContacts: Contac
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>(messagingService.getStatus());
   const [inSelection, setInSelection] = useState(false);
   const [selectedMessages, setSelectedMessages] = useState<Set<number>>(new Set());
+  const [searchInput, setSearchInput] = useState("");
 
   // Keep a ref of the selected contact such that it can be used in the message subscription callback
   const selectedContactRef = useRef<Contact | undefined>(undefined);
@@ -32,7 +39,12 @@ export default function Messenger({ initialContacts }: { initialContacts: Contac
     } else if (contact.usernameTo === contact.contactUsername) {
       return contact.userIdTo;
     }
-    return 0;
+
+    if (contact.messageId === -1) {
+      // Temporary contact, use the userIdFrom for the temp contact
+      return contact.userIdFrom;
+    }
+    return -1;
   };
 
   // Connect to WebSocket when component mounts
@@ -52,7 +64,7 @@ export default function Messenger({ initialContacts }: { initialContacts: Contac
         if (retryCount < 3) {
           console.log(`Retrying connection (${retryCount + 1}/3)...`);
           retryCount++;
-          retryTimeout = setTimeout(connectWithRetry, 3000);
+          retryTimeout = setTimeout(connectWithRetry, 1000);
         } else {
           console.log("Max retries reached");
         }
@@ -124,6 +136,8 @@ export default function Messenger({ initialContacts }: { initialContacts: Contac
           }
         }
       });
+
+      setContacts(initialContacts);
     } catch (error) {
       console.error("Failed to subscribe to channel:", error);
     }
@@ -133,7 +147,7 @@ export default function Messenger({ initialContacts }: { initialContacts: Contac
         messagingService.unsubscribe(`/channel/${session.userId}`);
       }
     };
-  }, [session.userId, connectionStatus]);
+  }, [session, connectionStatus]);
 
   // Mark messages as read when contact is selected or when new messages arrive
   useEffect(() => {
@@ -158,6 +172,8 @@ export default function Messenger({ initialContacts }: { initialContacts: Contac
         readAt: null,
         imageAPIList: null,
       };
+
+      console.log("Sending message:", tempMessage);
 
       // Add to UI immediately
       setMessages((prev) => [...prev, tempMessage]);
@@ -247,8 +263,8 @@ export default function Messenger({ initialContacts }: { initialContacts: Contac
   };
 
   // Exit selection mode
-  const cancelSelection = () => {
-    setInSelection(false);
+  const handleSelectionButton = () => {
+    setInSelection(!inSelection);
     setSelectedMessages(new Set());
   };
 
@@ -256,6 +272,53 @@ export default function Messenger({ initialContacts }: { initialContacts: Contac
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       sendMessage();
+    }
+  };
+
+  const searchUser = async (uid: string) => {
+    if (!session.userId || !session.token) return;
+
+    const userId = parseInt(uid, 10);
+
+    try {
+      // Check if we already have a conversation with this user
+      const existingContact = initialContacts.find((contact) => getContactUserId(contact) === userId);
+
+      if (existingContact) {
+        // If we already have a conversation, just select it
+        setSelectedContact(existingContact);
+        setSearchInput("");
+        return;
+      }
+
+      // Create a new temporary contact
+      const newContact: Contact = {
+        messageId: -1, // Temporary ID
+        contactUsername: "Unknown User",
+        latestMessage:
+          "This is a temp contact, a real contact can be created using the Get Search User Result API. Reload the page after sending a message to get a real contact for now",
+        userIdFrom: userId,
+        usernameFrom: "",
+        userIdTo: -1,
+        usernameTo: "",
+        sentAt: "",
+        readAt: "",
+        unreadMessageCount: 0,
+      };
+
+      // Update the contacts list and select the new contact
+      setContacts((prev) => [newContact, ...prev]);
+      setSelectedContact(newContact);
+      setMessages([]);
+      setSearchInput("");
+    } catch (error) {
+      console.error("Error searching for user:", error);
+    }
+  };
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      searchUser(searchInput);
     }
   };
 
@@ -267,17 +330,34 @@ export default function Messenger({ initialContacts }: { initialContacts: Contac
       <div className="bg-base-200 min-h-full flex flex-grow w-6/8 shadow-lg">
         {/* Contact List (Left)*/}
         <div className="w-1/3 flex flex-col bg-base-100 shadow-md">
-          <div className="flex items-end p-2 h-24 text-2xl font-bold ">Contacts</div>
+          <div className="flex flex-col p-2 gap-2">
+            <h1 className="text-2xl font-bold mt-6">Contacts</h1>
+            {/* Search bar */}
+            <div className="relative bg-base-200 rounded-full p-1">
+              <FontAwesomeIcon
+                icon={faMagnifyingGlass}
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-base-content/50"
+              />
+              <input
+                type="text"
+                placeholder="Enter user ID to create a new chat for now"
+                // placeholder="Search Contacts"
+                className="w-full h-full rounded-full text-sm pl-8 pr-3"
+                onChange={(e) => setSearchInput(e.target.value)}
+                onKeyDown={handleSearchKeyDown}
+              />
+            </div>
+          </div>
           <ul className="list overflow-y-auto">
             {/* Please create a contact component */}
             {connectionStatus !== ConnectionStatus.CONNECTED ? (
               [1, 2, 3, 4, 5, 6].map((item) => <LoadingContact key={item} />)
-            ) : initialContacts.length === 0 ? (
+            ) : contacts.length === 0 ? (
               <p className="text-base-content/50 text-center mt-4 break-words text-wrap mx-16">
                 Start a new conversation with someone to get started
               </p>
             ) : (
-              initialContacts.map((contact) => (
+              contacts.map((contact) => (
                 <li
                   key={getContactUserId(contact)}
                   className={`list-row cursor-pointer hover:bg-base-200 ${
@@ -314,7 +394,7 @@ export default function Messenger({ initialContacts }: { initialContacts: Contac
                 </Link>
                 <div className="flex gap-1 place-items-center">
                   {inSelection && (
-                    <div className="badge badge-outline badge-primary">Selected ({selectedMessages.size})</div>
+                    <div className="badge badge-outline badge-primary">Selected {selectedMessages.size} messages</div>
                   )}
 
                   {/* Options menu */}
@@ -325,7 +405,7 @@ export default function Messenger({ initialContacts }: { initialContacts: Contac
                     <ul tabIndex={0} className="dropdown-content menu bg-base-100 rounded-box z-10 shadow-lg w-26">
                       {/* Selection mode toggle */}
                       <li>
-                        <a onClick={() => setInSelection(!inSelection)}>
+                        <a onClick={handleSelectionButton}>
                           <FontAwesomeIcon icon={inSelection ? faCheckedSquare : faCheckSquare} />
                           <span>{inSelection ? "Cancel" : "Select"}</span>
                         </a>

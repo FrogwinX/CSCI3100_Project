@@ -101,7 +101,7 @@ export class MessagingService {
       try {
         const socket = new SockJS("https://flowchatbackend.azurewebsites.net/chat", null, {
           // Specify preferred transports to avoid unnecessary fallback attempts
-          transports: ["websocket", "xhr-streaming", "xhr-polling"],
+          transports: ["xhr-streaming", "websocket", "xhr-polling"],
         });
 
         this.client = new Client({
@@ -109,9 +109,9 @@ export class MessagingService {
           connectHeaders: {
             Authorization: `Bearer ${token}`,
           },
-          reconnectDelay: 5000,
-          heartbeatIncoming: 15000,
-          heartbeatOutgoing: 15000,
+          reconnectDelay: 3000,
+          heartbeatIncoming: 30000,
+          heartbeatOutgoing: 30000,
         });
 
         this.client.onConnect = () => {
@@ -127,7 +127,7 @@ export class MessagingService {
             this.updateStatus(ConnectionStatus.ERROR);
             reject(new Error("Connection timed out"));
           }
-        }, 5000);
+        }, 1000);
       } catch (error) {
         console.error("Failed to connect:", error);
       }
