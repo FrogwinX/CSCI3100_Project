@@ -5,7 +5,7 @@ import { TagProvider } from "@/hooks/useTags";
 export default function ForumLayout({ children }: { children: React.ReactNode }) {
   return (
     <TagProvider>
-      <div className="flex h-full w-full gap-x-2 md:px-32">
+      <div className="flex h-fit min-h-full w-full gap-x-2 md:px-32">
         {/* Left column - conditionally rendered back button */}
         <div className="hidden lg:flex w-1/6 flex-col items-end pt-4 pr-4 sticky h-fit">
           <BackButton />
