@@ -2,14 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import PostPreview, { Post } from "./PostPreview";
-import { getPosts } from "@/utils/posts";
+import { getPosts, getSearchPosts } from "@/utils/posts";
 import { useTagContext } from "@/hooks/useTags";
 import LoadingPostPreview from "@/components/posts/LoadingPostPreview";
 
-export default function PostList(
-  { filter = "latest" }: { filter?: "latest" | "recommended" | "following" },
-
-) {
+export default function PostList({ filter, keyword }: { filter?: "latest" | "recommended" | "following" | undefined; keyword?: string | undefined; }) {
   const { selectedTags: tags, setPostsLoading } = useTagContext();
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -50,8 +47,14 @@ export default function PostList(
 
     const fetchInitialPosts = async () => {
       try {
-        const initialPosts = await getPosts({ filter });
 
+        let initialPosts;
+        //switch between getPosts and getSearchPosts based on keyword
+        if (!keyword) {
+          initialPosts = await getPosts({ filter });
+        } else {
+          initialPosts = await getSearchPosts({ keyword });
+        }
         // Scroll to the top of the page smoothly
         window.scrollTo({ top: 0, behavior: "smooth" });
 
@@ -83,7 +86,7 @@ export default function PostList(
     };
 
     fetchInitialPosts();
-  }, [filter, tags]); // Refetch when tags or filter changes
+  }, [filter, tags, keyword]); // Refetch when tags or filter or keyword change
 
   // Effect to handle auto-loading more posts if filtered results are empty
   useEffect(() => {
@@ -123,13 +126,21 @@ export default function PostList(
     setIsLoading(true);
 
     try {
-      // Fetch more posts
-      const newPosts = await getPosts({
-        filter,
-        excludingPostIdList: Array.from(excludedPostIds),
-        count: 10,
-      });
-
+      let newPosts;
+      //switch between getPosts and getSearchPosts based on keyword
+      if (!keyword) {
+        newPosts = await getPosts({
+          filter,
+          excludingPostIdList: Array.from(excludedPostIds),
+          count: 10,
+        });
+      } else {
+        newPosts = await getSearchPosts({
+          keyword,
+          excludingPostIdList: Array.from(excludedPostIds),
+          count: 10,
+        });
+      }
       // No posts are returned from the API
       if (!newPosts || newPosts.length === 0) {
         setHasMore(false);
