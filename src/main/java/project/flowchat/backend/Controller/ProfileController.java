@@ -3,6 +3,7 @@ package project.flowchat.backend.Controller;
 import lombok.AllArgsConstructor;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,7 +11,9 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import project.flowchat.backend.DTO.PostDTO;
 import project.flowchat.backend.DTO.ResponseBodyDTO;
+import project.flowchat.backend.DTO.UserProfileDTO;
 import project.flowchat.backend.Service.ExceptionService;
 import project.flowchat.backend.Service.ProfileService;
 
@@ -103,6 +106,7 @@ public class ProfileController {
         }
         return responseBodyDTO;
     }
+
     @PutMapping(value = "updatePersonalProfile", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     private ResponseBodyDTO updatePersonalProfile(@RequestPart Map<String, Object> requestBody,
                                                 @RequestPart(required = false, value = "avatar") MultipartFile avatar) {
@@ -119,6 +123,52 @@ public class ProfileController {
             responseBodyDTO.setMessage(e.getMessage());
             Map<String, Object> data = new HashMap<>();
             data.put("isSuccess", false);
+            responseBodyDTO.setData(data);
+        } catch (Exception e) {
+            responseBodyDTO.setMessage("Fail: " + e);
+            responseBodyDTO.setData(null);
+        }
+        return responseBodyDTO;
+    }
+
+    @GetMapping("getProfileContent")
+    private ResponseBodyDTO getProfileContent(@RequestParam Integer userIdFrom, Integer userIdTo) {
+        try {
+            Map<String, Object> data = new HashMap<>();
+            UserProfileDTO userProfileDTO = profileService.getProfileContent(userIdFrom, userIdTo);
+            data.put("isSuccess", true);
+            data.put("profile", userProfileDTO);
+            responseBodyDTO.setMessage("The user profile content is returned");
+            responseBodyDTO.setData(data);
+        } catch (ExceptionService e) {
+            Map<String, Object> data = new HashMap<>();
+            data.put("isSuccess", false);
+            data.put("profile", null);
+            responseBodyDTO.setMessage(e.getMessage());
+            responseBodyDTO.setData(data);
+        } catch (Exception e) {
+            responseBodyDTO.setMessage("Fail: " + e);
+            responseBodyDTO.setData(null);
+        }
+        return responseBodyDTO;
+    }
+
+    @GetMapping("getMyPostPreviewList")
+    private ResponseBodyDTO getMyPostPreviewList(@RequestParam Integer userId,
+                                                 @RequestParam(value = "excludingPostIdList") List<Integer> excludingPostIdList,
+                                                 @RequestParam Integer postNum) {
+        try {
+            Map<String, Object> data = new HashMap<>();
+            List<PostDTO> postPreviewModelList = forumService.getLatestPostPreviewList(userId, excludingPostIdList, postNum);
+            data.put("isSuccess", true);
+            data.put("postPreviewList", postPreviewModelList);
+            responseBodyDTO.setMessage("The latest post preview list is returned");
+            responseBodyDTO.setData(data);
+        } catch (ExceptionService e) {
+            Map<String, Object> data = new HashMap<>();
+            data.put("isSuccess", false);
+            data.put("postPreviewList", null);
+            responseBodyDTO.setMessage(e.getMessage());
             responseBodyDTO.setData(data);
         } catch (Exception e) {
             responseBodyDTO.setMessage("Fail: " + e);

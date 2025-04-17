@@ -147,6 +147,9 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
             "FETCH NEXT ?3 ROWS ONLY")
     List<PostModel> findPopularActivePostByRange(Integer userId, List<Integer> excludingPostIdList, Integer postNum);
 
+    @NativeQuery()
+    List<PostModel> findUserActivePostByRange(Integer userId, List<Integer> excludingPostIdList, Integer postNum);
+
     /**
      * Find some active posts by a tag, filtered out the blocked users, ordered by the descending order of post update time
      * @param userId  userId Integer
@@ -533,4 +536,22 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
     @Transactional
     @NativeQuery("UPDATE FORUM.Recommendation SET score = ?3 WHERE user_id = ?1 AND tag_id = ?2")
     void updateRecommendationScore(Integer userId, Integer tagId, int val);
+
+    @NativeQuery("SELECT COUNT(*) FROM FORUM.Post WHERE user_id = ?1 AND attach_to = 0")
+    Integer countPostByUserId(Integer userId);
+
+    @NativeQuery("SELECT COUNT(*) FROM FORUM.Post WHERE user_id = ?1 AND attach_to != 0")
+    Integer countCommentByUserId(Integer userId);
+
+    @NativeQuery("SELECT SUM(like_count) FROM FORUM.Post WHERE user_id = ?1 AND attach_to = 0")
+    Integer countPostLikeByUserId(Integer userId);
+
+    @NativeQuery("SELECT SUM(like_count) FROM FORUM.Post WHERE user_id = ?1 AND attach_to != 0")
+    Integer countCommentLikeByUserId(Integer userId);
+
+    @NativeQuery("SELECT SUM(dislike_count) FROM FORUM.Post WHERE user_id = ?1 AND attach_to = 0")
+    Integer countPostDislikeByUserId(Integer userId);
+
+    @NativeQuery("SELECT SUM(dislike_count) FROM FORUM.Post WHERE user_id = ?1 AND attach_to != 0")
+    Integer countCommentDislikeByUserId(Integer userId);
 }

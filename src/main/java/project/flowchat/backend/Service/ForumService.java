@@ -423,6 +423,17 @@ public class ForumService {
         return postPreviewModelList;
     }
 
+    public List<PostDTO> getUserPostPreviewList(Integer userId, List<Integer> excludingPostIdList, Integer postNum) throws Exception {
+        securityService.checkUserIdWithToken(userId);
+        List<PostModel> postModelList = forumRepository.findLatestActivePostByRange(userId, excludingPostIdList, postNum);
+        List<PostDTO> postPreviewModelList = new ArrayList<>();
+        for (PostModel post : postModelList) {
+            PostDTO postPreview = createPostDTO(post, userId);
+            postPreviewModelList.add(postPreview);
+        }
+        return postPreviewModelList;
+    }
+
     /**
      * Get the post data by postId
      * @param postId postId Integer

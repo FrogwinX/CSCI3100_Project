@@ -7,8 +7,6 @@ import org.springframework.data.jpa.repository.NativeQuery;
 import org.springframework.stereotype.Repository;
 import project.flowchat.backend.Model.UserProfileModel;
 
-import java.util.List;
-
 
 @Repository
 public interface UserProfileRepository extends JpaRepository<UserProfileModel, Integer> {
@@ -71,4 +69,13 @@ public interface UserProfileRepository extends JpaRepository<UserProfileModel, I
     @Transactional
     @NativeQuery("DELETE FROM PROFILE.Block WHERE user_id_from = ?1 AND user_id_to = ?2")
     Integer unblockUser(Integer userIdFrom, Integer userIdTo);
+
+    @NativeQuery("SELECT * FROM PROFILE.User_Profile WHERE user_id = ?1")
+    UserProfileModel findProfileByUserId(Integer userId);
+
+    @NativeQuery("SELECT COUNT(*) FROM PROFILE.Follow WHERE user_id_from = ?1")
+    Integer countFollowingByUserId(Integer userId);
+
+    @NativeQuery("SELECT COUNT(*) FROM PROFILE.Follow WHERE user_id_to = 1")
+    Integer countFollowerByUserId(Integer userId);
 }

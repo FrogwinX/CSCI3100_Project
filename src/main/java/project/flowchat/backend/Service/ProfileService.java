@@ -9,8 +9,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import project.flowchat.backend.DTO.UserProfileDTO;
 import project.flowchat.backend.Model.UserAccountModel;
 import project.flowchat.backend.Model.UserProfileModel;
+import project.flowchat.backend.Repository.ForumRepository;
 import project.flowchat.backend.Repository.ImageRepository;
 import project.flowchat.backend.Repository.UserAccountRepository;
 import project.flowchat.backend.Repository.UserProfileRepository;
@@ -23,6 +25,7 @@ public class ProfileService {
     private final UserProfileRepository userProfileRepository;
     private final UserAccountRepository userAccountRepository;
     private final ImageRepository imageRepository;
+    private final ForumRepository forumRepository;
     private final SecurityService securityService;
     private final ImageService imageService;
 
@@ -173,5 +176,27 @@ public class ProfileService {
         if (username == null || username.isEmpty() || username.contains(";") || username.contains("@")) {
             ExceptionService.throwException(ExceptionService.INVALID_USERNAME_FORMAT);
         }
+    }
+
+    public UserProfileDTO getProfileContent(Integer userIdFrom, Integer userIdTo) throws Exception {
+        securityService.checkUserIdWithToken(userIdFrom);
+        UserProfileModel userProfileModel = userProfileRepository.findProfileByUserId(userIdTo);
+        if (userProfileModel == null) {
+            ExceptionService.throwException(ExceptionService.PROFILE_NOT_EXIST);
+        }
+        UserProfileDTO userProfileDTO = new UserProfileDTO();
+        userProfileDTO.setUserId(userProfileModel.getUserId());
+        userProfileDTO.setUsername(userProfileModel.getUsername());
+        userProfileDTO.setDescription(userProfileModel.getDescription());
+        userProfileDTO.setAvatar(imageService.getImageAPI(userProfileModel.getAvatarId()));
+        userProfileDTO.setUpdatedAt(userProfileModel.getUpdatedAt());
+        userProfileDTO.setPostCount(forumRepository.countPostByUserId(userIdTo));
+        userProfileDTO.setCommentCount(forumRepository.countCommentByUserId(userIdTo));
+        userProfileDTO.setFollowingCount(userProfileRepository.countFollowingByUserId(userIdTo));
+        userProfileDTO.setFollowerCount(userProfileRepository.countFollowerByUserId(userIdTo));
+        userProfileDTO.setLikeCount(forumRepository.countPostLikeByUserId(userIdTo) + forumRepository.countCommentLikeByUserId(userIdTo));
+        userProfileDTO.setDislikeCount(forumRepository.countPostDislikeByUserId(userIdTo) + forumRepository.countCommentDislikeByUserId(userIdTo));
+        userProfileDTO.setIsUserBlocked(userProfileRepository.checkIfUserBlocked(userIdFrom, userIdTo) != null);
+        return userProfileDTO;
     }
 }
