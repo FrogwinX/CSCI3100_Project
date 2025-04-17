@@ -147,7 +147,13 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
             "FETCH NEXT ?3 ROWS ONLY")
     List<PostModel> findPopularActivePostByRange(Integer userId, List<Integer> excludingPostIdList, Integer postNum);
 
-    @NativeQuery()
+    @NativeQuery("SELECT TOP (?3) *\n" +
+                "FROM FORUM.Post\n" +
+                "WHERE is_active = 1\n" +
+                "AND attach_to = 0\n" +
+                "AND user_id = ?1\n" +
+                "AND post_id NOT IN ?2\n" +
+                "ORDER BY updated_at DESC")
     List<PostModel> findUserActivePostByRange(Integer userId, List<Integer> excludingPostIdList, Integer postNum);
 
     /**

@@ -15,6 +15,7 @@ import project.flowchat.backend.DTO.PostDTO;
 import project.flowchat.backend.DTO.ResponseBodyDTO;
 import project.flowchat.backend.DTO.UserProfileDTO;
 import project.flowchat.backend.Service.ExceptionService;
+import project.flowchat.backend.Service.ForumService;
 import project.flowchat.backend.Service.ProfileService;
 
 @AllArgsConstructor
@@ -25,6 +26,7 @@ public class ProfileController {
 
     @Autowired
     private final ProfileService profileService;
+    private final ForumService forumService;
     private ResponseBodyDTO responseBodyDTO;
 
     @PostMapping("followUser")
@@ -159,10 +161,10 @@ public class ProfileController {
                                                  @RequestParam Integer postNum) {
         try {
             Map<String, Object> data = new HashMap<>();
-            List<PostDTO> postPreviewModelList = forumService.getLatestPostPreviewList(userId, excludingPostIdList, postNum);
+            List<PostDTO> postPreviewModelList = forumService.getUserPostPreviewList(userId, excludingPostIdList, postNum);
             data.put("isSuccess", true);
             data.put("postPreviewList", postPreviewModelList);
-            responseBodyDTO.setMessage("The latest post preview list is returned");
+            responseBodyDTO.setMessage("My post preview list is returned");
             responseBodyDTO.setData(data);
         } catch (ExceptionService e) {
             Map<String, Object> data = new HashMap<>();
