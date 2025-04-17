@@ -49,6 +49,7 @@ public class ExceptionService extends Exception {
     public static final String USER_ALREADY_BLOCKED = "Have already blocked this user.";
     public static final String USER_NOT_BLOCKED = "Have not blocked this user before.";
     public static final String PROFILE_NOT_EXIST = "The user profile does not exist.";
+    public static final String INVALID_LIST_FORMAT = "The user list format is invalid.";
 
     public ExceptionService(String message) {
         super(message);

@@ -13,7 +13,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import project.flowchat.backend.DTO.PostDTO;
 import project.flowchat.backend.DTO.ResponseBodyDTO;
+import project.flowchat.backend.DTO.UserInfoDTO;
 import project.flowchat.backend.DTO.UserProfileDTO;
+import project.flowchat.backend.Model.UserProfileModel;
 import project.flowchat.backend.Service.ExceptionService;
 import project.flowchat.backend.Service.ForumService;
 import project.flowchat.backend.Service.ProfileService;
@@ -156,12 +158,13 @@ public class ProfileController {
     }
 
     @GetMapping("getMyPostPreviewList")
-    private ResponseBodyDTO getMyPostPreviewList(@RequestParam Integer userId,
+    private ResponseBodyDTO getMyPostPreviewList(@RequestParam Integer userIdFrom,
+                                                 @RequestParam Integer userIdTo,
                                                  @RequestParam(value = "excludingPostIdList") List<Integer> excludingPostIdList,
                                                  @RequestParam Integer postNum) {
         try {
             Map<String, Object> data = new HashMap<>();
-            List<PostDTO> postPreviewModelList = forumService.getUserPostPreviewList(userId, excludingPostIdList, postNum);
+            List<PostDTO> postPreviewModelList = forumService.getUserPostPreviewList(userIdFrom, userIdTo, excludingPostIdList, postNum);
             data.put("isSuccess", true);
             data.put("postPreviewList", postPreviewModelList);
             responseBodyDTO.setMessage("My post preview list is returned");
@@ -170,6 +173,103 @@ public class ProfileController {
             Map<String, Object> data = new HashMap<>();
             data.put("isSuccess", false);
             data.put("postPreviewList", null);
+            responseBodyDTO.setMessage(e.getMessage());
+            responseBodyDTO.setData(data);
+        } catch (Exception e) {
+            responseBodyDTO.setMessage("Fail: " + e);
+            responseBodyDTO.setData(null);
+        }
+        return responseBodyDTO;
+    }
+
+    @GetMapping("getMyCommentPreviewList")
+    private ResponseBodyDTO getMyCommentPreviewList(@RequestParam Integer userIdFrom,
+                                                    @RequestParam Integer userIdTo,
+                                                    @RequestParam(value = "excludingPostIdList") List<Integer> excludingPostIdList,
+                                                    @RequestParam Integer postNum) {
+        try {
+            Map<String, Object> data = new HashMap<>();
+            List<PostDTO> postPreviewModelList = forumService.getUserPostPreviewList(userIdFrom, userIdTo, excludingPostIdList, postNum);
+            data.put("isSuccess", true);
+            data.put("postPreviewList", postPreviewModelList);
+            responseBodyDTO.setMessage("My post preview list is returned");
+            responseBodyDTO.setData(data);
+        } catch (ExceptionService e) {
+            Map<String, Object> data = new HashMap<>();
+            data.put("isSuccess", false);
+            data.put("postPreviewList", null);
+            responseBodyDTO.setMessage(e.getMessage());
+            responseBodyDTO.setData(data);
+        } catch (Exception e) {
+            responseBodyDTO.setMessage("Fail: " + e);
+            responseBodyDTO.setData(null);
+        }
+        return responseBodyDTO;
+    }
+
+    @GetMapping("getMyFollowingList")
+    private ResponseBodyDTO getMyFollowingList(@RequestParam Integer userId,
+                                               @RequestParam(value = "excludingUserIdList") List<Integer> excludingUserIdList,
+                                               @RequestParam Integer userNum) {
+        try {
+            Map<String, Object> data = new HashMap<>();
+            List<UserInfoDTO> userList = profileService.getUserList(userId, excludingUserIdList, userNum, "following");
+            data.put("isSuccess", true);
+            data.put("userList", userList);
+            responseBodyDTO.setMessage("My following list is returned");
+            responseBodyDTO.setData(data);
+        } catch (ExceptionService e) {
+            Map<String, Object> data = new HashMap<>();
+            data.put("isSuccess", false);
+            data.put("userList", null);
+            responseBodyDTO.setMessage(e.getMessage());
+            responseBodyDTO.setData(data);
+        } catch (Exception e) {
+            responseBodyDTO.setMessage("Fail: " + e);
+            responseBodyDTO.setData(null);
+        }
+        return responseBodyDTO;
+    }
+
+    @GetMapping("getMyFollowerList")
+    private ResponseBodyDTO getMyFollowerList( @RequestParam Integer userId,
+                                               @RequestParam(value = "excludingUserIdList") List<Integer> excludingUserIdList,
+                                               @RequestParam Integer userNum) {
+        try {
+            Map<String, Object> data = new HashMap<>();
+            List<UserInfoDTO> userList = profileService.getUserList(userId, excludingUserIdList, userNum, "follower");
+            data.put("isSuccess", true);
+            data.put("userList", userList);
+            responseBodyDTO.setMessage("My follower list is returned");
+            responseBodyDTO.setData(data);
+        } catch (ExceptionService e) {
+            Map<String, Object> data = new HashMap<>();
+            data.put("isSuccess", false);
+            data.put("userList", null);
+            responseBodyDTO.setMessage(e.getMessage());
+            responseBodyDTO.setData(data);
+        } catch (Exception e) {
+            responseBodyDTO.setMessage("Fail: " + e);
+            responseBodyDTO.setData(null);
+        }
+        return responseBodyDTO;
+    }
+
+    @GetMapping("getMyBlockingList")
+    private ResponseBodyDTO getMyBlockingList( @RequestParam Integer userId,
+                                               @RequestParam(value = "excludingUserIdList") List<Integer> excludingUserIdList,
+                                               @RequestParam Integer userNum) {
+        try {
+            Map<String, Object> data = new HashMap<>();
+            List<UserInfoDTO> userList = profileService.getUserList(userId, excludingUserIdList, userNum, "blocking");
+            data.put("isSuccess", true);
+            data.put("userList", userList);
+            responseBodyDTO.setMessage("My blocking list is returned");
+            responseBodyDTO.setData(data);
+        } catch (ExceptionService e) {
+            Map<String, Object> data = new HashMap<>();
+            data.put("isSuccess", false);
+            data.put("userList", null);
             responseBodyDTO.setMessage(e.getMessage());
             responseBodyDTO.setData(data);
         } catch (Exception e) {

@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.NativeQuery;
 import org.springframework.stereotype.Repository;
 import project.flowchat.backend.Model.UserProfileModel;
 
+import java.util.List;
+
 
 @Repository
 public interface UserProfileRepository extends JpaRepository<UserProfileModel, Integer> {
@@ -78,4 +80,31 @@ public interface UserProfileRepository extends JpaRepository<UserProfileModel, I
 
     @NativeQuery("SELECT COUNT(*) FROM PROFILE.Follow WHERE user_id_to = 1")
     Integer countFollowerByUserId(Integer userId);
+
+    @NativeQuery(   "SELECT TOP (?3) UP.user_id, UP.username, UP.description, UP.avatar_id, UP.updated_at\n" +
+                    "FROM PROFILE.User_Profile UP\n" +
+                    "JOIN PROFILE.Follow F\n" +
+                    "ON UP.user_id = F.user_id_to\n" +
+                    "WHERE user_id_from = ?1\n" +
+                    "AND user_id NOT IN (?2)\n" +
+                    "ORDER BY username ASC")
+    List<UserProfileModel> findFollowingListByUserId(Integer userId, List<Integer> excludingUserIdList, Integer userNum);
+
+    @NativeQuery(   "SELECT TOP (?3) UP.user_id, UP.username, UP.description, UP.avatar_id, UP.updated_at\n" +
+                    "FROM PROFILE.User_Profile UP\n" +
+                    "JOIN PROFILE.Follow F\n" +
+                    "ON UP.user_id = F.user_id_from\n" +
+                    "WHERE user_id_to = ?1\n" +
+                    "AND user_id NOT IN (?2)\n" +
+                    "ORDER BY username ASC")
+    List<UserProfileModel> findFollowerListByUserId(Integer userId, List<Integer> excludingUserIdList, Integer userNum);
+
+    @NativeQuery(   "SELECT TOP (?3) UP.user_id, UP.username, UP.description, UP.avatar_id, UP.updated_at\n" +
+                    "FROM PROFILE.User_Profile UP\n" +
+                    "JOIN PROFILE.Block B\n" +
+                    "ON UP.user_id = B.user_id_to\n" +
+                    "WHERE user_id_from = ?1\n" +
+                    "AND user_id NOT IN (?2)\n" +
+                    "ORDER BY username ASC")
+    List<UserProfileModel> findBlockingListByUserId(Integer userId, List<Integer> excludingUserIdList, Integer userNum);
 }

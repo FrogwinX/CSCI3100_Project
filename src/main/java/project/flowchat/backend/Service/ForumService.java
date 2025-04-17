@@ -423,12 +423,12 @@ public class ForumService {
         return postPreviewModelList;
     }
 
-    public List<PostDTO> getUserPostPreviewList(Integer userId, List<Integer> excludingPostIdList, Integer postNum) throws Exception {
-        securityService.checkUserIdWithToken(userId);
-        List<PostModel> postModelList = forumRepository.findUserActivePostByRange(userId, excludingPostIdList, postNum);
+    public List<PostDTO> getUserPostPreviewList(Integer userIdFrom, Integer userIdTo, List<Integer> excludingPostIdList, Integer postNum) throws Exception {
+        securityService.checkUserIdWithToken(userIdFrom);
+        List<PostModel> postModelList = forumRepository.findUserActivePostByRange(userIdTo, excludingPostIdList, postNum);
         List<PostDTO> postPreviewModelList = new ArrayList<>();
         for (PostModel post : postModelList) {
-            PostDTO postPreview = createPostDTO(post, userId);
+            PostDTO postPreview = createPostDTO(post, userIdTo);
             postPreviewModelList.add(postPreview);
         }
         return postPreviewModelList;

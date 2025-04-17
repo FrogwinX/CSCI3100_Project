@@ -4,11 +4,14 @@ import lombok.AllArgsConstructor;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import project.flowchat.backend.DTO.UserInfoDTO;
 import project.flowchat.backend.DTO.UserProfileDTO;
 import project.flowchat.backend.Model.UserAccountModel;
 import project.flowchat.backend.Model.UserProfileModel;
@@ -198,5 +201,37 @@ public class ProfileService {
         userProfileDTO.setDislikeCount(forumRepository.countPostDislikeByUserId(userIdTo) + forumRepository.countCommentDislikeByUserId(userIdTo));
         userProfileDTO.setIsUserBlocked(userProfileRepository.checkIfUserBlocked(userIdFrom, userIdTo) != null);
         return userProfileDTO;
+    }
+
+    public List<UserInfoDTO> getUserList(Integer userId, List<Integer> excludingUserIdList, Integer userNum, String type) throws Exception {
+        securityService.checkUserIdWithToken(userId);
+        List<UserInfoDTO> userInfoDTOList = new ArrayList<>();
+        List<UserProfileModel> userProfileModelList = switch (type) {
+            case "following" -> userProfileRepository.findFollowingListByUserId(userId, excludingUserIdList, userNum);
+            case "follower" -> userProfileRepository.findFollowerListByUserId(userId, excludingUserIdList, userNum);
+            case "blocking" -> userProfileRepository.findBlockingListByUserId(userId, excludingUserIdList, userNum);
+            default -> null;
+        };
+        if (userProfileModelList == null) {
+            ExceptionService.throwException(ExceptionService.INVALID_LIST_FORMAT);
+        }
+        for (UserProfileModel userProfileModel : userProfileModelList) {
+            UserInfoDTO userInfoDTO = new UserInfoDTO();
+            userInfoDTO.setUserId(userProfileModel.getUserId());
+            userInfoDTO.setUsername(userProfileModel.getUsername());
+            userInfoDTO.setDescription(userProfileModel.getDescription());
+            userInfoDTO.setAvatar(userProfileModel.getAvatarId() != null ? imageService.getImageAPI(userProfileModel.getAvatarId()) : null);
+            userInfoDTO.setUpdatedAt(userProfileModel.getUpdatedAt());
+            userInfoDTO.setStatus(
+                    switch (type) {
+                        case "following" -> "following";
+                        case "follower" -> userProfileRepository.checkIfUserFollowed(userId, userProfileModel.getUserId()) != null ? "following" : "not following";
+                        case "blocking" -> "blocking";
+                        default -> null;
+                    }
+            );
+            userInfoDTOList.add(userInfoDTO);
+        }
+        return userInfoDTOList;
     }
 }
