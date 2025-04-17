@@ -136,4 +136,12 @@ public interface UserAccountRepository extends JpaRepository<UserAccountModel, I
                             "OFFSET 0 ROWS\n" +
                             "FETCH NEXT ?4 ROWS ONLY\n")
     List<List<String>> findActiveUserByKeyword(Integer userId, String keyword, List<Integer> excludingUserIdList, Integer searchNum);
+
+    /**
+     * Find the is_active status of the user with the given userId
+     * @param userId userId Integer
+     * @return true if user is active, otherwise false
+     */
+    @NativeQuery("SELECT is_active FROM ACCOUNT.User_Account WHERE user_id = ?1")
+    Boolean findIfUserActive(Integer userId);
 }

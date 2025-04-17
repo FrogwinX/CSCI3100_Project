@@ -1,8 +1,15 @@
 package project.flowchat.backend.Controller;
 
 import lombok.AllArgsConstructor;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
 import project.flowchat.backend.DTO.ResponseBodyDTO;
 import project.flowchat.backend.Service.ExceptionService;
 import project.flowchat.backend.Service.ProfileService;
@@ -17,4 +24,106 @@ public class ProfileController {
     private final ProfileService profileService;
     private ResponseBodyDTO responseBodyDTO;
 
+    @PostMapping("followUser")
+    private ResponseBodyDTO followUser(@RequestBody Map<String, Integer> requestBody) {
+        try {
+            Map<String, Object> data = new HashMap<>();
+            profileService.followUser(requestBody.get("userIdFrom"), requestBody.get("userIdTo"));
+            data.put("isSuccess", true);
+            responseBodyDTO.setMessage("The user is followed");
+            responseBodyDTO.setData(data);
+        } catch (ExceptionService e) {
+            responseBodyDTO.setMessage(e.getMessage());
+            Map<String, Object> data = new HashMap<>();
+            data.put("isSuccess", false);
+            responseBodyDTO.setData(data);
+        } catch (Exception e) {
+            responseBodyDTO.setMessage("Fail: " + e);
+            responseBodyDTO.setData(null);
+        }
+        return responseBodyDTO;
+    }
+
+    @DeleteMapping("unfollowUser")
+    private ResponseBodyDTO unfollowUser(@RequestBody Map<String, Integer> requestBody) {
+        try {
+            Map<String, Object> data = new HashMap<>();
+            profileService.unfollowUser(requestBody.get("userIdFrom"), requestBody.get("userIdTo"));
+            data.put("isSuccess", true);
+            responseBodyDTO.setMessage("The user is unfollowed");
+            responseBodyDTO.setData(data);
+        } catch (ExceptionService e) {
+            responseBodyDTO.setMessage(e.getMessage());
+            Map<String, Object> data = new HashMap<>();
+            data.put("isSuccess", false);
+            responseBodyDTO.setData(data);
+        } catch (Exception e) {
+            responseBodyDTO.setMessage("Fail: " + e);
+            responseBodyDTO.setData(null);
+        }
+        return responseBodyDTO;
+    }
+
+    @PostMapping("blockUser")
+    private ResponseBodyDTO blockUser(@RequestBody Map<String, Integer> requestBody) {
+        try {
+            Map<String, Object> data = new HashMap<>();
+            profileService.blockUser(requestBody.get("userIdFrom"), requestBody.get("userIdTo"));
+            data.put("isSuccess", true);
+            responseBodyDTO.setMessage("The user is blocked");
+            responseBodyDTO.setData(data);
+        } catch (ExceptionService e) {
+            responseBodyDTO.setMessage(e.getMessage());
+            Map<String, Object> data = new HashMap<>();
+            data.put("isSuccess", false);
+            responseBodyDTO.setData(data);
+        } catch (Exception e) {
+            responseBodyDTO.setMessage("Fail: " + e);
+            responseBodyDTO.setData(null);
+        }
+        return responseBodyDTO;
+    }
+
+    @DeleteMapping("unblockUser")
+    private ResponseBodyDTO unblockUser(@RequestBody Map<String, Integer> requestBody) {
+        try {
+            Map<String, Object> data = new HashMap<>();
+            profileService.unblockUser(requestBody.get("userIdFrom"), requestBody.get("userIdTo"));
+            data.put("isSuccess", true);
+            responseBodyDTO.setMessage("The user is unblocked");
+            responseBodyDTO.setData(data);
+        } catch (ExceptionService e) {
+            responseBodyDTO.setMessage(e.getMessage());
+            Map<String, Object> data = new HashMap<>();
+            data.put("isSuccess", false);
+            responseBodyDTO.setData(data);
+        } catch (Exception e) {
+            responseBodyDTO.setMessage("Fail: " + e);
+            responseBodyDTO.setData(null);
+        }
+        return responseBodyDTO;
+    }
+    @PutMapping(value = "updatePersonalProfile", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    private ResponseBodyDTO updatePersonalProfile(@RequestPart Map<String, Object> requestBody,
+                                                @RequestPart(required = false, value = "avatar") MultipartFile avatar) {
+        try {
+            Map<String, Object> data = new HashMap<>();
+            profileService.updatePersonalProfile((Integer) requestBody.get("userId"), 
+                                                (String) requestBody.get("username"), 
+                                                (String) requestBody.get("description"), 
+                                                avatar);
+            data.put("isSuccess", true);
+            responseBodyDTO.setMessage("The user personal profile is updated");
+            responseBodyDTO.setData(data);
+        } catch (ExceptionService e) {
+            responseBodyDTO.setMessage(e.getMessage());
+            Map<String, Object> data = new HashMap<>();
+            data.put("isSuccess", false);
+            responseBodyDTO.setData(data);
+        } catch (Exception e) {
+            responseBodyDTO.setMessage("Fail: " + e);
+            responseBodyDTO.setData(null);
+        }
+        return responseBodyDTO;
+    }
 }

@@ -31,6 +31,7 @@ public class AccountService {
     private final UserAccountRepository userAccountRepository;
     private final SecurityService securityService;
     private final ForumService forumService;
+    private final ProfileService profileService;
     private JavaMailSender mailSender;
 
     private static final Integer USER_ROLE_ID = 2;
@@ -281,6 +282,7 @@ public class AccountService {
         securityService.setKeyUnavailable(email, licenseKey, SecurityService.KeyType.LICENSE);
         UserAccountModel userAccountModel = addAccountToDatabase(username, email, password);
         forumService.addAllTagsForUserToDatabase(userAccountModel.getUserId());
+        profileService.addNewUserProfile(userAccountModel.getUserId(), username);
         return userAccountModel;
     }
 

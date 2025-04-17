@@ -105,7 +105,7 @@ public class AccountController {
             Map<String, Object> data = new HashMap<>();
             data.put("isSuccess", false);
             responseBodyDTO.setData(data);
-        } catch (Exception e) {
+        } catch (Exception e) { 
             responseBodyDTO.setMessage("Fail: " + e);
             responseBodyDTO.setData(null);
         }
