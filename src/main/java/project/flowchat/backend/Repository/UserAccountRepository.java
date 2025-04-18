@@ -115,29 +115,6 @@ public interface UserAccountRepository extends JpaRepository<UserAccountModel, I
     void updateUserAccountById(Integer userId);
 
     /**
-     * Find a list of userId and usernames of the active users with case-insensitive keywords in usernames or emails, filtered out the blocked users, ordered randomly
-     * @param userId userId Integer
-     * @param keyword keywords case-insensitive String
-     * @param excludingUserIdList a list of userId that have already retrieved
-     * @param searchNum required number of queries
-     * @return a lists of userId and usernames
-     */
-    @NativeQuery(value =    "SELECT user_id, username\n" +
-                            "FROM ACCOUNT.User_Account\n" +
-                            "WHERE is_active = 1\n" +
-                            "AND (username LIKE ?2\n" +
-                            "OR email LIKE ?2)\n" +
-                            "AND user_id NOT IN (\n" +
-                            "SELECT user_id_to\n" +
-                            "FROM PROFILE.Block\n" +
-                            "WHERE user_id_from = ?1)\n" +
-                            "AND user_id NOT IN ?3\n" +
-                            "ORDER BY user_id\n" +
-                            "OFFSET 0 ROWS\n" +
-                            "FETCH NEXT ?4 ROWS ONLY\n")
-    List<List<String>> findActiveUserByKeyword(Integer userId, String keyword, List<Integer> excludingUserIdList, Integer searchNum);
-
-    /**
      * Find the is_active status of the user with the given userId
      * @param userId userId Integer
      * @return true if user is active, otherwise false

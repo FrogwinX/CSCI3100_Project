@@ -3,7 +3,6 @@ package project.flowchat.backend.Service;
 import jakarta.mail.internet.MimeMessage;
 import lombok.AllArgsConstructor;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +14,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import project.flowchat.backend.DTO.UserInfoDTO;
 import project.flowchat.backend.Model.UserAccountModel;
 import project.flowchat.backend.Repository.UserAccountRepository;
 
@@ -178,6 +178,7 @@ public class AccountService {
         userLoginInfo.put("id", userInfoFromDatabase.getUserId());
         userLoginInfo.put("username", userInfoFromDatabase.getUsername());
         userLoginInfo.put("roles", role);
+        userLoginInfo.put("avatar", profileService.getUserAvatarByUserId(userInfoFromDatabase.getUserId()));
 
         return userLoginInfo;
     }
@@ -345,26 +346,18 @@ public class AccountService {
     }
 
     /**
-     * Get a list of userId and usernames by searching the usernames and emails with keyword in database
+     * Get a list of user info by searching the usernames and emails with keyword in database
      * @param userId userId Integer
      * @param keyword keyword case-insensitive String
      * @param searchNum required number of post previews
      * @param excludingUserIdList a list of userId that have already retrieved
-     * @return a list of userId and usernames
+     * @return a list of user info
      * @throws Exception any exception
      */
-    public List<Map<String, Object>> searchUser(Integer userId, String keyword, List<Integer> excludingUserIdList, Integer searchNum) throws Exception {
+    public List<UserInfoDTO> searchUser(Integer userId, String keyword, List<Integer> excludingUserIdList, Integer searchNum) throws Exception {
         securityService.checkUserIdWithToken(userId);
         keyword = "%" + keyword + "%";
-        List<Map<String, Object>> userList = new ArrayList<>();
-        List<List<String>> usernameAndUserIdList = userAccountRepository.findActiveUserByKeyword(userId, keyword, excludingUserIdList, searchNum);
-        for (List<String> list : usernameAndUserIdList) {
-            Map<String, Object> user = new HashMap<>();
-            user.put("userId", list.get(0));
-            user.put("username", list.get(1));
-            userList.add(user);
-        }
-        return userList;
+        return profileService.getUserList(userId, excludingUserIdList, searchNum, keyword);
     }
 
 }

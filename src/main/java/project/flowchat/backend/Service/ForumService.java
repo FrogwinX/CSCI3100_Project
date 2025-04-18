@@ -28,6 +28,7 @@ public class ForumService {
     private final ForumRepository forumRepository;
     private final UserAccountRepository userAccountRepository;
     private final ImageService imageService;
+    private final ProfileService profileService;
     private final SecurityService securityService;
 
     public static final String INTERACTION_VIEW = "view";
@@ -52,6 +53,7 @@ public class ForumService {
 
         postDTO.setPostId(postId);
         postDTO.setUsername(userAccountRepository.findUsernameByUserId(post.getUserId()));
+        postDTO.setAvatar(profileService.getUserAvatarByUserId(post.getUserId()));
         postDTO.setTitle(post.getTitle());
         postDTO.setContent(post.getContent());
 
@@ -587,8 +589,7 @@ public class ForumService {
         List<PostModel> postModelList = forumRepository.findPopularActivePostByRangeAndKeyword(userId, keyword, excludingPostIdList, searchNum);
         List<PostDTO> postPreviewModelList = new ArrayList<>();
         for (PostModel post : postModelList) {
-            PostDTO postPreview = createPostDTO(post, userId);
-            postPreviewModelList.add(postPreview);
+            postPreviewModelList.add(createPostDTO(post, userId));
         }
         return postPreviewModelList;
     }

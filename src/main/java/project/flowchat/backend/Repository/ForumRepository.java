@@ -106,7 +106,7 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
     List<PostModel> findLatestActivePostByRange(Integer userId, List<Integer> excludingPostIdList, Integer postNum);
 
     /**
-     * Find some active posts, filtered in the following users, ordered by random order
+     * Find some active posts, filtered in the following users, ordered by descending order of popularity score
      * @param userId  userId Integer
      * @param excludingPostIdList a list of postId that have already retrieved
      * @param postNum required number of post

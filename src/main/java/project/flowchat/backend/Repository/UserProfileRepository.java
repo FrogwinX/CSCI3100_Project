@@ -13,6 +13,9 @@ import java.util.List;
 @Repository
 public interface UserProfileRepository extends JpaRepository<UserProfileModel, Integer> {
 
+    @NativeQuery("SELECT avatar_id FROM PROFILE.User_Profile WHERE user_id = ?1")
+    Integer findAvatarIdByUserId(Integer userId);
+
     /**
      * Check if a user have followed another user before
      * @param userIdFrom userIdFrom Integer
@@ -86,7 +89,7 @@ public interface UserProfileRepository extends JpaRepository<UserProfileModel, I
                     "JOIN PROFILE.Follow F\n" +
                     "ON UP.user_id = F.user_id_to\n" +
                     "WHERE user_id_from = ?1\n" +
-                    "AND user_id NOT IN (?2)\n" +
+                    "AND user_id NOT IN ?2\n" +
                     "ORDER BY username ASC")
     List<UserProfileModel> findFollowingListByUserId(Integer userId, List<Integer> excludingUserIdList, Integer userNum);
 
@@ -95,7 +98,7 @@ public interface UserProfileRepository extends JpaRepository<UserProfileModel, I
                     "JOIN PROFILE.Follow F\n" +
                     "ON UP.user_id = F.user_id_from\n" +
                     "WHERE user_id_to = ?1\n" +
-                    "AND user_id NOT IN (?2)\n" +
+                    "AND user_id NOT IN ?2\n" +
                     "ORDER BY username ASC")
     List<UserProfileModel> findFollowerListByUserId(Integer userId, List<Integer> excludingUserIdList, Integer userNum);
 
@@ -104,7 +107,25 @@ public interface UserProfileRepository extends JpaRepository<UserProfileModel, I
                     "JOIN PROFILE.Block B\n" +
                     "ON UP.user_id = B.user_id_to\n" +
                     "WHERE user_id_from = ?1\n" +
-                    "AND user_id NOT IN (?2)\n" +
+                    "AND user_id NOT IN ?2\n" +
                     "ORDER BY username ASC")
     List<UserProfileModel> findBlockingListByUserId(Integer userId, List<Integer> excludingUserIdList, Integer userNum);
+
+    /**
+     * Find a list of UserProfileModel of the active users with case-insensitive keywords in usernames or emails, ordered randomly
+     * @param keyword keywords case-insensitive String
+     * @param excludingUserIdList a list of userId that have already retrieved
+     * @param searchNum required number of queries
+     * @return a lists of UserProfileModel
+     */
+    @NativeQuery(   "SELECT TOP (?3) UP.user_id, UP.username, UP.description, UP.avatar_id, UP.updated_at\n" +
+                    "FROM PROFILE.User_Profile UP\n" +
+                    "JOIN ACCOUNT.User_Account UA\n" +
+                    "ON UP.user_id = UA.user_id\n" +
+                    "WHERE UA.is_active = 1\n" +
+                    "AND (UA.username LIKE ?1\n" +
+                    "OR UA.email LIKE ?1)\n" +
+                    "AND UP.user_id NOT IN ?2\n" +
+                    "ORDER BY NEWID()")
+    List<UserProfileModel> findSearchListByKeyword(String keyword, List<Integer> excludingUserIdList, Integer searchNum);
 }

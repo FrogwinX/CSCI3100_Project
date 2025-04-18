@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import project.flowchat.backend.DTO.PostDTO;
 import project.flowchat.backend.DTO.ResponseBodyDTO;
 import org.springframework.web.multipart.MultipartFile;
+import project.flowchat.backend.DTO.UserInfoDTO;
 import project.flowchat.backend.Service.AccountService;
 import project.flowchat.backend.Service.ExceptionService;
 import project.flowchat.backend.Service.ForumService;
@@ -273,7 +274,7 @@ public class ForumController {
                                        @RequestParam Integer searchNum) {
         try {
             Map<String, Object> data = new HashMap<>();
-            List<Map<String, Object>> userList = accountService.searchUser(userId, keyword, excludingUserIdList, searchNum);
+            List<UserInfoDTO> userList = accountService.searchUser(userId, keyword, excludingUserIdList, searchNum);
             data.put("isSuccess", true);
             data.put("userList", userList);
             responseBodyDTO.setMessage("The search result is returned");

@@ -15,6 +15,7 @@ public class PostDTO {
     @Id
     private Integer postId;
     private String username;
+    private String avatar;
     private String title;
     private String content;
     private List<String> imageAPIList;

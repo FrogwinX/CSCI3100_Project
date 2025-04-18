@@ -32,6 +32,12 @@ public class ProfileService {
     private final SecurityService securityService;
     private final ImageService imageService;
 
+    public String getUserAvatarByUserId(Integer userId) {
+        if (userId == null) {
+            return null;
+        }
+        return imageService.getImageAPI(userProfileRepository.findAvatarIdByUserId(userId));
+    }
 
     /**
      * Follow a user
@@ -191,7 +197,7 @@ public class ProfileService {
         userProfileDTO.setUserId(userProfileModel.getUserId());
         userProfileDTO.setUsername(userProfileModel.getUsername());
         userProfileDTO.setDescription(userProfileModel.getDescription());
-        userProfileDTO.setAvatar(imageService.getImageAPI(userProfileModel.getAvatarId()));
+        userProfileDTO.setAvatar(getUserAvatarByUserId(userProfileModel.getUserId()));
         userProfileDTO.setUpdatedAt(userProfileModel.getUpdatedAt());
         userProfileDTO.setPostCount(forumRepository.countPostByUserId(userIdTo));
         userProfileDTO.setCommentCount(forumRepository.countCommentByUserId(userIdTo));
@@ -210,7 +216,7 @@ public class ProfileService {
             case "following" -> userProfileRepository.findFollowingListByUserId(userId, excludingUserIdList, userNum);
             case "follower" -> userProfileRepository.findFollowerListByUserId(userId, excludingUserIdList, userNum);
             case "blocking" -> userProfileRepository.findBlockingListByUserId(userId, excludingUserIdList, userNum);
-            default -> null;
+            default -> userProfileRepository.findSearchListByKeyword(type, excludingUserIdList, userNum);
         };
         if (userProfileModelList == null) {
             ExceptionService.throwException(ExceptionService.INVALID_LIST_FORMAT);
@@ -220,16 +226,10 @@ public class ProfileService {
             userInfoDTO.setUserId(userProfileModel.getUserId());
             userInfoDTO.setUsername(userProfileModel.getUsername());
             userInfoDTO.setDescription(userProfileModel.getDescription());
-            userInfoDTO.setAvatar(userProfileModel.getAvatarId() != null ? imageService.getImageAPI(userProfileModel.getAvatarId()) : null);
+            userInfoDTO.setAvatar(getUserAvatarByUserId(userProfileModel.getUserId()));
             userInfoDTO.setUpdatedAt(userProfileModel.getUpdatedAt());
-            userInfoDTO.setStatus(
-                    switch (type) {
-                        case "following" -> "following";
-                        case "follower" -> userProfileRepository.checkIfUserFollowed(userId, userProfileModel.getUserId()) != null ? "following" : "not following";
-                        case "blocking" -> "blocking";
-                        default -> null;
-                    }
-            );
+            userInfoDTO.setStatus(  userProfileRepository.checkIfUserFollowed(userId, userProfileModel.getUserId()) != null ? "following" :
+                                    userProfileRepository.checkIfUserBlocked(userId, userProfileModel.getUserId()) != null ? "blocking" : "not following");
             userInfoDTOList.add(userInfoDTO);
         }
         return userInfoDTOList;
