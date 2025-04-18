@@ -38,8 +38,9 @@ public class ForumService {
     public static final String INTERACTION_UNDISLIKE = "undislike";
     public static final String INTERACTION_COMMENT = "comment";
     public static final String INTERACTION_POST = "post";
+
     /**
-     * Convert post data from database (PostModel) to Java Object (PostDTO)
+     * Convert post data PostModel from database to Java post preview object PostDTO
      * @param post post data from database (PostModel)
      * @param userIdFrom the user who is viewing the post
      * @return post data Java Object (PostDTO)
@@ -428,6 +429,15 @@ public class ForumService {
         return postPreviewModelList;
     }
 
+    /**
+     * userIdFrom get a list of post previews created by a user userIdTo
+     * @param userIdFrom userIdFrom Integer
+     * @param userIdTo userIdTo Integer
+     * @param excludingPostIdList a list of postId that have already retrieved
+     * @param postNum required number of post previews
+     * @return my post preview list
+     * @throws Exception any Exception
+     */
     public List<PostDTO> getUserPostPreviewList(Integer userIdFrom, Integer userIdTo, List<Integer> excludingPostIdList, Integer postNum) throws Exception {
         securityService.checkUserIdWithToken(userIdFrom);
         List<PostModel> postModelList = forumRepository.findUserActivePostByRange(userIdTo, excludingPostIdList, postNum);
@@ -439,6 +449,15 @@ public class ForumService {
         return postPreviewModelList;
     }
 
+    /**
+     * userIdFrom get a list of comment previews created by a user userIdTo
+     * @param userIdFrom userIdFrom Integer
+     * @param userIdTo userIdTo Integer
+     * @param excludingCommentIdList a list of commentId that have already retrieved
+     * @param commentNum required number of comment previews
+     * @return my post preview list, with all the comments attached
+     * @throws Exception any Exception
+     */
     public List<PostDTO> getUserCommentPreviewList(Integer userIdFrom, Integer userIdTo, List<Integer> excludingCommentIdList, Integer commentNum) throws Exception {
         securityService.checkUserIdWithToken(userIdFrom);
         List<PostModel> commentModelList = forumRepository.findUserActiveCommentByRange(userIdTo, excludingCommentIdList, commentNum);
@@ -627,7 +646,7 @@ public class ForumService {
      */
     public List<Map<String, Object>> getAllTag() throws Exception {
         List<Map<String, Object>> tagList = new ArrayList<>();
-        List<List<String>> tagIdAndNameList = forumRepository.findAllTagName();
+        List<List<String>> tagIdAndNameList = forumRepository.findAllTag();
         for (List<String> list : tagIdAndNameList) {
             Map<String, Object> tag = new HashMap<>();
             tag.put("tagId", list.get(0));

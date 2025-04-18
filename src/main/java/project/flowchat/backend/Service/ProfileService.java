@@ -32,6 +32,11 @@ public class ProfileService {
     private final SecurityService securityService;
     private final ImageService imageService;
 
+    /**
+     * Get the user avatar by userId
+     * @param userId userId Integer
+     * @return image API link if the user has an avatar, else null
+     */
     public String getUserAvatarByUserId(Integer userId) {
         Integer avatarId = userProfileRepository.findAvatarIdByUserId(userId);
         if (avatarId == null) {
@@ -40,10 +45,22 @@ public class ProfileService {
         return imageService.getImageAPI(avatarId);
     }
 
+    /**
+     * Check if userIdFrom is following userIdTo
+     * @param userIdFrom userIdFrom Integer
+     * @param userIdTo userIdTo Integer
+     * @return true if userIdFrom is following userIdTo, else false
+     */
     public Boolean isUserFollowing(Integer userIdFrom, Integer userIdTo) {
         return userProfileRepository.checkIfUserFollowed(userIdFrom, userIdTo) != null;
     }
 
+    /**
+     * Check if userIdFrom is blocking userIdTo
+     * @param userIdFrom userIdFrom Integer
+     * @param userIdTo userIdTo Integer
+     * @return true if userIdFrom is blocking userIdTo, else false
+     */
     public Boolean isUserBlocking(Integer userIdFrom, Integer userIdTo) {
         return userProfileRepository.checkIfUserBlocked(userIdFrom, userIdTo) != null;
     }
@@ -196,6 +213,13 @@ public class ProfileService {
         userProfileRepository.save(userProfileModel);
     }
 
+    /**
+     * userIdFrom gets the personal profile information of userIdTo
+     * @param userIdFrom userIdFrom Integer
+     * @param userIdTo userIdTo Intefer
+     * @return UserProfileDTO
+     * @throws Exception PROFILE_NOT_EXIST
+     */
     public UserProfileDTO getProfileContent(Integer userIdFrom, Integer userIdTo) throws Exception {
         securityService.checkUserIdWithToken(userIdFrom);
         UserProfileModel userProfileModel = userProfileRepository.findProfileByUserId(userIdTo);
@@ -229,6 +253,15 @@ public class ProfileService {
         return userProfileDTO;
     }
 
+    /**
+     * Get my following, follower, blocking, searching user list of a user
+     * @param userId userId Integer
+     * @param excludingUserIdList a list of userId that have already retrieved
+     * @param userNum required number of user info
+     * @param type "following", "follower", "blocking", or any keyword for searching
+     * @return a list of user info
+     * @throws Exception any Exception
+     */
     public List<UserInfoDTO> getUserList(Integer userId, List<Integer> excludingUserIdList, Integer userNum, String type) throws Exception {
         securityService.checkUserIdWithToken(userId);
         List<UserInfoDTO> userInfoDTOList = new ArrayList<>();
@@ -238,9 +271,6 @@ public class ProfileService {
             case "blocking" -> userProfileRepository.findBlockingListByUserId(userId, excludingUserIdList, userNum);
             default -> userProfileRepository.findSearchListByKeyword(type, excludingUserIdList, userNum);
         };
-        if (userProfileModelList == null) {
-            ExceptionService.throwException(ExceptionService.INVALID_LIST_FORMAT);
-        }
         for (UserProfileModel userProfileModel : userProfileModelList) {
             UserInfoDTO userInfoDTO = new UserInfoDTO();
             userInfoDTO.setUserId(userProfileModel.getUserId());

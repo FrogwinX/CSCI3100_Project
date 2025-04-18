@@ -15,7 +15,6 @@ import project.flowchat.backend.DTO.PostDTO;
 import project.flowchat.backend.DTO.ResponseBodyDTO;
 import project.flowchat.backend.DTO.UserInfoDTO;
 import project.flowchat.backend.DTO.UserProfileDTO;
-import project.flowchat.backend.Model.UserProfileModel;
 import project.flowchat.backend.Service.ExceptionService;
 import project.flowchat.backend.Service.ForumService;
 import project.flowchat.backend.Service.ProfileService;

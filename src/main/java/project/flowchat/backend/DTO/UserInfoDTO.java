@@ -16,5 +16,5 @@ public class UserInfoDTO {
     private String description;
     private String avatar;
     private ZonedDateTime updatedAt;
-    private String status;
+    private String status; // "following", "blocking" or "not following"
 }

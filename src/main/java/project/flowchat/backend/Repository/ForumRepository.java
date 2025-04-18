@@ -12,6 +12,7 @@ import java.util.List;
 
 @Repository
 public interface ForumRepository extends JpaRepository<PostModel, Integer> {
+
     /**
      * Get tag id from tag name
      * @param tagName tag name string
@@ -114,6 +115,13 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
             "FETCH NEXT ?3 ROWS ONLY")
     List<PostModel> findFollowingActivePostByRange(Integer userId, List<Integer> excludingPostIdList, Integer postNum);
 
+    /**
+     * Find a list of posts created by a user
+     * @param userId userId Integer
+     * @param excludingPostIdList a list of postId that have already retrieved
+     * @param postNum required number of post
+     * @return a lists of posts PostModel
+     */
     @NativeQuery(   "SELECT TOP (?3) *\n" +
             "FROM FORUM.Post\n" +
             "WHERE is_active = 1\n" +
@@ -123,6 +131,13 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
             "ORDER BY updated_at DESC")
     List<PostModel> findUserActivePostByRange(Integer userId, List<Integer> excludingPostIdList, Integer postNum);
 
+    /**
+     * Find a list of comments created by a user
+     * @param userId userId Integer
+     * @param excludingCommentIdList a list of commentId that have already retrieved
+     * @param commentNum required number of comment
+     * @return a lists of posts PostModel
+     */
     @NativeQuery(   "SELECT TOP (?3) *\n" +
             "FROM FORUM.Post\n" +
             "WHERE is_active = 1\n" +
@@ -207,7 +222,6 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
 
     /**
      * Find some active posts starting from the offset by keywords, ordered by the descending order of popularity score
-     *
      * @param keyword   keyword case-insensitive String
      * @param searchNum required number of queries
      * @param excludingPostIdList a list of postId that have already retrieved
@@ -225,7 +239,6 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
 
     /**
      * Add the comment count by 1 of the given post id
-     *
      * @param postId postId Integer
      */
     @Modifying
@@ -235,7 +248,6 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
 
     /**
      * Insert record into FORUM.Post_Image
-     *
      * @param postId  postId Integer
      * @param imageId imageId Integer
      */
@@ -246,7 +258,6 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
 
     /**
      * Delete all tag from FORUM.Post_Tag with the given post id
-     *
      * @param postId postId Integer
      */
     @Modifying
@@ -256,7 +267,6 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
 
     /**
      * Reduce comment count of the post or comment by the given count
-     *
      * @param postId postId Integer
      * @param count  count int
      */
@@ -267,7 +277,6 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
 
     /**
      * Add comment count of the post or comment by the given count
-     *
      * @param postId postId Integer
      * @param count  count int
      */
@@ -278,7 +287,6 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
 
     /**
      * Delete relevant record in Post_Image table
-     *
      * @param imageId imageId Integer
      */
     @Modifying
@@ -288,7 +296,6 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
 
     /**
      * Delete relevant record in Image_Data table
-     *
      * @param imageId imageId Integer
      */
     @Modifying
@@ -298,7 +305,6 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
 
     /**
      * Minus the comment count by 1 of the given post id
-     *
      * @param postId postId Integer
      */
     @Modifying
@@ -308,7 +314,6 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
 
     /**
      * Find if user liked that post or comment before
-     *
      * @param postId postId Integer
      * @param userId userId Integer
      * @return post id if user liked that post or comment before, null if user did not like that post or comment
@@ -318,7 +323,6 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
 
     /**
      * Add a record in Like table
-     *
      * @param postId postId Integer
      * @param userId userId Integer
      */
@@ -329,7 +333,6 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
 
     /**
      * Add 1 to like count in Post table
-     *
      * @param postId postId Integer
      */
     @Modifying
@@ -339,7 +342,6 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
 
     /**
      * Find if user disliked that post or comment before
-     *
      * @param postId postId Integer
      * @param userId userId Integer
      * @return post id if user disliked that post or comment before, null if user did not dislike that post or comment
@@ -349,7 +351,6 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
 
     /**
      * Add a record in Dislike table
-     *
      * @param postId postId Integer
      * @param userId userId Integer
      */
@@ -360,7 +361,6 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
 
     /**
      * Add 1 to dislike count in Post table
-     *
      * @param postId postId Integer
      */
     @Modifying
@@ -370,7 +370,6 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
 
     /**
      * Remove a record from Like table with the corresponding post id and user id
-     *
      * @param postId postId Integer
      * @param userId userId Integer
      */
@@ -381,7 +380,6 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
 
     /**
      * Minus like count of a post or comment with the given postId by one in Post table
-     *
      * @param postId postId Integer
      */
     @Modifying
@@ -391,7 +389,6 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
 
     /**
      * Remove a record from Dislike table with the corresponding post id and user id
-     *
      * @param postId postId Integer
      * @param userId userId Integer
      */
@@ -402,7 +399,6 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
 
     /**
      * Minus dislike count of a post or comment with the given postId by one in Post table
-     *
      * @param postId postId Integer
      */
     @Modifying
@@ -410,12 +406,15 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
     @NativeQuery("UPDATE FORUM.Post SET dislike_count = dislike_count - 1 WHERE post_id = ?1")
     void minusDislikeCount(Integer postId);
 
+    /**
+     * Find all tag in database
+     * @return a list of tagId and tagName
+     */
     @NativeQuery("SELECT tag_id, tag_name FROM FORUM.Tag_Data")
-    List<List<String>> findAllTagName();
+    List<List<String>> findAllTag();
 
     /**
      * Check if post or comment is active
-     *
      * @param postId postId Integer
      * @return true if post or comment is active, false if post or comment is not active
      */
@@ -451,9 +450,9 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
     void addViewCount(Integer postId);
 
     /**
-     * Find some active posts by a tag, filtered out the blocked users, ordered by the descending order of post update time
+     * Find a list postId of posts which are viewed by a user within a week
      * @param userId  userId Integer
-     * @return a lists of postId
+     * @return a list of postId
      */
     @NativeQuery("SELECT P.post_id\n" +
             "FROM FORUM.Post P\n" +
