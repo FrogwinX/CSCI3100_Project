@@ -18,6 +18,7 @@ public class ContactDTO {
     private Integer contactUserId;
     private String contactUsername;
     private String contactUserAvatar;
+    private Boolean isContactUserBlocked;
     private String latestMessage;
     private Integer userIdFrom;
     private String usernameFrom;

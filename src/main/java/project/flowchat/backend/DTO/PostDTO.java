@@ -14,8 +14,10 @@ import java.util.List;
 public class PostDTO {
     @Id
     private Integer postId;
+    private Integer userId;
     private String username;
     private String avatar;
+    private Boolean isUserBlocked;
     private String title;
     private String content;
     private List<String> imageAPIList;

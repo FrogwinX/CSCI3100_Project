@@ -41,19 +41,22 @@ public class ForumService {
     /**
      * Convert post data from database (PostModel) to Java Object (PostDTO)
      * @param post post data from database (PostModel)
-     * @param viewUserId the user who is viewing the post
+     * @param userIdFrom the user who is viewing the post
      * @return post data Java Object (PostDTO)
      */
-    private PostDTO createPostDTO(PostModel post, Integer viewUserId) {
+    private PostDTO createPostDTO(PostModel post, Integer userIdFrom) {
         if (post == null) {
             return null;
         }
         PostDTO postDTO = new PostDTO();
         Integer postId = post.getPostId();
+        Integer userIdTo = post.getUserId();
 
         postDTO.setPostId(postId);
-        postDTO.setUsername(userAccountRepository.findUsernameByUserId(post.getUserId()));
-        postDTO.setAvatar(profileService.getUserAvatarByUserId(post.getUserId()));
+        postDTO.setUserId(userIdTo);
+        postDTO.setUsername(userAccountRepository.findUsernameByUserId(userIdTo));
+        postDTO.setAvatar(profileService.getUserAvatarByUserId(userIdTo));
+        postDTO.setIsUserBlocked(profileService.isUserBlocking(userIdFrom, userIdTo));
         postDTO.setTitle(post.getTitle());
         postDTO.setContent(post.getContent());
 
@@ -78,10 +81,10 @@ public class ForumService {
         }
 
         postDTO.setLikeCount(post.getLikeCount());
-        postDTO.setIsLiked(forumRepository.isLikeClick(postId, viewUserId) != null);
+        postDTO.setIsLiked(forumRepository.isLikeClick(postId, userIdFrom) != null);
 
         postDTO.setDislikeCount(post.getDislikeCount());
-        postDTO.setIsDisliked(forumRepository.isDislikeClick(postId, viewUserId) != null);
+        postDTO.setIsDisliked(forumRepository.isDislikeClick(postId, userIdFrom) != null);
 
         postDTO.setCommentCount(post.getCommentCount());
         postDTO.setUpdatedAt(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm").format(post.getUpdatedAt()));
@@ -328,7 +331,7 @@ public class ForumService {
      */
     public List<PostDTO> getLatestPostPreviewList(Integer userId, List<Integer> excludingPostIdList, Integer postNum) throws Exception {
         securityService.checkUserIdWithToken(userId);
-        List<PostModel> postModelList = forumRepository.findLatestActivePostByRange(userId, excludingPostIdList, postNum);
+        List<PostModel> postModelList = forumRepository.findLatestActivePostByRange(excludingPostIdList, postNum);
         List<PostDTO> postPreviewModelList = new ArrayList<>();
         for (PostModel post : postModelList) {
             PostDTO postPreview = createPostDTO(post, userId);
@@ -350,9 +353,9 @@ public class ForumService {
         List<PostDTO> postPreviewModelList = new ArrayList<>();
         List<PostModel> tagPostList;
         tagPostList = switch (postType) {
-            case "popular" -> forumRepository.findPopularActivePostByRangeAndTag(userId, tagId, excludingPostIdList, requiredPostNum);
-            case "latest" -> forumRepository.findLatestActivePostByRangeAndTag(userId, tagId, excludingPostIdList, requiredPostNum);
-            default -> forumRepository.findPopularActivePostByRange(userId, excludingPostIdList, requiredPostNum);
+            case "popular" -> forumRepository.findPopularActivePostByRangeAndTag(tagId, excludingPostIdList, requiredPostNum);
+            case "latest" -> forumRepository.findLatestActivePostByRangeAndTag(tagId, excludingPostIdList, requiredPostNum);
+            default -> forumRepository.findPopularActivePostByRange(excludingPostIdList, requiredPostNum);
         };
         for (PostModel post : tagPostList) {
             PostDTO postPreview = createPostDTO(post, userId);
@@ -436,6 +439,31 @@ public class ForumService {
         return postPreviewModelList;
     }
 
+    public List<PostDTO> getUserCommentPreviewList(Integer userIdFrom, Integer userIdTo, List<Integer> excludingCommentIdList, Integer commentNum) throws Exception {
+        securityService.checkUserIdWithToken(userIdFrom);
+        List<PostModel> commentModelList = forumRepository.findUserActiveCommentByRange(userIdTo, excludingCommentIdList, commentNum);
+        List<Integer> postIdList = new ArrayList<>();
+        HashSet<Integer> postIdHashSet = new HashSet<>();
+        for (PostModel comment : commentModelList) {
+            PostModel post = forumRepository.findPostByPostId(comment.getAttachTo());
+            if (post.getAttachTo() != 0) {
+                post = forumRepository.findPostByPostId(post.getAttachTo());
+            }
+            if (!postIdHashSet.contains(post.getPostId())) {
+                postIdList.add(post.getPostId());
+                postIdHashSet.add(post.getPostId());
+            }
+        }
+
+        List<PostDTO> postPreviewModelList = new ArrayList<>();
+        for (Integer postId : postIdList) {
+            PostDTO postDTO = getPostContentByPostId(postId, userIdFrom);
+            postDTO.setCommentList(getCommentByPostId(postId, userIdFrom));
+            postPreviewModelList.add(postDTO);
+        }
+        return postPreviewModelList;
+    }
+
     /**
      * Get the post data by postId
      * @param postId postId Integer
@@ -465,19 +493,17 @@ public class ForumService {
         securityService.checkUserIdWithToken(userId);
 
         List<PostDTO> commentList = new ArrayList<>();
-        List<PostModel> commentModelList = forumRepository.findActivePostCommentByAttachTo(postId, userId);
+        List<PostModel> commentModelList = forumRepository.findActivePostCommentByAttachTo(postId);
         if (!commentModelList.isEmpty()) {
             for (PostModel commentData : commentModelList) {
                 PostDTO comment = createPostDTO(commentData, userId);
-                comment.setTitle(null);
 
                 Integer commentId = commentData.getPostId();
                 List<PostDTO> subCommentList = new ArrayList<>();
-                List<PostModel> subCommentModelList = forumRepository.findActivePostCommentByAttachTo(commentId, userId);
+                List<PostModel> subCommentModelList = forumRepository.findActivePostCommentByAttachTo(commentId);
                 if (!subCommentModelList.isEmpty()) {
                     for (PostModel subCommentData : subCommentModelList) {
                         PostDTO subComment = createPostDTO(subCommentData, userId);
-                        subComment.setTitle(null);
                         subCommentList.add(subComment);
                     }
                 }
@@ -586,7 +612,7 @@ public class ForumService {
     public List<PostDTO> searchPost(Integer userId, String keyword, List<Integer> excludingPostIdList, Integer searchNum) throws Exception {
         securityService.checkUserIdWithToken(userId);
         keyword = "%" + keyword + "%";
-        List<PostModel> postModelList = forumRepository.findPopularActivePostByRangeAndKeyword(userId, keyword, excludingPostIdList, searchNum);
+        List<PostModel> postModelList = forumRepository.findPopularActivePostByRangeAndKeyword(keyword, excludingPostIdList, searchNum);
         List<PostDTO> postPreviewModelList = new ArrayList<>();
         for (PostModel post : postModelList) {
             postPreviewModelList.add(createPostDTO(post, userId));

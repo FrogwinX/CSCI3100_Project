@@ -31,21 +31,16 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
     void connectPostWithTag(Integer postId, Integer tagId);
 
     /**
-     * Find active comments from post id, filtered out the blocked users, ordered by the descending order of likes num
+     * Find active comments from post id, ordered by the descending order of likes num
      * @param postId postId Integer
-     * @param userId userId Integer
      * @return a list of comments
      */
     @NativeQuery("SELECT * \n" +
             "FROM FORUM.Post \n" +
             "WHERE attach_to = ?1\n" +
             "AND is_active = 1\n" +
-            "AND user_id NOT IN (\n" +
-            "SELECT user_id_to\n" +
-            "FROM PROFILE.Block\n" +
-            "WHERE user_id_from = ?2)" +
             "ORDER BY like_count DESC\n")
-    List<PostModel> findActivePostCommentByAttachTo(Integer postId, Integer userId);
+    List<PostModel> findActivePostCommentByAttachTo(Integer postId); // To be changed
 
     /**
      * Find post content by postId
@@ -85,25 +80,18 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
     List<Integer> findTagIdByPostId(Integer postId);
 
     /**
-     * Find some active posts, filtered out the blocked users, ordered by the descending order of post update time
-     * @param userId  userId Integer
+     * Find some active posts, ordered by the descending order of post update time
      * @param excludingPostIdList a list of postId that have already retrieved
      * @param postNum required number of post
      * @return a lists of posts
      */
-    @NativeQuery("SELECT * \n" +
-            "FROM FORUM.Post\n" +
-            "WHERE is_active = 1 \n" +
-            "AND attach_to = 0 \n" +
-            "AND user_id NOT IN (\n" +
-            "SELECT user_id_to \n" +
-            "FROM PROFILE.Block\n" +
-            "WHERE user_id_from = ?1)\n" +
-            "AND post_id NOT IN ?2\n" +
-            "ORDER BY updated_at DESC\n" +
-            "OFFSET 0 ROWS\n" +
-            "FETCH NEXT ?3 ROWS ONLY")
-    List<PostModel> findLatestActivePostByRange(Integer userId, List<Integer> excludingPostIdList, Integer postNum);
+    @NativeQuery(   "SELECT TOP (?2) * \n" +
+                    "FROM FORUM.Post\n" +
+                    "WHERE is_active = 1 \n" +
+                    "AND attach_to = 0 \n" +
+                    "AND post_id NOT IN ?1\n" +
+                    "ORDER BY updated_at DESC")
+    List<PostModel> findLatestActivePostByRange(List<Integer> excludingPostIdList, Integer postNum);
 
     /**
      * Find some active posts, filtered in the following users, ordered by descending order of popularity score
@@ -126,85 +114,73 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
             "FETCH NEXT ?3 ROWS ONLY")
     List<PostModel> findFollowingActivePostByRange(Integer userId, List<Integer> excludingPostIdList, Integer postNum);
 
+    @NativeQuery(   "SELECT TOP (?3) *\n" +
+            "FROM FORUM.Post\n" +
+            "WHERE is_active = 1\n" +
+            "AND attach_to = 0\n" +
+            "AND user_id = ?1\n" +
+            "AND post_id NOT IN ?2\n" +
+            "ORDER BY updated_at DESC")
+    List<PostModel> findUserActivePostByRange(Integer userId, List<Integer> excludingPostIdList, Integer postNum);
+
+    @NativeQuery(   "SELECT TOP (?3) *\n" +
+            "FROM FORUM.Post\n" +
+            "WHERE is_active = 1\n" +
+            "AND attach_to != 0\n" +
+            "AND user_id = ?1\n" +
+            "AND post_id NOT IN ?2\n" +
+            "ORDER BY updated_at DESC")
+    List<PostModel> findUserActiveCommentByRange(Integer userId, List<Integer> excludingCommentIdList, Integer commentNum);
+
     /**
-     * Find some active posts, filtered out the blocked users, ordered by the descending order of likes num
-     * @param userId  userId Integer
+     * Find some active posts, ordered by the descending order of popularity score
      * @param excludingPostIdList a list of postId that have already retrieved
      * @param postNum required number of post
      * @return a lists of posts
      */
-    @NativeQuery("SELECT * \n" +
+    @NativeQuery("SELECT TOP (?2) * \n" +
             "FROM FORUM.Post\n" +
             "WHERE is_active = 1 \n" +
             "AND attach_to = 0 \n" +
-            "AND user_id NOT IN (\n" +
-            "SELECT user_id_to \n" +
-            "FROM PROFILE.Block\n" +
-            "WHERE user_id_from = ?1)\n" +
-            "AND post_id NOT IN ?2\n" +
-            "ORDER BY popularity_score DESC\n" +
-            "OFFSET 0 ROWS\n" +
-            "FETCH NEXT ?3 ROWS ONLY")
-    List<PostModel> findPopularActivePostByRange(Integer userId, List<Integer> excludingPostIdList, Integer postNum);
-
-    @NativeQuery("SELECT TOP (?3) *\n" +
-                "FROM FORUM.Post\n" +
-                "WHERE is_active = 1\n" +
-                "AND attach_to = 0\n" +
-                "AND user_id = ?1\n" +
-                "AND post_id NOT IN ?2\n" +
-                "ORDER BY updated_at DESC")
-    List<PostModel> findUserActivePostByRange(Integer userId, List<Integer> excludingPostIdList, Integer postNum);
+            "AND post_id NOT IN ?1\n" +
+            "ORDER BY popularity_score DESC")
+    List<PostModel> findPopularActivePostByRange(List<Integer> excludingPostIdList, Integer postNum);
 
     /**
-     * Find some active posts by a tag, filtered out the blocked users, ordered by the descending order of post update time
-     * @param userId  userId Integer
-     * @param tagId   tagId Integer
+     * Find some active posts by a tag, ordered by the descending order of post update time
+     * @param tagId tagId Integer
      * @param excludingPostIdList a list of postId that have already retrieved
      * @param postNum required number of post
      * @return a lists of posts
      */
-    @NativeQuery("SELECT P.post_id, user_id, title, content, like_count, dislike_count, comment_count, view_count, popularity_score, attach_to, is_active, created_at, updated_at\n" +
+    @NativeQuery("SELECT TOP (?3) P.post_id, user_id, title, content, like_count, dislike_count, comment_count, view_count, popularity_score, attach_to, is_active, created_at, updated_at\n" +
             "FROM FORUM.Post P\n" +
             "JOIN FORUM.Post_Tag PT \n" +
             "ON P.post_id = PT.post_id\n" +
             "WHERE is_active = 1 \n" +
             "AND attach_to = 0 \n" +
-            "AND tag_id = ?2\n" +
-            "AND user_id NOT IN (\n" +
-            "SELECT user_id_to\n" +
-            "FROM PROFILE.Block\n" +
-            "WHERE user_id_from = ?1)\n" +
-            "AND P.post_id NOT IN ?3\n" +
-            "ORDER BY updated_at DESC\n" +
-            "OFFSET 0 ROWS\n" +
-            "FETCH NEXT ?4 ROWS ONLY")
-    List<PostModel> findLatestActivePostByRangeAndTag(Integer userId, Integer tagId, List<Integer> excludingPostIdList, Integer postNum);
+            "AND tag_id = ?1\n" +
+            "AND P.post_id NOT IN ?2\n" +
+            "ORDER BY updated_at DESC")
+    List<PostModel> findLatestActivePostByRangeAndTag(Integer tagId, List<Integer> excludingPostIdList, Integer postNum);
 
     /**
-     * Find some active posts from a tag, filtered out the blocked users, ordered by the descending order of likes num
-     * @param userId  userId Integer
-     * @param tagId   tagId Integer
+     * Find some active posts from a tag, ordered by the descending order of popularity score
+     * @param tagId tagId Integer
      * @param excludingPostIdList a list of postId that have already retrieved
      * @param postNum required number of post
      * @return a lists of posts
      */
-    @NativeQuery("SELECT P.post_id, user_id, title, content, like_count, dislike_count, comment_count, view_count, popularity_score, attach_to, is_active, created_at, updated_at\n" +
+    @NativeQuery("SELECT TOP (?3) P.post_id, user_id, title, content, like_count, dislike_count, comment_count, view_count, popularity_score, attach_to, is_active, created_at, updated_at\n" +
             "FROM FORUM.Post P\n" +
             "JOIN FORUM.Post_Tag PT \n" +
             "ON P.post_id = PT.post_id\n" +
             "WHERE is_active = 1 \n" +
             "AND attach_to = 0 \n" +
-            "AND tag_id = ?2\n" +
-            "AND user_id NOT IN (\n" +
-            "SELECT user_id_to\n" +
-            "FROM PROFILE.Block\n" +
-            "WHERE user_id_from = ?1)\n" +
-            "AND P.post_id NOT IN ?3\n" +
-            "ORDER BY popularity_score DESC\n" +
-            "OFFSET 0 ROWS\n" +
-            "FETCH NEXT ?4 ROWS ONLY")
-    List<PostModel> findPopularActivePostByRangeAndTag(Integer userId, Integer tagId, List<Integer> excludingPostIdList, Integer postNum);
+            "AND tag_id = ?1\n" +
+            "AND P.post_id NOT IN ?2\n" +
+            "ORDER BY popularity_score DESC")
+    List<PostModel> findPopularActivePostByRangeAndTag(Integer tagId, List<Integer> excludingPostIdList, Integer postNum);
 
     /**
      * Add the new tagId with the userId to Recommendation table
@@ -230,29 +206,22 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
     List<Integer> findRecommendedTagByHighestScore(Integer userId);
 
     /**
-     * Find some active posts starting from the offset by keywords, filtered out the blocked users, ordered by the descending order of likes num
+     * Find some active posts starting from the offset by keywords, ordered by the descending order of popularity score
      *
-     * @param userId    userId Integer
      * @param keyword   keyword case-insensitive String
      * @param searchNum required number of queries
      * @param excludingPostIdList a list of postId that have already retrieved
      * @return a lists of posts
      */
-    @NativeQuery("SELECT *\n" +
+    @NativeQuery("SELECT TOP (?3) *\n" +
             "FROM FORUM.Post\n" +
             "WHERE is_active = 1\n" +
             "AND attach_to = 0\n" +
-            "AND (title LIKE ?2\n" +
-            "OR content LIKE ?2)\n" +
-            "AND user_id NOT IN (\n" +
-            "SELECT user_id_to\n" +
-            "FROM PROFILE.Block\n" +
-            "WHERE user_id_from = ?1)\n" +
-            "AND post_id NOT IN ?3\n" +
-            "ORDER BY popularity_score DESC\n" +
-            "OFFSET 0 ROWS\n" +
-            "FETCH NEXT ?4 ROWS ONLY\n")
-    List<PostModel> findPopularActivePostByRangeAndKeyword(Integer userId, String keyword, List<Integer> excludingPostIdList, Integer searchNum);
+            "AND (title LIKE ?1\n" +
+            "OR content LIKE ?1)\n" +
+            "AND post_id NOT IN ?2\n" +
+            "ORDER BY popularity_score DESC")
+    List<PostModel> findPopularActivePostByRangeAndKeyword(String keyword, List<Integer> excludingPostIdList, Integer searchNum);
 
     /**
      * Add the comment count by 1 of the given post id

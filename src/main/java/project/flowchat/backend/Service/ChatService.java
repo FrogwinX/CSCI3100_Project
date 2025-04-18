@@ -19,7 +19,6 @@ import project.flowchat.backend.Model.MessageModel;
 import project.flowchat.backend.Repository.ForumRepository;
 import project.flowchat.backend.Repository.MessageRepository;
 import project.flowchat.backend.Repository.UserAccountRepository;
-import project.flowchat.backend.Repository.UserProfileRepository;
 
 @AllArgsConstructor
 @Service
@@ -236,6 +235,7 @@ public class ChatService {
                 contactDTO.setContactUserId(userIdTo);
                 contactDTO.setContactUsername(userAccountRepository.findUsernameByUserId(userIdTo));
                 contactDTO.setContactUserAvatar(profileService.getUserAvatarByUserId(userIdTo));
+                contactDTO.setIsContactUserBlocked(profileService.isUserBlocking(userIdFrom, userIdTo) || profileService.isUserBlocking(userIdTo, userIdFrom));
                 contactDTO.setUnreadMessageCount(messageRepository.getUnreadMessageCountByUserPair(userIdTo, userId));
             }
             else {

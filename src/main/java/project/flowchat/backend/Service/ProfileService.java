@@ -33,10 +33,45 @@ public class ProfileService {
     private final ImageService imageService;
 
     public String getUserAvatarByUserId(Integer userId) {
-        if (userId == null) {
+        Integer avatarId = userProfileRepository.findAvatarIdByUserId(userId);
+        if (avatarId == null) {
             return null;
         }
-        return imageService.getImageAPI(userProfileRepository.findAvatarIdByUserId(userId));
+        return imageService.getImageAPI(avatarId);
+    }
+
+    public Boolean isUserFollowing(Integer userIdFrom, Integer userIdTo) {
+        return userProfileRepository.checkIfUserFollowed(userIdFrom, userIdTo) != null;
+    }
+
+    public Boolean isUserBlocking(Integer userIdFrom, Integer userIdTo) {
+        return userProfileRepository.checkIfUserBlocked(userIdFrom, userIdTo) != null;
+    }
+
+    /**
+     * Check if the username contains invalid characters
+     * @param username username String
+     * @throws ExceptionService INVALID_USERNAME_FORMAT if there is any invalid characters
+     */
+    private void checkUsernameFormat(String username) throws Exception {
+        if (username == null || username.isEmpty() || username.contains(";") || username.contains("@")) {
+            ExceptionService.throwException(ExceptionService.INVALID_USERNAME_FORMAT);
+        }
+    }
+
+    /**
+     * Check if the input username is correct in format and unique by counting all the usernames in database
+     * @param username username string
+     * @return true if username is unique, else false
+     * @throws ExceptionService INVALID_USERNAME_FORMAT, USERNAME_NOT_UNIQUE
+     */
+    public Boolean isUsernameUnique(String username) throws Exception {
+        checkUsernameFormat(username);
+        Integer countUser = userAccountRepository.countAllUsersByUsername(username);
+        if (countUser > 0) {
+            ExceptionService.throwException(ExceptionService.USERNAME_NOT_UNIQUE);
+        }
+        return true;
     }
 
     /**
@@ -53,7 +88,7 @@ public class ProfileService {
         if (!userAccountRepository.findIfUserActive(userIdTo)) {
             ExceptionService.throwException(ExceptionService.USER_DELETED);
         }
-        if (userProfileRepository.checkIfUserFollowed(userIdFrom, userIdTo) != null) {
+        if (isUserFollowing(userIdFrom, userIdTo)) {
             ExceptionService.throwException(ExceptionService.USER_ALREADY_FOLLOWED);
         }
         userProfileRepository.followUser(userIdFrom, userIdTo);
@@ -67,7 +102,7 @@ public class ProfileService {
      */
     public void unfollowUser(Integer userIdFrom, Integer userIdTo) throws Exception {
         securityService.checkUserIdWithToken(userIdFrom);
-        if (userProfileRepository.checkIfUserFollowed(userIdFrom, userIdTo) == null) {
+        if (!isUserFollowing(userIdFrom, userIdTo)) {
             ExceptionService.throwException(ExceptionService.USER_NOT_FOLLOWED);
         }
         userProfileRepository.unfollowUser(userIdFrom, userIdTo);
@@ -87,7 +122,7 @@ public class ProfileService {
         if (!userAccountRepository.findIfUserActive(userIdTo)) {
             ExceptionService.throwException(ExceptionService.USER_DELETED);
         }
-        if (userProfileRepository.checkIfUserBlocked(userIdFrom, userIdTo) != null) {
+        if (isUserBlocking(userIdFrom, userIdTo)) {
             ExceptionService.throwException(ExceptionService.USER_ALREADY_BLOCKED);
         }
         userProfileRepository.blockUser(userIdFrom, userIdTo);
@@ -101,7 +136,7 @@ public class ProfileService {
      */
     public void unblockUser(Integer userIdFrom, Integer userIdTo) throws Exception {
         securityService.checkUserIdWithToken(userIdFrom);
-        if (userProfileRepository.checkIfUserBlocked(userIdFrom, userIdTo) == null) {
+        if (!isUserBlocking(userIdFrom, userIdTo)) {
             ExceptionService.throwException(ExceptionService.USER_NOT_BLOCKED);
         }
         userProfileRepository.unblockUser(userIdFrom, userIdTo);
@@ -161,32 +196,6 @@ public class ProfileService {
         userProfileRepository.save(userProfileModel);
     }
 
-    /**
-     * Check if the input username is correct in format and unique by counting all the usernames in database
-     * @param username username string
-     * @return true if username is unique, else false
-     * @throws ExceptionService INVALID_USERNAME_FORMAT, USERNAME_NOT_UNIQUE
-     */
-    private Boolean isUsernameUnique(String username) throws Exception {
-        checkUsernameFormat(username);
-        Integer countUser = userAccountRepository.countAllUsersByUsername(username);
-        if (countUser > 0) {
-            ExceptionService.throwException(ExceptionService.USERNAME_NOT_UNIQUE);
-        }
-        return true;
-    }
-
-    /**
-     * Check if the username contains invalid characters
-     * @param username username String
-     * @throws ExceptionService INVALID_USERNAME_FORMAT if there is any invalid characters
-     */
-    private void checkUsernameFormat(String username) throws Exception {
-        if (username == null || username.isEmpty() || username.contains(";") || username.contains("@")) {
-            ExceptionService.throwException(ExceptionService.INVALID_USERNAME_FORMAT);
-        }
-    }
-
     public UserProfileDTO getProfileContent(Integer userIdFrom, Integer userIdTo) throws Exception {
         securityService.checkUserIdWithToken(userIdFrom);
         UserProfileModel userProfileModel = userProfileRepository.findProfileByUserId(userIdTo);
@@ -203,9 +212,20 @@ public class ProfileService {
         userProfileDTO.setCommentCount(forumRepository.countCommentByUserId(userIdTo));
         userProfileDTO.setFollowingCount(userProfileRepository.countFollowingByUserId(userIdTo));
         userProfileDTO.setFollowerCount(userProfileRepository.countFollowerByUserId(userIdTo));
-        userProfileDTO.setLikeCount(forumRepository.countPostLikeByUserId(userIdTo) + forumRepository.countCommentLikeByUserId(userIdTo));
-        userProfileDTO.setDislikeCount(forumRepository.countPostDislikeByUserId(userIdTo) + forumRepository.countCommentDislikeByUserId(userIdTo));
-        userProfileDTO.setIsUserBlocked(userProfileRepository.checkIfUserBlocked(userIdFrom, userIdTo) != null);
+
+        Integer count1 = forumRepository.countPostLikeByUserId(userIdTo);
+        Integer count2 = forumRepository.countCommentLikeByUserId(userIdTo);
+        count1 = (count1 == null ? 0 : count1);
+        count2 = (count2 == null ? 0 : count2);
+        userProfileDTO.setLikeCount(count1 + count2);
+
+        count1 = forumRepository.countPostDislikeByUserId(userIdTo);
+        count2 = forumRepository.countCommentDislikeByUserId(userIdTo);
+        count1 = (count1 == null ? 0 : count1);
+        count2 = (count2 == null ? 0 : count2);
+        userProfileDTO.setDislikeCount(count1 + count2);
+
+        userProfileDTO.setIsUserBlocked(isUserBlocking(userIdFrom, userIdTo));
         return userProfileDTO;
     }
 
@@ -228,8 +248,8 @@ public class ProfileService {
             userInfoDTO.setDescription(userProfileModel.getDescription());
             userInfoDTO.setAvatar(getUserAvatarByUserId(userProfileModel.getUserId()));
             userInfoDTO.setUpdatedAt(userProfileModel.getUpdatedAt());
-            userInfoDTO.setStatus(  userProfileRepository.checkIfUserFollowed(userId, userProfileModel.getUserId()) != null ? "following" :
-                                    userProfileRepository.checkIfUserBlocked(userId, userProfileModel.getUserId()) != null ? "blocking" : "not following");
+            userInfoDTO.setStatus(  isUserFollowing(userId, userProfileModel.getUserId()) ? "following" :
+                                    isUserBlocking(userId, userProfileModel.getUserId()) ? "blocking" : "not following");
             userInfoDTOList.add(userInfoDTO);
         }
         return userInfoDTOList;

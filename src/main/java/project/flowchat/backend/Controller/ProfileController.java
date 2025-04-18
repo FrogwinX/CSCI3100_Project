@@ -185,14 +185,14 @@ public class ProfileController {
     @GetMapping("getMyCommentPreviewList")
     private ResponseBodyDTO getMyCommentPreviewList(@RequestParam Integer userIdFrom,
                                                     @RequestParam Integer userIdTo,
-                                                    @RequestParam(value = "excludingPostIdList") List<Integer> excludingPostIdList,
-                                                    @RequestParam Integer postNum) {
+                                                    @RequestParam(value = "excludingCommentIdList") List<Integer> excludingCommentIdList,
+                                                    @RequestParam Integer commentNum) {
         try {
             Map<String, Object> data = new HashMap<>();
-            List<PostDTO> postPreviewModelList = forumService.getUserPostPreviewList(userIdFrom, userIdTo, excludingPostIdList, postNum);
+            List<PostDTO> postPreviewModelList = forumService.getUserCommentPreviewList(userIdFrom, userIdTo, excludingCommentIdList, commentNum);
             data.put("isSuccess", true);
             data.put("postPreviewList", postPreviewModelList);
-            responseBodyDTO.setMessage("My post preview list is returned");
+            responseBodyDTO.setMessage("My comment preview list is returned");
             responseBodyDTO.setData(data);
         } catch (ExceptionService e) {
             Map<String, Object> data = new HashMap<>();
