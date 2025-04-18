@@ -25,11 +25,12 @@ import project.flowchat.backend.Repository.UserAccountRepository;
 public class ChatService {
 
     @Autowired
-    private final ImageService imageService;
     private final MessageRepository messageRepository;
     private final ForumRepository forumRepository;
     private final UserAccountRepository userAccountRepository;
+    private final ImageService imageService;
     private final SecurityService securityService;
+    private final ProfileService profileService;
     private SimpMessagingTemplate messagingTemplate;
 
     public void handleMessage(ChatSendMessageDTO message) {
@@ -231,11 +232,16 @@ public class ChatService {
             contactDTO.setUserIdTo(userIdTo);
             contactDTO.setUsernameTo(userAccountRepository.findUsernameByUserId(userIdTo));
             if (userId.equals(userIdFrom)) {
+                contactDTO.setContactUserId(userIdTo);
                 contactDTO.setContactUsername(userAccountRepository.findUsernameByUserId(userIdTo));
+                contactDTO.setContactUserAvatar(profileService.getUserAvatarByUserId(userIdTo));
+                contactDTO.setIsContactUserBlocked(profileService.isUserBlocking(userIdFrom, userIdTo) || profileService.isUserBlocking(userIdTo, userIdFrom));
                 contactDTO.setUnreadMessageCount(messageRepository.getUnreadMessageCountByUserPair(userIdTo, userId));
             }
             else {
+                contactDTO.setContactUserId(userIdFrom);
                 contactDTO.setContactUsername(userAccountRepository.findUsernameByUserId(userIdFrom));
+                contactDTO.setContactUserAvatar(profileService.getUserAvatarByUserId(userIdFrom));
                 contactDTO.setUnreadMessageCount(messageRepository.getUnreadMessageCountByUserPair(userIdFrom, userId));
             }
 
