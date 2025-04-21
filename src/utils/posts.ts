@@ -1,9 +1,22 @@
 "use server";
 
-import { Post } from "@/components/posts/PostPreview";
 import { getSession } from "@/utils/sessions";
-// import { count } from "console";
-// import exp from "constants";
+
+export interface Post {
+  postId: string;
+  username: string;
+  title: string;
+  content: string;
+  imageAPIList: string[] | null;
+  tagNameList: string[] | null;
+  likeCount: number;
+  isLiked: boolean;
+  dislikeCount: number;
+  isDisliked: boolean;
+  commentCount: number;
+  updatedAt: string;
+  commentList: Post[] | null;
+}
 
 // API response type for getPost
 interface PostPreviewResponse {
@@ -37,41 +50,9 @@ interface TagResponse {
 
 interface CreatePostResponse {
   message: string;
-  data: any;
-}
-
-function base64ToFile(base64String: string, fileName: string): File {
-  const arr = base64String.split(",");
-  const mime = arr[0].match(/:(.*?);/)?.[1] || "image/png";
-  const bstr = atob(arr[1]);
-  let n = bstr.length;
-  const u8arr = new Uint8Array(n);
-
-  while (n--) {
-    u8arr[n] = bstr.charCodeAt(n);
-  }
-
-  return new File([u8arr], fileName, { type: mime });
-}
-
-function extractImagesFromContent(content: string): { cleanContent: string; images: File[] } {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(content, "text/html");
-  const imgElements = doc.querySelectorAll("img");
-  const images: File[] = [];
-  let cleanContent = content;
-
-  imgElements.forEach((img, index) => {
-    const src = img.getAttribute("src") || "";
-    if (src.startsWith("data:image")) {
-      const fileName = `image-${index + 1}.png`;
-      const file = base64ToFile(src, fileName);
-      images.push(file);
-      cleanContent = cleanContent.replace(src, fileName);
-    }
-  });
-
-  return { cleanContent, images };
+  data: {
+    isSuccess: boolean;
+  };
 }
 
 export async function getAllTags(): Promise<Tag[]> {
@@ -299,11 +280,6 @@ export async function getPostById(postId: string): Promise<Post | null> {
     console.error("Error fetching post:", error);
     return null;
   }
-}
-
-interface CreatePostResponse {
-  message: string;
-  data: any; // Can be a string or an object depending on backend response
 }
 
 // Create a new post with the given title, content, tags, and images

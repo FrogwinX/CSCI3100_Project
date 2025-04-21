@@ -2,22 +2,7 @@ import PostFooter from "@/components/posts/PostFooter";
 import PostLink from "@/components/navigation/PostLink";
 import PostHeader from "@/components/posts/PostHeader";
 import LoadingImage from "./LoadingImage";
-
-export interface Post {
-  postId: string;
-  username: string;
-  title: string;
-  content: string;
-  imageAPIList: string[] | null;
-  tagNameList: string[] | null;
-  likeCount: number;
-  isLiked: boolean;
-  dislikeCount: number;
-  isDisliked: boolean;
-  commentCount: number;
-  updatedAt: string;
-  commentList: Post[] | null;
-}
+import { Post } from "@/utils/posts";
 
 export default function PostPreview({ post }: { post: Post }) {
   return (

@@ -5,15 +5,7 @@ import { useSession } from "@/hooks/useSession";
 import { getAllTags, Tag, getPostById, updatePost } from "@/utils/posts";
 import { useRouter } from "next/navigation";
 import { getProxyImageUrl } from "@/utils/images";
-
-// Define the interface for a Post
-interface Post {
-  id: string;
-  title: string;
-  content: string;
-  tagNameList: string[];
-  imageAPIList: string[];
-}
+import { Post } from "@/utils/posts";
 
 // EditPost component for editing an existing post
 export default function EditPost({ params: paramsPromise }: { params: Promise<{ postId: string }> }) {
@@ -129,9 +121,9 @@ export default function EditPost({ params: paramsPromise }: { params: Promise<{ 
                 `;
                 placeholder.replaceWith(imgWrapper);
 
-                const img = imgWrapper.querySelector("img");
-                const skeleton = imgWrapper.querySelector(".skeleton");
-                const errorMessage = imgWrapper.querySelector("p.text-red-500");
+                const img = imgWrapper.querySelector("img") as HTMLImageElement;
+                const skeleton = imgWrapper.querySelector(".skeleton") as HTMLDivElement;
+                const errorMessage = imgWrapper.querySelector("p.text-red-500") as HTMLParagraphElement;
 
                 if (img && skeleton && errorMessage) {
                   const onLoadHandler = () => {
@@ -367,17 +359,19 @@ export default function EditPost({ params: paramsPromise }: { params: Promise<{ 
     try {
       await updatePost(postId, title, content, tags, images, existingImages);
       router.push(`/forum/post/${postId}`);
-    } catch (error: any) {
-      console.error("Update post error:", error);
-      if (error.message.includes("Authentication failed")) {
+    } catch (error: unknown) {
+      // Set message to either standard error message or API error message
+      const message = error instanceof Error ? error.message : String(error);
+      console.error("Update post error:", message);
+      if (message.includes("Authentication failed")) {
         setSubmitError("Authentication failed, please log in again");
         refresh();
-      } else if (error.message.includes("Unsupported media type")) {
+      } else if (message.includes("Unsupported media type")) {
         setSubmitError("Unsupported request format, please contact the administrator");
-      } else if (error.message.includes("Server error")) {
+      } else if (message.includes("Server error")) {
         setSubmitError("Server error, please contact the administrator");
       } else {
-        setSubmitError(error.message || "Failed to update post, please try again later");
+        setSubmitError(message || "Failed to update post, please try again later");
       }
     }
   };

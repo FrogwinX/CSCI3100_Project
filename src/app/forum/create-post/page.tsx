@@ -40,7 +40,7 @@ export default function CreatePost() {
           setAllTags(tags);
           setTagFetchError(null);
         }
-      } catch (error) {
+      } catch {
         setTagFetchError("Failed to load tags");
         setAllTags([]);
       }
@@ -230,16 +230,18 @@ export default function CreatePost() {
       } else {
         setSubmitError("Failed to create post, unable to retrieve post ID");
       }
-    } catch (error: any) {
-      if (error.message.includes("Authentication failed")) {
+    } catch (error: unknown) {
+      // Set message to either standard error message or API error message
+      const message = error instanceof Error ? error.message : String(error);
+      if (message.includes("Authentication failed")) {
         setSubmitError("Authentication failed, please log in again");
         refresh();
-      } else if (error.message.includes("Unsupported media type")) {
+      } else if (message.includes("Unsupported media type")) {
         setSubmitError("Unsupported request format, please contact the administrator");
-      } else if (error.message.includes("Server error")) {
+      } else if (message.includes("Server error")) {
         setSubmitError("Server error, please contact the administrator");
       } else {
-        setSubmitError(error.message || "Failed to create post, please try again later");
+        setSubmitError(message || "Failed to create post, please try again later");
       }
     }
   };
