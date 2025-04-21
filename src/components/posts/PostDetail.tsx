@@ -1,7 +1,7 @@
 import PostHeader from "@/components/posts/PostHeader";
 import PostFooter from "@/components/posts/PostFooter";
-import { Post } from "@/components/posts/PostPreview";
 import LoadingImage from "@/components/posts/LoadingImage";
+import { Post } from "@/utils/posts";
 
 export default function PostDetail({ post }: { post: Post }) {
   return (

@@ -1,12 +1,19 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import PostPreview, { Post } from "./PostPreview";
+import PostPreview from "@/components/posts/PostPreview";
+import { Post } from "@/utils/posts";
 import { getPosts, getSearchPosts } from "@/utils/posts";
 import { useTagContext } from "@/hooks/useTags";
 import LoadingPostPreview from "@/components/posts/LoadingPostPreview";
 
-export default function PostList({ filter, keyword }: { filter?: "latest" | "recommended" | "following" | undefined; keyword?: string | undefined; }) {
+export default function PostList({
+  filter,
+  keyword,
+}: {
+  filter?: "latest" | "recommended" | "following" | undefined;
+  keyword?: string | undefined;
+}) {
   const { selectedTags: tags, setPostsLoading } = useTagContext();
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -47,7 +54,6 @@ export default function PostList({ filter, keyword }: { filter?: "latest" | "rec
 
     const fetchInitialPosts = async () => {
       try {
-
         let initialPosts;
         //switch between getPosts and getSearchPosts based on keyword
         if (!keyword) {
@@ -108,13 +114,15 @@ export default function PostList({ filter, keyword }: { filter?: "latest" | "rec
       { threshold: 0.1 }
     );
 
-    if (observerTarget.current) {
-      observer.observe(observerTarget.current);
+    const currentObserverTarget = observerTarget.current;
+
+    if (currentObserverTarget) {
+      observer.observe(currentObserverTarget);
     }
 
     return () => {
-      if (observerTarget.current) {
-        observer.unobserve(observerTarget.current);
+      if (currentObserverTarget) {
+        observer.unobserve(currentObserverTarget);
       }
     };
   }, [hasMore, isLoading]);
@@ -195,7 +203,7 @@ export default function PostList({ filter, keyword }: { filter?: "latest" | "rec
               <div className="h-10"></div>
             ) : (
               <div className="text-center text-base-content/50 my-4">
-                <p className="text-sm">You've reached the end</p>
+                <p className="text-sm">You&apos;ve reached the end</p>
               </div>
             )}
           </div>
