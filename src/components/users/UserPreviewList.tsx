@@ -122,7 +122,7 @@ export default function UserList({ searchKeyword = "" }: { searchKeyword?: strin
               <div className="h-10"></div>
             ) : (
               <div className="text-center text-base-content/50 my-4">
-                <p className="text-sm">You've reached the end</p>
+                <p className="text-sm">You&apos;ve reached the end</p>
               </div>
             )}
           </div>
