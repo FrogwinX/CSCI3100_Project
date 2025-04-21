@@ -35,7 +35,10 @@ export interface IncomingMessage {
 
 export interface Contact {
   messageId: number;
+  contactUserId: number;
   contactUsername: string;
+  contactUserAvatar: string | null;
+  isContactUserBlocked: boolean;
   latestMessage: string;
   userIdFrom: number;
   usernameFrom: string;

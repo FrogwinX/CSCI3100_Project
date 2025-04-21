@@ -8,16 +8,19 @@ import { useRouter } from "next/navigation";
 import moment from "moment";
 import Link from "next/link";
 import { useSession } from "@/hooks/useSession";
+import UserAvatar from "@/components/users/UserAvatar";
 
 export default function PostHeader({
   postId,
   postUsername,
   postUpdatedAt,
+  postUserAvatar,
   size = "sm",
 }: {
   postId: string;
   postUsername: string;
   postUpdatedAt: string;
+  postUserAvatar: string | null;
   size?: "sm" | "md";
 }) {
   const router = useRouter();
@@ -41,9 +44,6 @@ export default function PostHeader({
     alert("Report to be implemented");
   };
 
-  const avatarSize = size === "md" ? "w-10" : "w-8";
-  const iconSize = size === "md" ? "lg" : "1x";
-  const usernameSize = size === "md" ? "text-md" : "text-sm";
   const textSize = size === "md" ? "text-sm" : "text-xs";
 
   return (
@@ -52,12 +52,7 @@ export default function PostHeader({
       <div className="flex">
         {/** Avatar and username */}
         <Link href={`/profile/${postUsername}`}>
-          <div className="avatar avatar-placeholder items-center gap-1">
-            <div className={`bg-neutral text-neutral-content ${avatarSize} rounded-full`}>
-              <FontAwesomeIcon icon={faUser} size={iconSize} />
-            </div>
-            <span className={`${usernameSize}`}>{postUsername}</span>
-          </div>
+          <UserAvatar src={postUserAvatar} username={postUsername} size={size} />
         </Link>
         {/** Time */}
         <div className="flex items-center mx-0.5 gap-0.5">
