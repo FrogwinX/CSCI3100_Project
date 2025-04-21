@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+@plugin 'tailwind-scrollbar' {
+  nocompatible: true;
+  preferredstrategy: "pseudoelements";
+}
+
 /* Override focus styles */
 *:focus-visible {
   outline: none !important;
@@ -33,8 +38,8 @@
   --color-success-content: oklch(0% 0 0);
   --color-warning: oklch(84.71% 0.199 83.87);
   --color-warning-content: oklch(0% 0 0);
-  --color-error: oklch(64.84% 0.293 29.349);
-  --color-error-content: oklch(12.968% 0.058 29.349);
+  --color-error: oklch(78.66% 0.15 28.47);
+  --color-error-content: oklch(15.732% 0.03 28.47);
   --radius-selector: 0.65rem;
   --radius-field: 0.65rem;
   --radius-box: 0.65rem;

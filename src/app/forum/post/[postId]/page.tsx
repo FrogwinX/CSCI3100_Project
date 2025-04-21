@@ -1,12 +1,17 @@
 import { getPostById } from "@/utils/posts";
 import { notFound } from "next/navigation";
 import PostDetail from "@/components/posts/PostDetail";
+import { cache } from "react";
 
 type Params = Promise<{ postId: string }>;
 
+const getPost = cache((postId: string) => {
+  return getPostById(postId);
+});
+
 export async function generateMetadata(props: { params: Params }) {
   const params = await props.params;
-  const post = await getPostById(params.postId);
+  const post = await getPost(params.postId);
 
   if (!post) {
     return {
@@ -22,7 +27,7 @@ export async function generateMetadata(props: { params: Params }) {
 
 export default async function PostDetailPage(props: { params: Params }) {
   const params = await props.params;
-  const post = await getPostById(params.postId);
+  const post = await getPost(params.postId);
 
   if (!post) {
     notFound();
@@ -33,10 +38,9 @@ export default async function PostDetailPage(props: { params: Params }) {
       <PostDetail post={post} />
 
       {/** Comments section */}
-      <p id="comments" className="card bg-base-100 p-4 scroll-mt-16 min-h-screen">
-        @Boscode31415 Please create a comment section here, label the component id=&quot;comments&quot; and add
-        classname=&quot;scroll-mt-16&quot; so my comment button can navigate to the comment section without navbar
-        blocking
+      <p id="comments" className="card bg-base-100 p-4 min-h-screen">
+        @Boscode31415 Please create a comment section here, label the component id=&quot;comments&quot; so my comment
+        button can navigate to the comment section without navbar blocking
       </p>
     </div>
   );

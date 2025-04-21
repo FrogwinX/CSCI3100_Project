@@ -20,12 +20,16 @@ export async function middleware(request: NextRequest) {
   const isAuthenticated = session.isLoggedIn;
 
   // Redirect logic
+  if (isAuthenticated && isRoot) {
+    return NextResponse.redirect(new URL("/forum/latest", request.url));
+  }
+
   if (isAuthenticated && isAuthPath) {
     // Authenticated users shouldn't access auth pages
     return NextResponse.redirect(new URL("/", request.url));
   }
 
-  if (!isAuthenticated && !isAuthPath && !isRoot) {
+  if (!isAuthenticated && !isAuthPath) {
     // Unauthenticated users can only access auth pages
     return NextResponse.redirect(new URL("/login", request.url));
   }

@@ -1,7 +1,6 @@
 import PostFooter from "@/components/posts/PostFooter";
 import PostLink from "@/components/navigation/PostLink";
 import PostHeader from "@/components/posts/PostHeader";
-import Image from "next/image";
 import LoadingImage from "./LoadingImage";
 
 export interface Post {
@@ -29,9 +28,9 @@ export default function PostPreview({ post }: { post: Post }) {
           <PostHeader postId={post.postId} postUsername={post.username} postUpdatedAt={post.updatedAt} />
           {/** Body */}
           <div className="flex gap-4">
-            <div className="flex-1">
-              <h3 className="card-title text-lg font-bold line-clamp-2">{post.title}</h3>
-              <p className="text-base-content text-md my-2 line-clamp-3 md:line-clamp-6">{post.content}</p>
+            <div className="flex-1 overflow-hidden">
+              <h3 className="card-title text-lg font-bold line-clamp-2 break-words">{post.title}</h3>
+              <p className="text-base-content text-md my-2 line-clamp-3 md:line-clamp-6 break-words">{post.content}</p>
             </div>
             {/* Image on the right side, conditionally rendered */}
             {post.imageAPIList && post.content.trim().length >= 50 && (
@@ -47,24 +46,11 @@ export default function PostPreview({ post }: { post: Post }) {
           {/* Show image below title if no description */}
           {post.imageAPIList && post.content.trim().length < 50 && (
             <div className="relative w-full overflow-hidden rounded-xl bg-base-300 ">
-              {/* Blurred background image */}
-              <div className="absolute inset-0 w-full h-full opacity-60 scale-200">
-                <Image
-                  src={post.imageAPIList[0]}
-                  alt="Blurred Background"
-                  className="object-cover blur-xl w-full h-full aspect-video"
-                  width={500}
-                  height={500}
-                />
-              </div>
-              {/* Main image */}
-              <div className="relative w-full h-full items-center justify-center">
-                <LoadingImage
-                  src={post.imageAPIList[0]}
-                  alt={post.title}
-                  className=" object-contain rounded-md aspect-video"
-                />
-              </div>
+              <LoadingImage
+                src={post.imageAPIList[0]}
+                alt={post.title}
+                className="object-contain rounded-md max-h-64 md:max-h-72 lg:max-h-80 mx-auto"
+              />
             </div>
           )}
           {/** Tags */}

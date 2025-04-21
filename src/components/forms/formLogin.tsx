@@ -101,7 +101,7 @@ export default function Login() {
             <span className="label-text text-base-content">Username / Email</span>
           </label>
           <input
-            type="text"
+            type="input"
             placeholder="Username or email"
             value={UsernameOrEmail}
             onChange={handleInputChange}

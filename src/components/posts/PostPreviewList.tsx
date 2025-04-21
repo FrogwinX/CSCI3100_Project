@@ -2,89 +2,103 @@
 
 import { useEffect, useRef, useState } from "react";
 import PostPreview, { Post } from "./PostPreview";
-import { getPosts } from "@/utils/posts";
-import { Tag } from "@/utils/posts";
+import { getPosts, getSearchPosts } from "@/utils/posts";
+import { useTagContext } from "@/hooks/useTags";
+import LoadingPostPreview from "@/components/posts/LoadingPostPreview";
 
-export default function PostList({
-  tags = [],
-  filter = "latest",
-}: {
-  tags?: Tag[];
-  filter?: "latest" | "recommended" | "following";
-}) {
+export default function PostList({ filter, keyword }: { filter?: "latest" | "recommended" | "following" | undefined; keyword?: string | undefined; }) {
+  const { selectedTags: tags, setPostsLoading } = useTagContext();
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hasMore, setHasMore] = useState(true);
   const observerTarget = useRef<HTMLDivElement>(null);
+  const [excludedPostIds, setExcludedPostIds] = useState<Set<number>>(new Set());
+  const [fetchAttempts, setFetchAttempts] = useState(0);
+  const MAX_ATTEMPTS = 10; // Limit fetch attempts to prevent infinite loops
 
-  useEffect(
-    () => {
-      const fetchInitialPosts = async () => {
-        setIsLoading(true);
-        try {
-          const initialPosts = await getPosts({ filter, lastPostId: "0" });
-
-          // Filter posts if tags are selected
-          if (tags.length === 0) {
-            setPosts(initialPosts);
-          } else {
-            const filteredPosts = initialPosts.filter(
-              (post) => post.tagNameList?.some((tag) => tags.some((t) => t.tagName === tag)) ?? false
-            );
-            setPosts(filteredPosts);
-          }
-
-          setHasMore(initialPosts.length > 0);
-        } catch (err) {
-          console.error("Failed to load posts:", err);
-        } finally {
-          setIsLoading(false);
-        }
-      };
-
-      fetchInitialPosts();
-    } /* eslint-disable-next-line */,
-    []
-  );
-
-  // Infinite scrolling setup
+  // Synchronize local loading state with the global tag context loading state
   useEffect(() => {
-    const loadMorePosts = async () => {
-      if (isLoading || !hasMore || posts.length === 0) return;
+    setPostsLoading(isLoading);
+  }, [isLoading, setPostsLoading]);
 
-      setIsLoading(true);
+  const filterPostsByTags = (postsToFilter: Post[]) => {
+    if (tags.length === 0) {
+      return postsToFilter; // No filtering needed if no tags selected
+    }
 
+    return postsToFilter.filter((post) => {
+      // Skip posts with no tags if we have selected tags
+      if (!post.tagNameList || post.tagNameList.length === 0) {
+        return false;
+      }
+
+      // Check if post contains ALL selected tags
+      return tags.every((tag) => post.tagNameList!.includes(tag.tagName));
+    });
+  };
+
+  useEffect(() => {
+    setIsLoading(true);
+    // Reset states when tags change
+    setPosts([]);
+    setExcludedPostIds(new Set());
+    setHasMore(true);
+    setFetchAttempts(0);
+
+    const fetchInitialPosts = async () => {
       try {
-        // Get the ID of the last post
-        const lastPostId = posts[posts.length - 1].postId;
 
-        // Fetch more posts
-        const newPosts = await getPosts({
-          filter,
-          lastPostId,
-          count: 10,
-        });
-
-        if (newPosts.length === 0) {
-          setHasMore(false);
+        let initialPosts;
+        //switch between getPosts and getSearchPosts based on keyword
+        if (!keyword) {
+          initialPosts = await getPosts({ filter });
         } else {
-          if (tags.length === 0) {
-            setPosts((prevPosts) => [...prevPosts, ...newPosts]);
-          } else {
-            // Fixed to match the same filtering logic used for initial posts
-            const filteredPosts = newPosts.filter(
-              (post) => post.tagNameList?.some((tag) => tags.some((t) => t.tagName === tag)) ?? false
-            );
-            setPosts((prevPosts) => [...prevPosts, ...filteredPosts]);
-          }
+          initialPosts = await getSearchPosts({ keyword });
         }
+        // Scroll to the top of the page smoothly
+        window.scrollTo({ top: 0, behavior: "smooth" });
+
+        // No posts are returned from the API
+        if (!initialPosts || initialPosts.length === 0) {
+          setHasMore(false);
+          return;
+        }
+
+        const filteredPosts = filterPostsByTags(initialPosts);
+
+        // Update excludedPostIds with the initial posts
+        const newExcludedIds = new Set<number>();
+        initialPosts.forEach((post) => newExcludedIds.add(Number(post.postId)));
+        setExcludedPostIds(newExcludedIds);
+
+        setPosts(filteredPosts);
+        setHasMore(initialPosts.length > 0);
+
+        console.log("Initial Posts:", initialPosts);
+        console.log("Filtered Posts:", filteredPosts);
+        console.log("Excluded Post IDs:", Array.from(newExcludedIds));
+        console.log("Selected Tags:", tags);
       } catch (err) {
-        console.error("Failed to load more posts:", err);
+        console.error("Failed to load posts:", err);
       } finally {
         setIsLoading(false);
       }
     };
 
+    fetchInitialPosts();
+  }, [filter, tags, keyword]); // Refetch when tags or filter or keyword change
+
+  // Effect to handle auto-loading more posts if filtered results are empty
+  useEffect(() => {
+    // If no posts after filtering, but there might be more, try loading more
+    if (!isLoading && posts.length === 0 && hasMore && fetchAttempts < MAX_ATTEMPTS) {
+      setFetchAttempts((prev) => prev + 1);
+      loadMorePosts();
+    }
+  }, [posts, hasMore, fetchAttempts]);
+
+  // Infinite scrolling setup
+  useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && hasMore && !isLoading) {
@@ -94,19 +108,69 @@ export default function PostList({
       { threshold: 0.1 }
     );
 
-    // Capture the current value of the ref
-    const currentObserverTarget = observerTarget.current;
-
-    if (currentObserverTarget) {
-      observer.observe(currentObserverTarget);
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
     }
 
     return () => {
-      if (currentObserverTarget) {
-        observer.unobserve(currentObserverTarget);
+      if (observerTarget.current) {
+        observer.unobserve(observerTarget.current);
       }
     };
-  }, [hasMore, isLoading, posts, tags, filter]);
+  }, [hasMore, isLoading]);
+
+  // Function to load more posts
+  const loadMorePosts = async () => {
+    if (isLoading || !hasMore) return;
+
+    setIsLoading(true);
+
+    try {
+      let newPosts;
+      //switch between getPosts and getSearchPosts based on keyword
+      if (!keyword) {
+        newPosts = await getPosts({
+          filter,
+          excludingPostIdList: Array.from(excludedPostIds),
+          count: 10,
+        });
+      } else {
+        newPosts = await getSearchPosts({
+          keyword,
+          excludingPostIdList: Array.from(excludedPostIds),
+          count: 10,
+        });
+      }
+      // No posts are returned from the API
+      if (!newPosts || newPosts.length === 0) {
+        setHasMore(false);
+        return;
+      }
+
+      const filteredPosts = filterPostsByTags(newPosts);
+
+      // Update excludedPostIds with new posts
+      setExcludedPostIds((prevExcludedIds) => {
+        const newExcludedIds = new Set(prevExcludedIds);
+        newPosts.forEach((post) => newExcludedIds.add(Number(post.postId)));
+        return newExcludedIds;
+      });
+
+      console.log("New Posts:", newPosts);
+      console.log("Filtered Posts:", filteredPosts);
+
+      setPosts((prevPosts) => [...prevPosts, ...filteredPosts]);
+
+      // If got posts but none passed the filter
+      if (filteredPosts.length === 0 && newPosts.length > 0) {
+        console.log("Got posts but all were filtered out");
+      }
+    } catch (err) {
+      console.error("Failed to load more posts:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="flex flex-col px-4 py-2">
@@ -131,15 +195,13 @@ export default function PostList({
               <div className="h-10"></div>
             ) : (
               <div className="text-center text-base-content/50 my-4">
-                <p className="text-sm">You&apos;ve reached the end</p>
+                <p className="text-sm">You've reached the end</p>
               </div>
             )}
           </div>
         </>
       ) : isLoading ? (
-        <div className="flex justify-center py-4">
-          <span className="loading loading-spinner loading-xl"></span>
-        </div>
+        [1, 2, 3, 4].map((i) => <LoadingPostPreview key={i} />)
       ) : (
         <div className="text-center text-lg text-base-content/50 my-4">No posts available</div>
       )}
