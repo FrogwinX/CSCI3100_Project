@@ -1,0 +1,44 @@
+import { Metadata } from "next";
+import { User } from "@/components/settings/User";
+import UserInfo from "@/components/settings/User";
+import ChangePassword from "@/components/settings/ChangePassword";
+import DeleteAccount from "@/components/settings/DeleteAccount";
+import { getSession } from "@/utils/sessions";
+
+export const metadata: Metadata = {
+  title: "Settings | FlowChat",
+  description: "Browse the user account settings.",
+};
+
+export default async function SettingPage() {
+
+  const session = await getSession();
+  const user : User = {
+    username: session.username,
+    email: "edwinlamtk@gmail.com",
+    profileImage: session.profileImage
+  };
+
+  return (
+    <div className="flex h-fit min-h-full w-full gap-x-2 md:px-32">
+      {/* Left column - conditionally rendered back button */}
+      <div className="hidden lg:flex w-1/6 flex-col items-end pt-4 pr-4 sticky h-fit"></div>
+
+      {/* Middle column - main content */}
+      <div className="flex-grow w-full lg:w-4/6">
+        <div className="bg-base-100 min-h-full">
+          <div className="w-full">
+            <div className="card-body p-6 gap-10">
+              <UserInfo user={user} />
+              <ChangePassword user={user} />
+              <DeleteAccount user={user} />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Right column - conditionally rendered action menu */}
+      <div className="hidden md:block w-1/6"></div>
+    </div>
+  );
+}
