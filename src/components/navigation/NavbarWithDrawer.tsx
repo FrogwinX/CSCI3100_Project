@@ -10,6 +10,7 @@ import { faGithub } from "@fortawesome/free-brands-svg-icons";
 import Image from "next/image";
 import { logout } from "@/utils/authentication";
 import { useSession } from "@/hooks/useSession";
+import UserAvatar from "@/components/users/UserAvatar";
 
 export default function NavbarWithDrawer() {
   const [isSidebarOpen, setSidebarOpen] = useState<boolean>(false);
@@ -103,11 +104,7 @@ export default function NavbarWithDrawer() {
               {/* User Avatar */}
               <div className="dropdown dropdown-end">
                 <div tabIndex={0} role="button" className="btn btn-ghost btn-circle">
-                  <div className="avatar avatar-placeholder">
-                    <div className="bg-neutral text-neutral-content rounded-full w-10">
-                      <FontAwesomeIcon icon={faUser} />
-                    </div>
-                  </div>
+                  <UserAvatar src={session.avatar!} size="md" />
                 </div>
                 <ul tabIndex={0} className="dropdown-content menu bg-base-100 rounded-box shadow">
                   {session.isLoggedIn ? (

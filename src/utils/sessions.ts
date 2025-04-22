@@ -8,7 +8,7 @@ export interface SessionData {
   roles?: string;
   isLoggedIn: boolean;
   token?: string;
-  profileImage?: string;
+  avatar?: string;
 }
 
 // Default session state when not logged in

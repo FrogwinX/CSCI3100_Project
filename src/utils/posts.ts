@@ -4,7 +4,10 @@ import { getSession } from "@/utils/sessions";
 
 export interface Post {
   postId: string;
+  userId: string;
   username: string;
+  avatar: string | null;
+  isUserBlocked: boolean;
   title: string;
   content: string;
   imageAPIList: string[] | null;
@@ -139,7 +142,10 @@ export async function getPosts(
     // Map API response to frontend Post interface
     const posts: Post[] = data.data.postPreviewList.map((post) => ({
       postId: post.postId,
+      userId: post.userId,
       username: post.username,
+      avatar: post.avatar,
+      isUserBlocked: post.isUserBlocked,
       title: post.title,
       content: post.content,
       imageAPIList: post.imageAPIList,
@@ -219,7 +225,10 @@ export async function getSearchPosts(
     // Map API response to frontend Post interface
     const posts: Post[] = data.data.postPreviewList.map((post) => ({
       postId: post.postId,
+      userId: post.userId,
       username: post.username,
+      avatar: post.avatar,
+      isUserBlocked: post.isUserBlocked,
       title: post.title,
       content: post.content,
       imageAPIList: post.imageAPIList,
@@ -259,7 +268,10 @@ export async function getPostById(postId: string): Promise<Post | null> {
       const post = data.data.post;
       return {
         postId: post.postId,
+        userId: post.userId,
         username: post.username,
+        avatar: post.avatar,
+        isUserBlocked: post.isUserBlocked,
         title: post.title,
         content: post.content,
         imageAPIList: post.imageAPIList,

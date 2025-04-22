@@ -15,6 +15,7 @@ import { useSession } from "@/hooks/useSession";
 import { ConnectionStatus, IncomingMessage, messagingService, Contact } from "@/utils/messaging";
 import ChatMessage from "@/components/chats/ChatMessage";
 import LoadingContact from "@/components/chats/LoadingContact";
+import UserAvatar from "@/components/users/UserAvatar";
 
 export default function Messenger({ initialContacts }: { initialContacts: Contact[] }) {
   const { session } = useSession();
@@ -294,7 +295,10 @@ export default function Messenger({ initialContacts }: { initialContacts: Contac
       // Create a new temporary contact
       const newContact: Contact = {
         messageId: -1, // Temporary ID
+        contactUserId: userId,
         contactUsername: "Unknown User",
+        contactUserAvatar: null,
+        isContactUserBlocked: false,
         latestMessage:
           "This is a temp contact, a real contact can be created using the Get Search User Result API. Reload the page after sending a message to get a real contact for now",
         userIdFrom: userId,
@@ -367,13 +371,8 @@ export default function Messenger({ initialContacts }: { initialContacts: Contac
                   }`}
                   onClick={() => setSelectedContact(contact)}
                 >
-                  <div className="bg-neutral text-neutral-content place-content-center rounded-full w-10 h-10">
-                    {/* <FontAwesomeIcon icon={faUser} /> */}
-                  </div>
-                  <div>
-                    <div>{contact.contactUsername}</div>
-                  </div>
-                  <p className="list-col-wrap text-xs">{contact.latestMessage}</p>
+                  <UserAvatar src={contact.contactUserAvatar} username={contact.contactUsername} size="lg" />
+                  <p className="list-col-wrap text-md">{contact.latestMessage}</p>
                 </li>
               ))
             )}

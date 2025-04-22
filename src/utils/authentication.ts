@@ -14,6 +14,7 @@ interface LoginData {
   user: {
     roles: string;
     id: number;
+    avatar: string | null;
     token: string;
     username: string;
   } | null;
@@ -87,6 +88,7 @@ export async function login(formData: FormData) {
       session.roles = result.data.user.roles;
       session.isLoggedIn = true;
       session.token = result.data.user.token;
+      session.avatar = result.data.user.avatar;
       await session.save();
     }
 
