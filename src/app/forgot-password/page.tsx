@@ -1,8 +1,11 @@
 "use client";
-import React from "react";
+
 import ForgotPasswordForm from "@/components/forms/formForgotPassword";
 
 export default function ForgotPasswordPage() {
-  return <ForgotPasswordForm />;
+  return (
+    <div className="flex h-fit min-h-full items-center justify-center p-8">
+      <ForgotPasswordForm />
+    </div>
+  );
 }
-

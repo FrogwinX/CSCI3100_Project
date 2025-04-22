@@ -1,12 +1,19 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
 @import "tailwindcss";
 
-body {
-  font-family: 'Inter', sans-serif;
+@plugin 'tailwind-scrollbar' {
+  nocompatible: true;
+  preferredstrategy: "pseudoelements";
+}
+
+/* Override focus styles */
+*:focus-visible {
+  outline: none !important;
+  box-shadow: 0 0 0 2px var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
 }
 
 @plugin "daisyui" {
-    themes: emerald --default;
+  themes: emerald --default;
 }
 @plugin "daisyui/theme" {
   name: "emerald";
@@ -31,8 +38,8 @@ body {
   --color-success-content: oklch(0% 0 0);
   --color-warning: oklch(84.71% 0.199 83.87);
   --color-warning-content: oklch(0% 0 0);
-  --color-error: oklch(64.84% 0.293 29.349);
-  --color-error-content: oklch(12.968% 0.058 29.349);
+  --color-error: oklch(78.66% 0.15 28.47);
+  --color-error-content: oklch(15.732% 0.03 28.47);
   --radius-selector: 0.65rem;
   --radius-field: 0.65rem;
   --radius-box: 0.65rem;
@@ -41,10 +48,4 @@ body {
   --border: 1px;
   --depth: 0;
   --noise: 0;
-}
-
-/* 覆寫樣式 */
-main {
-  min-height: calc(100vh - 64px);
-  background-color: oklch(95% 0 0); /* bg-base-200 */
 }

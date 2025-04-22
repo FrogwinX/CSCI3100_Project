@@ -1,7 +1,11 @@
 "use client";
-import React from "react";
+
 import Login from "@/components/forms/formLogin";
 
 export default function LoginPage() {
-  return <Login />;
+  return (
+    <div className="flex h-fit min-h-full items-center justify-center p-8">
+      <Login />
+    </div>
+  );
 }

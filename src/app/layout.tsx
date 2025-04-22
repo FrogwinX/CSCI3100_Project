@@ -1,20 +1,26 @@
 import React from "react";
 import type { Metadata } from "next";
-import { AuthProvider } from "@/hooks/useAuth";
-import "./globals.css";
+import { SessionProvider } from "@/hooks/useSession";
 import NavbarWithDrawer from "@/components/navigation/NavbarWithDrawer";
-import { config } from '@fortawesome/fontawesome-svg-core'
-import '@fortawesome/fontawesome-svg-core/styles.css'
-config.autoAddCss = false
+import { Inter } from "next/font/google";
+import "./globals.css";
+import { config } from "@fortawesome/fontawesome-svg-core";
+import "@fortawesome/fontawesome-svg-core/styles.css";
+config.autoAddCss = false;
 
 export const metadata: Metadata = {
   title: "FlowChat",
   description:
     "A discussion forum designed to provide an engaging and user-friendly platform for individuals to connect, communicate, and share ideas.",
   icons: {
-    icon: "/flowchat_logo.png",
+    icon: "/favicon.ico",
   },
 };
+
+const inter = Inter({
+  subsets: ["latin"],
+  display: "swap",
+});
 
 export default function RootLayout({
   children,
@@ -22,16 +28,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className="font-['Inter'] font-semibold">
-        <AuthProvider>
-          <div className="flex flex-col min-h-screen">
+    <html lang="en" className={inter.className}>
+      <body className="font-semibold">
+        <SessionProvider>
+          <div className="flex flex-col bg-base-200 text-base-content h-screen">
             <NavbarWithDrawer />
-            <main className="flex-1 bg-base-200 place-items-center place-content-center ">
-              {children}
-            </main>
+            <main className="flex-1 overflow-auto">{children}</main>
           </div>
-        </AuthProvider>
+        </SessionProvider>
       </body>
     </html>
   );
