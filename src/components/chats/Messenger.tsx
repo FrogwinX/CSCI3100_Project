@@ -12,16 +12,16 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 import { useSession } from "@/hooks/useSession";
-import { ConnectionStatus, IncomingMessage, messagingService, Contact } from "@/utils/messaging";
+import { ConnectionStatus, IncomingMessage, messagingService, Contact, getContactsList } from "@/utils/messaging";
 import ChatMessage from "@/components/chats/ChatMessage";
 import LoadingContact from "@/components/chats/LoadingContact";
 import UserAvatar from "@/components/users/UserAvatar";
 
-export default function Messenger({ initialContacts }: { initialContacts: Contact[] }) {
+export default function Messenger() {
   const { session } = useSession();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [selectedContact, setSelectedContact] = useState<Contact>();
-  const [messages, setMessages] = useState<IncomingMessage[]>([]);
+  const [conversation, setConversation] = useState<IncomingMessage[]>([]);
   const [messageText, setMessageText] = useState("");
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>(messagingService.getStatus());
   const [inSelection, setInSelection] = useState(false);
@@ -33,20 +33,6 @@ export default function Messenger({ initialContacts }: { initialContacts: Contac
   useEffect(() => {
     selectedContactRef.current = selectedContact;
   }, [selectedContact]);
-
-  const getContactUserId = (contact: Contact) => {
-    if (contact.usernameFrom === contact.contactUsername) {
-      return contact.userIdFrom;
-    } else if (contact.usernameTo === contact.contactUsername) {
-      return contact.userIdTo;
-    }
-
-    if (contact.messageId === -1) {
-      // Temporary contact, use the userIdFrom for the temp contact
-      return contact.userIdFrom;
-    }
-    return -1;
-  };
 
   // Connect to WebSocket when component mounts
   useEffect(() => {
@@ -62,8 +48,7 @@ export default function Messenger({ initialContacts }: { initialContacts: Contac
       try {
         await messagingService.connect(session.token!);
       } catch {
-        if (retryCount < 3) {
-          console.log(`Retrying connection (${retryCount + 1}/3)...`);
+        if (retryCount < 10) {
           retryCount++;
           retryTimeout = setTimeout(connectWithRetry, 1000);
         } else {
@@ -80,49 +65,55 @@ export default function Messenger({ initialContacts }: { initialContacts: Contac
     };
   }, [session]);
 
+  const fetchContacts = async () => {
+    try {
+      const contacts = await getContactsList(10);
+      setContacts(contacts);
+    } catch (error) {
+      console.error("Error fetching contacts:", error);
+    }
+  };
+
   // Subscribe to user own channel
   useEffect(() => {
     if (!session.userId || connectionStatus !== ConnectionStatus.CONNECTED) return;
 
     // Clear messages
-    setMessages([]);
+    setConversation([]);
 
     try {
       messagingService.subscribe(`${session.userId}`, (message) => {
         const messageDetail = message.messageDetail;
         const currentContact = selectedContactRef.current;
         console.log("Received message:", message);
+        fetchContacts();
         if (currentContact) {
           switch (message.action) {
             case "send":
-              if (
-                messageDetail.userIdFrom === getContactUserId(currentContact) ||
-                messageDetail.userIdTo === getContactUserId(currentContact)
-              ) {
-                // Check if this is a message we sent
-                if (messageDetail.userIdFrom === session.userId) {
-                  // Replace the temporary version with the server version which have the messageId)
-                  setMessages((prev) =>
-                    prev.map((m) =>
-                      m.userIdFrom === session.userId && m.content === messageDetail.content && m.messageId === -1
-                        ? messageDetail
-                        : m
-                    )
-                  );
-                } else {
-                  // For messages from other users, just add them
-                  setMessages((prev) => [...prev, messageDetail]);
-
-                  // Mark new message as read immediately if this conversation is active
-                  if (selectedContact) {
-                    readMessages([messageDetail]);
-                  }
-                }
+              // Message from self
+              if (messageDetail.userIdFrom === session.userId) {
+                // Replace the temporary version with the server version which have the messageId)
+                setConversation((prev) =>
+                  prev.map((m) =>
+                    m.userIdFrom === session.userId && m.content === messageDetail.content && m.messageId === -1
+                      ? messageDetail
+                      : m
+                  )
+                );
               }
+              // The message is from selected contact
+              if (messageDetail.userIdFrom === currentContact.contactUserId) {
+                // Add message to current conversation
+                setConversation((prev) => [...prev, messageDetail]);
+
+                // Mark new message as read immediately
+                readMessages([messageDetail]);
+              }
+
               break;
             case "read":
               // Update the read status of messages
-              setMessages((prev) =>
+              setConversation((prev) =>
                 prev.map((m) =>
                   message.readOrDeleteMessageIdList?.includes(m.messageId)
                     ? { ...m, readAt: new Date().toISOString() }
@@ -132,13 +123,13 @@ export default function Messenger({ initialContacts }: { initialContacts: Contac
               break;
             case "delete":
               // Remove deleted messages from the UI
-              setMessages((prev) => prev.filter((m) => !message.readOrDeleteMessageIdList?.includes(m.messageId)));
+              setConversation((prev) => prev.filter((m) => !message.readOrDeleteMessageIdList?.includes(m.messageId)));
               break;
           }
         }
       });
 
-      setContacts(initialContacts);
+      fetchContacts();
     } catch (error) {
       console.error("Failed to subscribe to channel:", error);
     }
@@ -152,10 +143,10 @@ export default function Messenger({ initialContacts }: { initialContacts: Contac
 
   // Mark messages as read when contact is selected or when new messages arrive
   useEffect(() => {
-    if (selectedContact && messages.length > 0 && connectionStatus === ConnectionStatus.CONNECTED) {
-      readMessages(messages);
+    if (selectedContact && conversation.length > 0 && connectionStatus === ConnectionStatus.CONNECTED) {
+      readMessages(conversation);
     }
-  }, [selectedContact, messages]);
+  }, [selectedContact, conversation]);
 
   // Send message function
   const sendMessage = () => {
@@ -166,7 +157,7 @@ export default function Messenger({ initialContacts }: { initialContacts: Contac
       const tempMessage: IncomingMessage = {
         messageId: -1, // Temporary ID
         userIdFrom: session.userId,
-        userIdTo: getContactUserId(selectedContact),
+        userIdTo: selectedContact.contactUserId,
         content: messageText,
         attachTo: 0,
         sentAt: new Date().toISOString(),
@@ -177,12 +168,12 @@ export default function Messenger({ initialContacts }: { initialContacts: Contac
       console.log("Sending message:", tempMessage);
 
       // Add to UI immediately
-      setMessages((prev) => [...prev, tempMessage]);
+      setConversation((prev) => [...prev, tempMessage]);
 
       // Send to server
       messagingService.sendMessage(`${session.userId}`, {
         userIdFrom: session.userId,
-        userIdTo: getContactUserId(selectedContact),
+        userIdTo: selectedContact.contactUserId,
         content: messageText,
         attachTo: 0,
         imageIdList: [],
@@ -201,7 +192,7 @@ export default function Messenger({ initialContacts }: { initialContacts: Contac
 
     // Filter unread messages received from the other user
     const unreadMessages = messages.filter(
-      (msg) => !msg.readAt && msg.userIdFrom === getContactUserId(selectedContact) && msg.userIdTo === session.userId
+      (msg) => !msg.readAt && msg.userIdFrom === selectedContact.contactUserId && msg.userIdTo === session.userId
     );
 
     if (unreadMessages.length === 0) return;
@@ -212,7 +203,7 @@ export default function Messenger({ initialContacts }: { initialContacts: Contac
     try {
       messagingService.sendMessage(`${session.userId}`, {
         userIdFrom: session.userId,
-        userIdTo: getContactUserId(selectedContact),
+        userIdTo: selectedContact.contactUserId,
         content: null,
         attachTo: null,
         imageIdList: null,
@@ -230,7 +221,7 @@ export default function Messenger({ initialContacts }: { initialContacts: Contac
     try {
       messagingService.sendMessage(`${session.userId}`, {
         userIdFrom: session.userId,
-        userIdTo: getContactUserId(selectedContact),
+        userIdTo: selectedContact.contactUserId,
         content: null,
         attachTo: null,
         imageIdList: null,
@@ -239,7 +230,7 @@ export default function Messenger({ initialContacts }: { initialContacts: Contac
       });
 
       // Update UI immediately for better user experience
-      setMessages((prev) => prev.filter((msg) => !selectedMessages.has(msg.messageId)));
+      setConversation((prev) => prev.filter((msg) => !selectedMessages.has(msg.messageId)));
 
       // Exit selection mode
       setInSelection(false);
@@ -283,7 +274,7 @@ export default function Messenger({ initialContacts }: { initialContacts: Contac
 
     try {
       // Check if we already have a conversation with this user
-      const existingContact = initialContacts.find((contact) => getContactUserId(contact) === userId);
+      const existingContact = contacts.find((contact) => contact.contactUserId === userId);
 
       if (existingContact) {
         // If we already have a conversation, just select it
@@ -313,7 +304,7 @@ export default function Messenger({ initialContacts }: { initialContacts: Contac
       // Update the contacts list and select the new contact
       setContacts((prev) => [newContact, ...prev]);
       setSelectedContact(newContact);
-      setMessages([]);
+      setConversation([]);
       setSearchInput("");
     } catch (error) {
       console.error("Error searching for user:", error);
@@ -363,16 +354,21 @@ export default function Messenger({ initialContacts }: { initialContacts: Contac
             ) : (
               contacts.map((contact) => (
                 <li
-                  key={getContactUserId(contact)}
-                  className={`list-row cursor-pointer hover:bg-base-200 ${
-                    selectedContact && getContactUserId(selectedContact) === getContactUserId(contact)
-                      ? "bg-base-200"
-                      : ""
+                  key={contact.contactUserId}
+                  className={`cursor-pointer p-2 hover:bg-base-200 ${
+                    selectedContact?.contactUserId === contact.contactUserId ? "bg-base-200" : ""
                   }`}
                   onClick={() => setSelectedContact(contact)}
                 >
                   <UserAvatar src={contact.contactUserAvatar} username={contact.contactUsername} size="lg" />
-                  <p className="list-col-wrap text-md">{contact.latestMessage}</p>
+                  <div className="flex justify-between items-center text-md">
+                    <span className="truncate">
+                      {contact.userIdFrom === session.userId ? `You: ${contact.latestMessage}` : contact.latestMessage}
+                    </span>
+                    {contact.unreadMessageCount > 0 && (
+                      <span className="badge badge-info badge-sm text-info-content">{contact.unreadMessageCount}</span>
+                    )}
+                  </div>
                 </li>
               ))
             )}
@@ -383,7 +379,7 @@ export default function Messenger({ initialContacts }: { initialContacts: Contac
           {selectedContact ? (
             <div className="overflow-y-auto flex flex-col flex-grow">
               <div className="flex h-14 justify-between items-center bg-base-100 shadow-md p-2">
-                <Link href={`/profile/${getContactUserId(selectedContact)}`}>
+                <Link href={`/profile/${selectedContact.contactUserId}`}>
                   <div className="avatar items-center gap-2">
                     <div className="bg-neutral text-neutral-content place-content-center rounded-full w-10">
                       {/* <FontAwesomeIcon icon={faUser} /> */}
@@ -434,7 +430,7 @@ export default function Messenger({ initialContacts }: { initialContacts: Contac
 
               {/* Messages */}
               <div className="flex-grow">
-                {messages.map((message) => (
+                {conversation.map((message) => (
                   <ChatMessage
                     key={message.messageId}
                     isOwner={message.userIdFrom === session.userId}
