@@ -3,14 +3,12 @@ package project.flowchat.backend.Controller;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import project.flowchat.backend.DTO.PostDTO;
 import project.flowchat.backend.DTO.ResponseBodyDTO;
 import project.flowchat.backend.Model.UserAccountModel;
 import project.flowchat.backend.Service.AccountService;
 import project.flowchat.backend.Service.ExceptionService;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @AllArgsConstructor
@@ -174,7 +172,33 @@ public class AccountController {
 
         try {
             Map<String, Object> data = new HashMap<>();
-            accountService.resetPassword(email, password, authenticationCode);
+            accountService.resetPasswordByEmail(email, password, authenticationCode);
+            data.put("isSuccess", true);
+            data.put("username", accountService.getNameFromEmail(email));
+            responseBodyDTO.setMessage("Password is reset");
+            responseBodyDTO.setData(data);
+        } catch (ExceptionService e) {
+            responseBodyDTO.setMessage(e.getMessage());
+            Map<String, Object> data = new HashMap<>();
+            data.put("isSuccess", false);
+            data.put("username", null);
+            responseBodyDTO.setData(data);
+        } catch (Exception e) {
+            responseBodyDTO.setMessage("Fail: " + e);
+            responseBodyDTO.setData(null);
+        }
+        return responseBodyDTO;
+    }
+
+    @PutMapping("resetPasswordByOldPassword")
+    private ResponseBodyDTO resetPasswordByOldPassword(@RequestBody Map<String, String> requestBody) {
+        String email = requestBody.get("email");
+        String oldPassword = requestBody.get("oldPassword");
+        String newPassword = requestBody.get("newPassword");
+
+        try {
+            Map<String, Object> data = new HashMap<>();
+            accountService.resetPasswordByOldPassword(email, oldPassword, newPassword);
             data.put("isSuccess", true);
             data.put("username", accountService.getNameFromEmail(email));
             responseBodyDTO.setMessage("Password is reset");
