@@ -18,7 +18,7 @@ export default function UserInfo() {
         {/* Username and email */}
         <div>
           <h3 className="text-xl font-bold">{session.username}</h3>
-          <p className="text-base-content/70">Email: xxx</p>
+          <p className="text-base-content/70">Email: {session.email}</p>
         </div>
       </div>
       <div className="divider my-0"></div>
