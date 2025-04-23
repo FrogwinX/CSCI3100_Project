@@ -23,6 +23,6 @@
       "@/*": ["src/*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "src/components/settings/DeleteAccount.tsx"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "src/components/settings/DeleteAccountSection.tsx"],
   "exclude": ["node_modules"]
 }

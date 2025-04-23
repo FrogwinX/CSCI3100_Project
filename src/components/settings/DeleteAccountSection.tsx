@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import ConfirmDialog from "@/components/settings/ConfirmDialog"
+import ConfirmDialog from "@/components/settings/ConfirmDeleteAccountDialog"
 
 export default function DeleteAccount() {
 

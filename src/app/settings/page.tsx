@@ -1,7 +1,7 @@
 import { Metadata } from "next";
-import UserInfo from "@/components/settings/User";
-import ChangePassword from "@/components/settings/ChangePassword";
-import DeleteAccount from "@/components/settings/DeleteAccount";
+import UserInfo from "@/components/settings/UserSection";
+import ChangePassword from "@/components/settings/ChangePasswordSection";
+import DeleteAccount from "@/components/settings/DeleteAccountSection";
 import { getSession } from "@/utils/sessions";
 
 export const metadata: Metadata = {

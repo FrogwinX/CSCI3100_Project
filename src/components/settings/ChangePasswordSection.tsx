@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import ChangePasswordSection from "@/components/forms/formChangePassword"
+import ChangePasswordSection from "@/components/settings/ChangePasswordForm"
 
 export default function ChangePassword() {
 
