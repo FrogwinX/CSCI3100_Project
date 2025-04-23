@@ -69,7 +69,7 @@ public class ChatController {
             List<ChatMessageDetailsDTO> messageHistoryList = chatService.getMessageHistoryList(userId, contactUserId, excludingMessageIdList, messageNum);
             data.put("isSuccess", true);
             data.put("messageHistoryList", messageHistoryList);
-            responseBodyDTO.setMessage("The contact list is returned");
+            responseBodyDTO.setMessage("The message history list is returned");
             responseBodyDTO.setData(data);
         } catch (ExceptionService e) {
             Map<String, Object> data = new HashMap<>();

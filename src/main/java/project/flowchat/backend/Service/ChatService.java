@@ -114,6 +114,7 @@ public class ChatService {
         messageDTO.setUserIdTo(messageModel.getUserIdTo());
         messageDTO.setContent(messageModel.getContent());
         messageDTO.setAttachTo(messageModel.getAttachTo());
+        messageDTO.setIsActive(messageModel.getIsActive());
         messageDTO.setSentAt(messageModel.getSentAt());
         messageDTO.setReadAt(messageModel.getReadAt());
 
