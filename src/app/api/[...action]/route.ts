@@ -92,8 +92,6 @@ export async function GET(request: NextRequest, props: { params: Params }) {
   const searchParams = url.search;
   const { token, userId } = await getAuthInfo();
 
-  console.log("GET request to:", `${API_BASE_URL}/${actionPath}${searchParams}`);
-
   const response = await fetch(`${API_BASE_URL}/${actionPath}${searchParams}&userId=${userId}`, {
     method: "GET",
     headers: {

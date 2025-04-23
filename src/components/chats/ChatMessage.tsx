@@ -23,11 +23,6 @@ export default function ChatMessage({
       className={`chat px-4 py-2 ${isOwner ? "chat-end" : "chat-start"} ${isSelected ? "bg-primary/20" : ""}`}
       onClick={handleClick}
     >
-      <div className="chat-image avatar">
-        <div className="bg-neutral text-neutral-content place-content-center rounded-full w-10">
-          {/* <FontAwesomeIcon icon={faUser} /> */}
-        </div>
-      </div>
       <div
         className={`chat-bubble ${
           isOwner ? "bg-primary text-primary-content" : "bg-neutral text-neutral-content"

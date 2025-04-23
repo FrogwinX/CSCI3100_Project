@@ -10,12 +10,20 @@ import {
 import { faCheckSquare } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Link from "next/link";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "@/hooks/useSession";
-import { ConnectionStatus, IncomingMessage, messagingService, Contact, getContactsList } from "@/utils/messaging";
+import {
+  ConnectionStatus,
+  IncomingMessage,
+  messagingService,
+  Contact,
+  getContactsList,
+  getMessageHistory,
+} from "@/utils/messaging";
 import ChatMessage from "@/components/chats/ChatMessage";
 import LoadingContact from "@/components/chats/LoadingContact";
 import UserAvatar from "@/components/users/UserAvatar";
+import { faImage } from "@fortawesome/free-solid-svg-icons";
 
 export default function Messenger() {
   const { session } = useSession();
@@ -27,6 +35,20 @@ export default function Messenger() {
   const [inSelection, setInSelection] = useState(false);
   const [selectedMessages, setSelectedMessages] = useState<Set<number>>(new Set());
   const [searchInput, setSearchInput] = useState("");
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const conversationRef = useRef<HTMLDivElement>(null);
+  const [isLoadingMoreMessages, setIsLoadingMoreMessages] = useState(false);
+  const [hasMoreMessages, setHasMoreMessages] = useState(true);
+  const messageLoaderRef = useRef<HTMLDivElement>(null);
+  const [excludedMessageIds, setExcludedMessageIds] = useState<Set<number>>(new Set());
+  const connectRetryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleImageSelect: React.ChangeEventHandler<HTMLInputElement> = (e) => {
+    const files = Array.from(e.target.files || []);
+    setSelectedFiles(files);
+    setImagePreviews(files.map((f) => URL.createObjectURL(f)));
+  };
 
   // Keep a ref of the selected contact such that it can be used in the message subscription callback
   const selectedContactRef = useRef<Contact | undefined>(undefined);
@@ -34,112 +56,217 @@ export default function Messenger() {
     selectedContactRef.current = selectedContact;
   }, [selectedContact]);
 
-  // Connect to WebSocket when component mounts
-  useEffect(() => {
-    if (!session.isLoggedIn || !session.token) return;
-
-    const unsubscribeStatus = messagingService.onStatusChange(setConnectionStatus);
-    let retryCount = 0;
-    let retryTimeout: NodeJS.Timeout;
-
-    const connectWithRetry = async () => {
-      if (messagingService.getStatus() === ConnectionStatus.CONNECTED) return;
-
-      try {
-        await messagingService.connect(session.token!);
-      } catch {
-        if (retryCount < 10) {
-          retryCount++;
-          retryTimeout = setTimeout(connectWithRetry, 1000);
-        } else {
-          console.log("Max retries reached");
-        }
-      }
-    };
-
-    connectWithRetry();
-
-    return () => {
-      unsubscribeStatus();
-      clearTimeout(retryTimeout);
-    };
-  }, [session]);
-
-  const fetchContacts = async () => {
+  const handleContactSelect = async (contact: Contact) => {
+    setSelectedContact(contact);
+    setConversation([]); // Clear previous conversation
+    setIsLoadingMoreMessages(true); // Show loading indicator
+    setHasMoreMessages(true); // Reset hasMore flag
     try {
-      const contacts = await getContactsList(10);
-      setContacts(contacts);
+      const messageHistory = await getMessageHistory(contact.contactUserId, 15);
+      setConversation(messageHistory);
+
+      // Add fetched message IDs to excludedMessageIds
+      const newExcludedIds = new Set<number>();
+      messageHistory.forEach((message) => newExcludedIds.add(Number(message.messageId)));
+      setExcludedMessageIds(newExcludedIds);
     } catch (error) {
-      console.error("Error fetching contacts:", error);
+      console.error("Error fetching message history:", error);
+      setHasMoreMessages(false); // Assume no more messages on error
+    } finally {
+      setIsLoadingMoreMessages(false);
     }
   };
 
-  // Subscribe to user own channel
-  useEffect(() => {
-    if (!session.userId || connectionStatus !== ConnectionStatus.CONNECTED) return;
+  // Function to load more messages (older ones)
+  const loadMoreMessages = useCallback(async () => {
+    if (isLoadingMoreMessages || !hasMoreMessages || !selectedContact || conversation.length === 0) return;
 
-    // Clear messages
-    setConversation([]);
-
+    setIsLoadingMoreMessages(true);
     try {
+      // Fetch older messages
+      const olderMessages = await getMessageHistory(selectedContact.contactUserId, 15, Array.from(excludedMessageIds));
+
+      // Update excludedMessageIds with new messages
+      setExcludedMessageIds((prevExcludedIds) => {
+        const newExcludedIds = new Set(prevExcludedIds);
+        olderMessages.forEach((message) => newExcludedIds.add(Number(message.messageId)));
+        return newExcludedIds;
+      });
+
+      if (olderMessages.length > 0) {
+        setConversation((prev) => [...prev, ...olderMessages]); // Append older messages
+      } else {
+        setHasMoreMessages(false); // No more messages to load
+      }
+    } catch (error) {
+      console.error("Failed to load more messages:", error);
+      setHasMoreMessages(false); // Stop trying on error
+    } finally {
+      setIsLoadingMoreMessages(false);
+    }
+  }, [isLoadingMoreMessages, hasMoreMessages, selectedContact, conversation]);
+
+  // Infinite scrolling setup for messages
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMoreMessages && !isLoadingMoreMessages) {
+          loadMoreMessages();
+        }
+      },
+      {
+        root: conversationRef.current, // Observe within the scrollable container
+        threshold: 0.1,
+      }
+    );
+
+    const currentLoaderRef = messageLoaderRef.current;
+    if (currentLoaderRef) {
+      observer.observe(currentLoaderRef);
+    }
+
+    return () => {
+      if (currentLoaderRef) {
+        observer.unobserve(currentLoaderRef);
+      }
+    };
+  }, [hasMoreMessages, isLoadingMoreMessages, loadMoreMessages]);
+
+  // Connect to the messaging service with retry logic
+  const connectWithRetry = useCallback(
+    async (attempt = 1): Promise<void> => {
+      // Clear any existing retry timeout
+      if (connectRetryTimeoutRef.current) {
+        clearTimeout(connectRetryTimeoutRef.current);
+        connectRetryTimeoutRef.current = null;
+      }
+
+      if (messagingService.getStatus() === ConnectionStatus.CONNECTED) {
+        console.log("Already connected.");
+        return;
+      }
+      if (attempt > 20) {
+        // Limit retries
+        console.error("WebSocket connection failed after multiple attempts.");
+        setConnectionStatus(ConnectionStatus.ERROR); // Set error state explicitly
+        return;
+      }
+
+      setConnectionStatus(ConnectionStatus.CONNECTING); // Ensure status is connecting
+
+      try {
+        await messagingService.connect(session.token!);
+      } catch (error) {
+        connectRetryTimeoutRef.current = setTimeout(() => connectWithRetry(attempt + 1), 500);
+      }
+    },
+    [session.token]
+  );
+
+  const fetchContacts = useCallback(async () => {
+    // Don't fetch if not connected or already loading
+    if (messagingService.getStatus() !== ConnectionStatus.CONNECTED) {
+      console.log("Skipping fetchContacts:", { status: messagingService.getStatus() });
+      return;
+    }
+    try {
+      const fetchedContacts = await getContactsList(20);
+      setContacts(fetchedContacts);
+    } catch (error) {
+      console.error("Error fetching contacts:", error);
+      setContacts([]); // Clear contacts on error
+    }
+  }, [ConnectionStatus]);
+
+  // Connect to websocket
+  useEffect(() => {
+    if (!session.isLoggedIn || !session.token || !session.userId) {
+      // If session is lost, disconnect and clear state
+      messagingService.disconnect();
+      setContacts([]);
+      setSelectedContact(undefined);
+      setConversation([]);
+      return;
+    }
+
+    // Subscribe to status changes
+    const unsubscribeStatus = messagingService.onStatusChange(setConnectionStatus);
+
+    // Attempt initial connection if disconnected
+    if (messagingService.getStatus() === ConnectionStatus.DISCONNECTED) {
+      connectWithRetry();
+    }
+
+    // Cleanup function
+    return () => {
+      unsubscribeStatus();
+      // Clear any pending retry timeout on component unmount or session change
+      if (connectRetryTimeoutRef.current) {
+        clearTimeout(connectRetryTimeoutRef.current);
+      }
+    };
+  }, [session.isLoggedIn, session.token, session.userId, connectWithRetry]);
+
+  // Subscribe to user channel and fetch contacts
+  useEffect(() => {
+    if (connectionStatus === ConnectionStatus.CONNECTED && session.userId) {
+      // Subscribe to user channel
       messagingService.subscribe(`${session.userId}`, (message) => {
         const messageDetail = message.messageDetail;
         const currentContact = selectedContactRef.current;
         console.log("Received message:", message);
+        // Update contacts list
         fetchContacts();
         if (currentContact) {
           switch (message.action) {
             case "send":
-              // Message from self
+              // Message from self (replace temp)
               if (messageDetail.userIdFrom === session.userId) {
-                // Replace the temporary version with the server version which have the messageId)
                 setConversation((prev) =>
                   prev.map((m) =>
-                    m.userIdFrom === session.userId && m.content === messageDetail.content && m.messageId === -1
+                    m.messageId === -1 && m.content === messageDetail.content // More specific check
                       ? messageDetail
                       : m
                   )
                 );
               }
-              // The message is from selected contact
-              if (messageDetail.userIdFrom === currentContact.contactUserId) {
-                // Add message to current conversation
-                setConversation((prev) => [...prev, messageDetail]);
-
-                // Mark new message as read immediately
-                readMessages([messageDetail]);
+              // Message from selected contact
+              else if (messageDetail.userIdFrom === currentContact.contactUserId) {
+                setConversation((prev) => [messageDetail, ...prev]); // Prepend for flex-reverse
+                readMessages([messageDetail]); // Mark as read
               }
-
+              // Message from *another* contact - update contact list state
+              else {
+                console.log("Message from another contact, fetching updated contacts list...");
+                fetchContacts(); // Fetch contacts if message is from someone else
+              }
               break;
             case "read":
-              // Update the read status of messages
               setConversation((prev) =>
                 prev.map((m) =>
-                  message.readOrDeleteMessageIdList?.includes(m.messageId)
-                    ? { ...m, readAt: new Date().toISOString() }
-                    : m
+                  message.readOrDeleteMessageIdList?.includes(m.messageId) ? { ...m, readAt: message.time } : m
                 )
               );
               break;
             case "delete":
-              // Remove deleted messages from the UI
               setConversation((prev) => prev.filter((m) => !message.readOrDeleteMessageIdList?.includes(m.messageId)));
               break;
           }
+        } else {
+          // Message received, but no contact selected. Update contacts list.
+          fetchContacts();
         }
       });
 
+      // Fetch initial contacts after successful connection and subscription setup
       fetchContacts();
-    } catch (error) {
-      console.error("Failed to subscribe to channel:", error);
-    }
 
-    return () => {
-      if (session.userId) {
+      // Cleanup for this effect: Unsubscribe when status is no longer CONNECTED or userId changes
+      return () => {
         messagingService.unsubscribe(`/channel/${session.userId}`);
-      }
-    };
-  }, [session, connectionStatus]);
+      };
+    }
+  }, [connectionStatus, session.userId, fetchContacts]);
 
   // Mark messages as read when contact is selected or when new messages arrive
   useEffect(() => {
@@ -151,6 +278,10 @@ export default function Messenger() {
   // Send message function
   const sendMessage = () => {
     if (!messageText.trim() || !session.userId || !selectedContact) return;
+
+    let imageIdList: number[] = [];
+    if (selectedFiles.length) {
+    }
 
     try {
       // Create a temporary message object for immediate display
@@ -165,10 +296,15 @@ export default function Messenger() {
         imageAPIList: null,
       };
 
-      console.log("Sending message:", tempMessage);
-
       // Add to UI immediately
-      setConversation((prev) => [...prev, tempMessage]);
+      setConversation((prev) => [tempMessage, ...prev]);
+      // Scroll to the bottom of the conversation
+      if (conversationRef.current) {
+        conversationRef.current.scrollTo({
+          top: conversationRef.current.scrollHeight,
+          behavior: "smooth",
+        });
+      }
 
       // Send to server
       messagingService.sendMessage(`${session.userId}`, {
@@ -182,6 +318,8 @@ export default function Messenger() {
       });
 
       setMessageText("");
+      setSelectedFiles([]);
+      setImagePreviews([]);
     } catch (error) {
       console.error("Failed to send message:", error);
     }
@@ -327,6 +465,20 @@ export default function Messenger() {
         <div className="w-1/3 flex flex-col bg-base-100 shadow-md">
           <div className="flex flex-col p-2 gap-2">
             <h1 className="text-2xl font-bold mt-6">Contacts</h1>
+            <div className="my-2 flex items-center gap-2">
+              <span className="text-sm font-medium">Status:</span>
+              <span
+                className={`badge ${
+                  connectionStatus === ConnectionStatus.CONNECTED
+                    ? "badge-success"
+                    : connectionStatus === ConnectionStatus.CONNECTING
+                    ? "badge-warning"
+                    : "badge-error"
+                } badge-sm`}
+              >
+                {connectionStatus.toLowerCase()}
+              </span>
+            </div>
             {/* Search bar */}
             <div className="relative bg-base-200 rounded-full p-1">
               <FontAwesomeIcon
@@ -358,7 +510,7 @@ export default function Messenger() {
                   className={`cursor-pointer p-2 hover:bg-base-200 ${
                     selectedContact?.contactUserId === contact.contactUserId ? "bg-base-200" : ""
                   }`}
-                  onClick={() => setSelectedContact(contact)}
+                  onClick={() => handleContactSelect(contact)}
                 >
                   <UserAvatar src={contact.contactUserAvatar} username={contact.contactUsername} size="lg" />
                   <div className="flex justify-between items-center text-md">
@@ -429,7 +581,8 @@ export default function Messenger() {
               </div>
 
               {/* Messages */}
-              <div className="flex-grow">
+              <div ref={conversationRef} className="flex flex-col-reverse flex-grow overflow-y-auto p-2">
+                {/* Map messages */}
                 {conversation.map((message) => (
                   <ChatMessage
                     key={message.messageId}
@@ -439,8 +592,17 @@ export default function Messenger() {
                     onMessageClick={toggleSelection}
                   />
                 ))}
+                {/* Observer target and loading state for older messages */}
+                <div ref={messageLoaderRef} className="py-2 text-center">
+                  {isLoadingMoreMessages ? (
+                    <span className="loading loading-spinner loading-md"></span>
+                  ) : !hasMoreMessages && conversation.length > 0 ? (
+                    <p className="text-xs text-base-content/50">This is the begining of this chat</p>
+                  ) : (
+                    <div className="h-1"></div> // Placeholder for observer
+                  )}
+                </div>
               </div>
-              {/* Please create a custom input field component with image input */}
               <div className="flex p-2 gap-2">
                 <input
                   type="text"
@@ -470,6 +632,7 @@ export default function Messenger() {
           )}
         </div>
       </div>
+
       {/* Right column */}
       <div className="hidden lg:block w-1/8"></div>
     </div>

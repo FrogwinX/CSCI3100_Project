@@ -58,6 +58,14 @@ interface ContactListResponse {
   };
 }
 
+interface MessageHistoryResponse {
+  message: string;
+  data: {
+    messageHistoryList: IncomingMessage[];
+    isSuccess: boolean;
+  };
+}
+
 // Connection status
 export enum ConnectionStatus {
   DISCONNECTED = "disconnected",
@@ -232,6 +240,55 @@ export async function getContactsList(count: number): Promise<Contact[]> {
     return data.data.contactList;
   } catch (error) {
     console.error("Error fetching contact list:", error);
+    return [];
+  }
+}
+
+export async function getMessageHistory(
+  contactUserId: number,
+  count: number,
+  excludingMessageIdList?: number[]
+): Promise<IncomingMessage[]> {
+  try {
+    let apiUrl = `/api/Chat/getMessageHistoryList?contactUserId=${contactUserId}&messageNum=${count || 15}`;
+
+    // Filter out fetched messages
+    if (excludingMessageIdList) {
+      while (excludingMessageIdList.length > 0) {
+        //add all excludingMessageId to the URL
+        apiUrl += `&excludingMessageIdList=${excludingMessageIdList.shift()}`;
+      }
+    } else {
+      //default value = 0
+      apiUrl += `&excludingMessageIdList=0`;
+    }
+
+    // Fetch data from the API
+    const response = await fetch(apiUrl, {
+      method: "GET",
+    });
+
+    if (!response.ok) {
+      console.error(`API error: ${response.status} ${response.statusText}`);
+      return [];
+    }
+
+    const data: MessageHistoryResponse = await response.json();
+
+    // Safer property access with detailed logging
+    if (!data) {
+      console.error("Empty response from API");
+      return [];
+    }
+
+    if (!data.data) {
+      console.error("Response missing data property:", data);
+      return [];
+    }
+
+    return data.data.messageHistoryList;
+  } catch (error) {
+    console.error("Error fetching message history:", error);
     return [];
   }
 }
