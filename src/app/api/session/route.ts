@@ -13,6 +13,7 @@ export async function GET() {
       isLoggedIn: session.isLoggedIn,
       token: session.token,
       avatar: session.avatar,
+      email: session.email,
     });
   } catch (error) {
     console.error("Error fetching session:", error);
