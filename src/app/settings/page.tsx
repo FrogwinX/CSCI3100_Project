@@ -1,5 +1,4 @@
 import { Metadata } from "next";
-import { User } from "@/components/settings/User";
 import UserInfo from "@/components/settings/User";
 import ChangePassword from "@/components/settings/ChangePassword";
 import DeleteAccount from "@/components/settings/DeleteAccount";
@@ -12,12 +11,6 @@ export const metadata: Metadata = {
 
 export default async function SettingPage() {
 
-  const session = await getSession();
-  const user : User = {
-    username: session.username,
-    email: "edwinlamtk@gmail.com",
-    profileImage: session.profileImage
-  };
 
   return (
     <div className="flex h-fit min-h-full w-full gap-x-2 md:px-32">
@@ -29,9 +22,12 @@ export default async function SettingPage() {
         <div className="bg-base-100 min-h-full">
           <div className="w-full">
             <div className="card-body p-6 gap-10">
-              <UserInfo user={user} />
-              <ChangePassword user={user} />
-              <DeleteAccount user={user} />
+              <label className="label">
+                <span className="label-text text-base-content text-2xl">Settings</span>
+              </label>
+              <UserInfo/>
+              <ChangePassword/>
+              <DeleteAccount/>
             </div>
           </div>
         </div>

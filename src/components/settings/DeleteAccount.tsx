@@ -1,17 +1,11 @@
 "use client";
 
-import {User} from "./User";
+import { useState } from "react";
+import ConfirmDialog from "@/components/settings/ConfirmDialog"
 
-export default function DeleteAccount({ user }: { user: User }) {
+export default function DeleteAccount() {
 
-  const handleClick = () => {
-    const confirmAction = window.confirm("Are you sure you want to delete your account?");
-    if (confirmAction) {
-      
-    } else {
-
-    }
-  };
+  const [isConfirmDialogOpen, setConfirmDialogOpen] = useState<boolean>(false);
 
   return (
     <div className="card-body p-0 gap-2">
@@ -21,9 +15,16 @@ export default function DeleteAccount({ user }: { user: User }) {
           <p className="text-base-content/70">Once you delete your account, you cannot retrieve it. Please be certain.</p>
         </div>
         <div>
-          <button className="btn btn-error" onClick={handleClick} >
+          <button
+            className="btn btn-error"
+            onClick={(): void => {
+              setConfirmDialogOpen(true);
+            }}>
             Delete Account
           </button>
+          <div className={isConfirmDialogOpen ? "" : "hidden"}>
+            <ConfirmDialog setConfirmDialogOpen={setConfirmDialogOpen}/>
+          </div>
         </div>
       </div>
       <div className="divider my-0"></div>

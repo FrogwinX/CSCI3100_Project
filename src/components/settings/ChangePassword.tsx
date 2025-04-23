@@ -1,16 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { User } from "./User";
 import ChangePasswordSection from "@/components/forms/formChangePassword"
 
-export default function ChangePassword({ user }: { user: User }) {
+export default function ChangePassword() {
 
   const [isPasswordInputBoxOpen, setPasswordInputBoxOpen] = useState<boolean>(false);
-
-  const togglePasswordInputBox = (): void => {
-    setPasswordInputBoxOpen((prev) => !prev);
-  };
 
   return (
     <div className="card-body p-0 gap-2">
@@ -20,13 +15,17 @@ export default function ChangePassword({ user }: { user: User }) {
           <p className="text-base-content/70">Strengthen your account by setting a stronger password.</p>
         </div>
         <div>
-          <button className={isPasswordInputBoxOpen ? "btn btn-basic" : "btn btn-primary"}  onClick={togglePasswordInputBox}>
+          <button
+            className={isPasswordInputBoxOpen ? "btn btn-basic" : "btn btn-primary"}
+            onClick={(): void => {
+              setPasswordInputBoxOpen((prev) => !prev);
+            }}>
             Change Password
           </button>
         </div>
       </div>
       <div className={isPasswordInputBoxOpen ? "" : "hidden"}>
-        <ChangePasswordSection/>
+        <ChangePasswordSection />
       </div>
       <div className="divider my-0"></div>
     </div>

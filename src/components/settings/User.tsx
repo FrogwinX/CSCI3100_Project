@@ -1,42 +1,27 @@
 "use client";
 
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faUser } from "@fortawesome/free-solid-svg-icons";
-import Image from "next/image";
+import UserAvatar from "@/components/users/UserAvatar";
+import { useSession } from "@/hooks/useSession";
 
-export interface User {
-  username?: string;
-  email: string;
-  profileImage?: string;
-}
+export default function UserInfo() {
 
-export default function UserInfo({ user }: { user: User }) {
+  const { session } = useSession();
+
   return (
-    <div className="h-20 flex items-center gap-4">
-      {/* User avatar */}
-      <div className="avatar avatar-placeholder items-center gap-1">
-        {user.profileImage ? (
-          <div className="w-16 h-16 rounded-full">
-            <Image
-              src={user.profileImage}
-              alt={""}
-              width={64}
-              height={64}
-              className="rounded-full object-cover"
-            />
-          </div>
-        ) : (
-          <div className="w-16 h-16 bg-neutral text-neutral-content rounded-full flex items-center justify-center">
-            <FontAwesomeIcon icon={faUser} size="lg" />
-          </div>
-        )}
-      </div>
+    <div className="card-body p-0 gap-2">
+      <div className="h-15 flex items-center gap-6">
+        {/* User avatar */}
+        <div className="avatar avatar-placeholder items-center gap-1">
+          <UserAvatar src={session.avatar!} size="lg" />
+        </div>
 
-      {/* Username and email */}
-      <div>
-        <h3 className="text-lg font-bold">{user.username}</h3>
-        <p className="text-base-content/70">Email: {user.email}</p>
+        {/* Username and email */}
+        <div>
+          <h3 className="text-xl font-bold">{session.username}</h3>
+          <p className="text-base-content/70">Email: xxx</p>
+        </div>
       </div>
+      <div className="divider my-0"></div>
     </div>
   );
 }
