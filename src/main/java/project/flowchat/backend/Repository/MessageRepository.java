@@ -105,8 +105,7 @@ public interface MessageRepository extends JpaRepository<MessageModel, Integer> 
      */
     @NativeQuery("SELECT TOP (?4) *\n" +
             "FROM CHAT.Message\n" +
-            "WHERE is_active = 1\n" +
-            "AND ((user_id_from = ?1 AND user_id_to = ?2)\n" +
+            "WHERE ((user_id_from = ?1 AND user_id_to = ?2)\n" +
             "OR (user_id_from = ?2 AND user_id_to = ?1))\n" +
             "AND message_id NOT IN ?3\n" +
             "ORDER BY sent_at DESC")

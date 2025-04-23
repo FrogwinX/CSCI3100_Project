@@ -18,6 +18,7 @@ public class ChatMessageDetailsDTO {
     private Integer userIdFrom;
     private Integer userIdTo;
     private String content;
+    private Boolean isActive;
     private Integer attachTo;
     private ZonedDateTime sentAt;
     private ZonedDateTime readAt;
