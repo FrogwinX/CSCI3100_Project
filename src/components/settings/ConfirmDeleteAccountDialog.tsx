@@ -6,6 +6,7 @@ import { faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { clear } from "console";
 
 export default function ConfirmDialog({ setConfirmDialogOpen }: { setConfirmDialogOpen: (value: boolean) => void }) {
 
@@ -22,6 +23,11 @@ export default function ConfirmDialog({ setConfirmDialogOpen }: { setConfirmDial
   const wait = (s: number) => {
     return new Promise(resolve => setTimeout(resolve, s * 1000));
   };
+
+  const clearForm = () => {
+    setUserInput("");
+    setPassword("");
+  }
   
   const handleLogin = async (e: React.FormEvent) => {
     setLoading(true);
@@ -44,7 +50,7 @@ export default function ConfirmDialog({ setConfirmDialogOpen }: { setConfirmDial
         setAccountDeleted(true);
         logout();
         await wait(5);
-        router.push("/login");
+        router.replace("/login");
         await refresh();
       } else {
         setPasswordCorrect(false);
@@ -56,7 +62,7 @@ export default function ConfirmDialog({ setConfirmDialogOpen }: { setConfirmDial
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUserInput(e.target.value);
-    if (e.target.value === session.username && password) {
+    if ((e.target.value === session.username || e.target.value === session.email) && password) {
       setIsSubmitDisabled(false)
     } else {
       setIsSubmitDisabled(true)
@@ -65,7 +71,7 @@ export default function ConfirmDialog({ setConfirmDialogOpen }: { setConfirmDial
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPassword(e.target.value);
-    if (e.target.value && UsernameOrEmail === session.username) {
+    if (e.target.value && (UsernameOrEmail === session.username || UsernameOrEmail === session.email)) {
       setIsSubmitDisabled(false)
     } else {
       setIsSubmitDisabled(true)
@@ -80,6 +86,7 @@ export default function ConfirmDialog({ setConfirmDialogOpen }: { setConfirmDial
         className="fixed inset-0"
         onClick={(): void => {
           setConfirmDialogOpen(false);
+          clearForm();
         }}
       >
       </div>
@@ -141,7 +148,7 @@ export default function ConfirmDialog({ setConfirmDialogOpen }: { setConfirmDial
             
           </div>
 
-          <div className={`form-control ${isAccountDeleted? 'hidden':''}`}>
+          <div className={`form-control ${isAccountDeleted? 'hidden' : ''}`}>
             <button
               type="submit"
               className="btn btn-error w-full"
@@ -151,12 +158,13 @@ export default function ConfirmDialog({ setConfirmDialogOpen }: { setConfirmDial
             </button>
           </div>
 
-          <div className={`form-control mt-2 ${isAccountDeleted? 'hidden':''}`}>
+          <div className={`form-control mt-2 ${isAccountDeleted? 'hidden' : ''}`}>
             <button
               type="button"
               className="btn btn-secondary w-full bg-base-300 text-base-content border-none"
               onClick={(): void => {
                 setConfirmDialogOpen(false);
+                clearForm();
               }}
             >
               Cancel

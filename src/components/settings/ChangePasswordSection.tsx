@@ -25,7 +25,7 @@ export default function ChangePassword() {
         </div>
       </div>
       <div className={isPasswordInputBoxOpen ? "" : "hidden"}>
-        <ChangePasswordSection />
+        <ChangePasswordSection setPasswordInputBoxOpen={setPasswordInputBoxOpen}/>
       </div>
       <div className="divider my-0"></div>
     </div>

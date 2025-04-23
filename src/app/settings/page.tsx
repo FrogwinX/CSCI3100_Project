@@ -2,7 +2,6 @@ import { Metadata } from "next";
 import UserInfo from "@/components/settings/UserSection";
 import ChangePassword from "@/components/settings/ChangePasswordSection";
 import DeleteAccount from "@/components/settings/DeleteAccountSection";
-import { getSession } from "@/utils/sessions";
 
 export const metadata: Metadata = {
   title: "Settings | FlowChat",
@@ -10,7 +9,6 @@ export const metadata: Metadata = {
 };
 
 export default async function SettingPage() {
-
 
   return (
     <div className="flex h-fit min-h-full w-full gap-x-2 md:px-32">

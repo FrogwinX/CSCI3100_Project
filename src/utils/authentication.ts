@@ -215,9 +215,9 @@ export async function deleteAccount(formData: FormData) {
     const session = await getSession();
     const result = await apiFetch<DeleteAccountData>("Account/deleteAccount", {
       method: "PUT",
-      headers: { 
+      headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${session.token}` 
+        Authorization: `Bearer ${session.token}`
       },
       body: JSON.stringify({ email, username, password }),
     });
@@ -242,6 +242,32 @@ export async function resetPasswordByEmail(formData: FormData) {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password, authenticationCode }),
+    });
+
+    return result;
+  } catch {
+    return {
+      message: "Failed to reset password",
+      data: { username: null, isSuccess: false },
+    };
+  }
+}
+
+// Reset password by old password server action
+export async function resetPasswordByOldPassword(formData: FormData) {
+  const email = formData.get("email") as string;
+  const oldPassword = formData.get("oldPassword") as string;
+  const newPassword = formData.get("newPassword") as string;
+
+  try {
+    const session = await getSession();
+    const result = await apiFetch<ResetPasswordData>("Account/resetPasswordByOldPassword", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.token}`
+      },
+      body: JSON.stringify({ email, oldPassword, newPassword }),
     });
 
     return result;

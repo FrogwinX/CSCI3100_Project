@@ -2,9 +2,10 @@
 import React, { FormEvent, useState, useEffect } from "react";
 import { faTriangleExclamation, faCheck } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { resetPasswordByEmail } from "@/utils/authentication";
+import { resetPasswordByOldPassword } from "@/utils/authentication";
+import { useSession } from "@/hooks/useSession";
 
-export default function ChangePasswordSection() {
+export default function ChangePasswordSection({setPasswordInputBoxOpen} : { setPasswordInputBoxOpen: (value: boolean) => void }) {
   const [success, setSuccess] = useState(false);
   const [serverSuccessMessage, setServerSuccessMessage] = useState<string>("");
   const [serverErrorMessage, setServerErrorMessage] = useState<string>("");
@@ -14,23 +15,44 @@ export default function ChangePasswordSection() {
   const [loading, setLoading] = useState(false);
   const [failure, setFailure] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
-
   const [passwordFormatError, setPasswordFormatError] = useState(false);
+
+  const { session } = useSession();
+
+  const wait = (s: number) => {
+    return new Promise(resolve => setTimeout(resolve, s * 1000));
+  };
+
+  const clearForm = () => {
+    setOldPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+  }
 
   const handleForgotPassword = async (e: FormEvent) => {
     e.preventDefault();
     setFailure(false);
     setLoading(true);
     try {
+      if (session.email === undefined) {
+        throw new Error("user email is undefined");
+      }
       const formData = new FormData();
+      formData.append("email", session.email)
       formData.append("oldPassword", oldPassword);
       formData.append("newPassword", newPassword);
-      const result = await resetPasswordByEmail(formData);
+      const result = await resetPasswordByOldPassword(formData);
       if (result.data.username && result.data.isSuccess) {
         setFailure(false);
         setLoading(false);
         setSuccess(true);
         setServerSuccessMessage(result.message);
+        clearForm();
+        await wait(3);
+        setServerSuccessMessage("");
+        setPasswordInputBoxOpen(false);
+        setSuccess(false);
+        clearServerError();
         window.scrollTo({ top: 0, behavior: "smooth" });
       } else {
         setServerErrorMessage(result.message);
