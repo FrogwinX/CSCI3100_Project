@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession } from "@/hooks/useSession";
-import { login, logout } from "@/utils/authentication";
+import { deleteAccount, login, logout } from "@/utils/authentication";
 import { faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useState } from "react";
@@ -37,15 +37,15 @@ export default function ConfirmDialog({ setConfirmDialogOpen }: { setConfirmDial
     formData.append("password", password);
 
     try {
-      const result = await login(formData);
+      const result = await deleteAccount(formData);
       setLoading(false);
-      if (result.data.isPasswordCorrect && result.data.isAccountActive && result.data.user) {
+      if (result.data.isSuccess) {
         setPasswordCorrect(true);
         setAccountDeleted(true);
+        logout();
         await wait(5);
-        await logout();
+        router.push("/login");
         await refresh();
-        router.replace("/login");
       } else {
         setPasswordCorrect(false);
         setPassword("");

@@ -210,15 +210,15 @@ export async function deleteAccount(formData: FormData) {
   const password = formData.get("password") as string;
 
   try {
+    const session = await getSession();
     const result = await apiFetch<DeleteAccountData>("Account/deleteAccount", {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.token}` 
+      },
       body: JSON.stringify({ email, username, password }),
     });
-
-    if (result.data.isSuccess) {
-      logout();
-    }
 
     return result;
   } catch {
@@ -250,3 +250,4 @@ export async function resetPasswordByEmail(formData: FormData) {
     };
   }
 }
+
