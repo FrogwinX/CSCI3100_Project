@@ -50,9 +50,6 @@ export default function PostFooter({
 
       const response = await fetch(url, {
         method: isRemoveAction ? "DELETE" : "POST",
-        headers: {
-          Authorization: `Bearer ${session.token}`,
-        },
         body: JSON.stringify({
           postId: parseInt(postId),
           userId: session.userId,

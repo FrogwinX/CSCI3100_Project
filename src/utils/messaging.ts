@@ -1,6 +1,7 @@
+"use client";
+
 import SockJS from "sockjs-client";
 import { Client, Message } from "@stomp/stompjs";
-import { getSession } from "@/utils/sessions";
 
 // Message types
 export interface OutgoingMessage {
@@ -112,9 +113,6 @@ export class MessagingService {
           connectHeaders: {
             Authorization: `Bearer ${token}`,
           },
-          reconnectDelay: 3000,
-          heartbeatIncoming: 30000,
-          heartbeatOutgoing: 30000,
         });
 
         this.client.onConnect = () => {
@@ -204,18 +202,13 @@ export class MessagingService {
 
 export async function getContactsList(count: number): Promise<Contact[]> {
   try {
-    const session = await getSession();
-
-    let apiUrl = `https://flowchatbackend.azurewebsites.net/api/Chat/getContactList?userId=${session.userId}&contactNum=${count}`;
+    let apiUrl = `/api/Chat/getContactList?contactNum=${count}`;
 
     apiUrl += `&excludingUserIdList=0`;
 
     // Fetch data from the API
     const response = await fetch(apiUrl, {
       method: "GET",
-      headers: {
-        Authorization: `Bearer ${session.token}`,
-      },
     });
 
     if (!response.ok) {

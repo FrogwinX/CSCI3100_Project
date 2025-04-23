@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUser } from "@fortawesome/free-solid-svg-icons";
-import { getProxyImageUrl } from "@/utils/images"; // Assuming you have this helper
+import { getProxyImageUrl } from "@/utils/images";
 
 export default function UserAvatar({
   src,
@@ -42,18 +42,14 @@ export default function UserAvatar({
   return (
     <div className="avatar avatar-placeholder gap-1 items-center">
       <div className={`${!imageUrl ? "bg-neutral text-neutral-content" : ""} ${currentContainerSize} rounded-full `}>
+        {/* Show avatar if available, Fallback to icon if not */}
         {imageUrl ? (
-          <Image
-            src={imageUrl}
-            alt={`${username}'s avatar`}
-            width={parseInt(currentContainerSize.split("-")[1]) * 4}
-            height={parseInt(currentContainerSize.split("-")[1]) * 4}
-            className="object-cover"
-          />
+          <Image src={imageUrl} alt={`${username}'s avatar`} width={64} height={64} className="object-cover" />
         ) : (
           <FontAwesomeIcon icon={faUser} size={currentIconSize} />
         )}
       </div>
+      {/* Show username if given */}
       {username && <span className={`${currentTextSize}`}>{username}</span>}
     </div>
   );
