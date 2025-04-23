@@ -23,7 +23,8 @@ public class SecurityConfig {
     public FilterRegistrationBean<JWTFilter> doJWTFilter() {
         FilterRegistrationBean<JWTFilter> registrationBean = new FilterRegistrationBean<>();
         registrationBean.setFilter(jwtFilter);
-        registrationBean.addUrlPatterns("/api/Forum/*", "/api/Chat/*", "/api/Image/*", "/api/Profile/*");
+        registrationBean.addUrlPatterns("/api/Forum/*", "/api/Chat/*", "/api/Image/*", "/api/Profile/*",
+                "/api/Account/resetPasswordByOldPassword", "/api/Account/deleteAccount");
         return registrationBean;
     }
 

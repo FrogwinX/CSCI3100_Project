@@ -33,7 +33,9 @@ public class JWTFilter implements Filter {
 
         String authHeader = httpRequest.getHeader("Authorization");
 
-        if (httpRequest.getRequestURI().startsWith("/api/Account")) {
+        if (httpRequest.getRequestURI().startsWith("/api/Account") &&
+                !httpRequest.getRequestURI().equals("/api/Account/resetPasswordByOldPassword") &&
+                !httpRequest.getRequestURI().equals("/api/Account/deleteAccount")) {
             chain.doFilter(request, response);
             return;
         }

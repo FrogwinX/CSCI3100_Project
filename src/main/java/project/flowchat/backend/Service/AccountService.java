@@ -177,6 +177,7 @@ public class AccountService {
         userLoginInfo.put("token", securityService.generateToken(userInfoFromDatabase));
         userLoginInfo.put("id", userInfoFromDatabase.getUserId());
         userLoginInfo.put("username", userInfoFromDatabase.getUsername());
+        userLoginInfo.put("email", userInfoFromDatabase.getEmail());
         userLoginInfo.put("roles", role);
         userLoginInfo.put("avatar", profileService.getUserAvatarByUserId(userInfoFromDatabase.getUserId()));
 
@@ -316,12 +317,25 @@ public class AccountService {
      * @param email email string
      * @param password password string
      */
-    public void resetPassword(String email, String password, String authenticationCode) throws Exception {
+    public void resetPasswordByEmail(String email, String password, String authenticationCode) throws Exception {
         checkEmailFormat(email);
         securityService.setKeyUnavailable(email, authenticationCode, SecurityService.KeyType.AUTHENTICATION);
         String passwordHash = encodePassword(password);
         UserAccountModel userAccountModel = userAccountRepository.findUserInfoByEmail(email);
         userAccountRepository.updateUserAccountById(userAccountModel.getUserId());
+        userAccountRepository.updatePassword(email, passwordHash);
+    }
+
+    /**
+     * Change the old password to the new password for the user with the given newpassword
+     * @param email email string
+     * @param oldPassword oldPassword string
+     * @param newPassword newPassword string
+     */
+    public void resetPasswordByOldPassword(String email, String oldPassword, String newPassword) throws Exception {
+        Integer userId = Integer.parseInt(getUserLoginInfo(null, email, oldPassword).get("id").toString());
+        String passwordHash = encodePassword(newPassword);
+        userAccountRepository.updateUserAccountById(userId);
         userAccountRepository.updatePassword(email, passwordHash);
     }
 
@@ -333,13 +347,12 @@ public class AccountService {
      */
     public void deleteAccount(String username, String email, String password) throws Exception {
         checkUserPassword(username, email, password);
-        UserAccountModel userAccountModel;
         if (username != null && email == null) {
-            userAccountModel = userAccountRepository.findUserInfoByUsername(username);
+            UserAccountModel userAccountModel = userAccountRepository.findUserInfoByUsername(username);
             userAccountRepository.updateUserAccountById(userAccountModel.getUserId());
             userAccountRepository.deleteAccountByUsername(username);
         } else if (username == null && email != null) {
-            userAccountModel = userAccountRepository.findUserInfoByEmail(email);
+            UserAccountModel userAccountModel = userAccountRepository.findUserInfoByEmail(email);
             userAccountRepository.updateUserAccountById(userAccountModel.getUserId());
             userAccountRepository.deleteAccountByEmail(email);
         }
