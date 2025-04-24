@@ -1,11 +1,11 @@
 "use client";
-import React, { FormEvent, useState, useEffect } from "react";
+import React, { FormEvent, useState } from "react";
 import { faTriangleExclamation, faCheck } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { resetPasswordByOldPassword } from "@/utils/authentication";
 import { useSession } from "@/hooks/useSession";
 
-export default function ChangePasswordSection({setPasswordInputBoxOpen} : { setPasswordInputBoxOpen: (value: boolean) => void }) {
+export default function ChangePasswordSection({ setPasswordInputBoxOpen }: { setPasswordInputBoxOpen: (value: boolean) => void }) {
   const [success, setSuccess] = useState(false);
   const [serverSuccessMessage, setServerSuccessMessage] = useState<string>("");
   const [serverErrorMessage, setServerErrorMessage] = useState<string>("");
@@ -61,7 +61,7 @@ export default function ChangePasswordSection({setPasswordInputBoxOpen} : { setP
         setLoading(false);
         setFailure(true);
       }
-    } catch {}
+    } catch { }
   };
 
   const clearServerError = () => {
@@ -132,115 +132,148 @@ export default function ChangePasswordSection({setPasswordInputBoxOpen} : { setP
   };
 
   return (
-    <form className="card w-full min-w-sm lg:min-w-lg max-w-xl bg-base-100" onSubmit={handleForgotPassword}>
-      <div className="card-body gap-4">
-        {success && !errors.length ? (
-          <div role="alert" className="alert alert-success alert-soft">
-            <FontAwesomeIcon icon={faCheck} className="text-2xl text-success" />
-            <p>{serverSuccessMessage}</p>
-          </div>
-        ) : (
-          <div
-            role="alert"
-            className={`alert alert-error alert-soft ${passwordFormatError || errors.length ? "" : "hidden"}`}
-          >
-            <FontAwesomeIcon icon={faTriangleExclamation} className="text-2xl text-error" />
-            {passwordFormatError ? (
-              <p>
-                Password must be at least 8 characters, with <br /> At least one alphabet (a~z, A~Z)
-                <br /> At least one numerical character (0~9)
-              </p>
-            ) : (
-              <p>{errors[0]}</p>
-            )}
-          </div>
-        )}
-
-        <div className="form-control">
-          <label className="label">
-            <span className="label-text text-base-content">Old Password</span>
-          </label>
-          <input
-            type="password"
-            placeholder="Old Password"
-            className="input input-bordered w-full my-1"
-            value={oldPassword}
-            onChange={handleOldPasswordChange}
-          />
-        </div>
-
-        <div className="form-control">
-          <label className="label">
-            <span className="label-text text-base-content">New Password</span>
-          </label>
-          <input
-            type="password"
-            placeholder="New Password"
-            className="input input-bordered w-full my-1"
-            value={newPassword}
-            onChange={handleNewPasswordChange}
-          />
-        </div>
-
-        <div className="form-control">
-          <label className="label">
-            <span className="label-text text-base-content">Confirm New Password</span>
-          </label>
-          <input
-            type="password"
-            placeholder="Confirm Password"
-            className="input input-bordered w-full my-1"
-            value={confirmPassword}
-            onChange={handleConfirmPasswordChange}
-          />
-        </div>
-
-        <div className="form-control">
-          <button
-            type="submit"
-            className={`btn btn-primary text-primary-content w-full `}
-            onClick={(e) => {
-              if (errors.length) {
-                e.preventDefault();
-                window.scrollTo({ top: 0, behavior: "smooth" });
-                return;
-              }
-              if (!oldPassword) {
-                e.preventDefault();
-                setErrors((prevErrors) => ["Old Password is required", ...prevErrors]);
-                window.scrollTo({ top: 0, behavior: "smooth" });
-                return;
-              }
-              if (!newPassword) {
-                e.preventDefault();
-                setErrors((prevErrors) => ["New Password is required", ...prevErrors]);
-                window.scrollTo({ top: 0, behavior: "smooth" });
-                return;
-              }
-              if (!confirmPassword) {
-                e.preventDefault();
-                setErrors((prevErrors) => ["Confirm password is required", ...prevErrors]);
-                window.scrollTo({ top: 0, behavior: "smooth" });
-                return;
-              }
-              if (newPassword !== confirmPassword) {
-                e.preventDefault();
-                setErrors((prevErrors) => ["Passwords do not match", ...prevErrors]);
-                window.scrollTo({ top: 0, behavior: "smooth" });
-                return;
-              }
-            }}
-          >
-            {loading ? (
-              <span className="loading loading-dots loading-md bg-base-content"></span>
-            ) : failure ? (
-              "Retry"
-            ) : (
-              "Reset Password"
-            )}
-          </button>
-        </div>
+    <div
+      className="fixed inset-0 bg-gray-500/20 flex justify-center items-center z-50">
+      <div
+        className="fixed inset-0"
+        onClick={(): void => {
+          setPasswordInputBoxOpen(false);
+        }}
+      >
       </div>
-    </form>
-  );
+
+      <form className={`card w-fit min-w-sm lg:min-w-lg max-w-xl bg-base-100 shadow-xl`} onSubmit={handleForgotPassword}>
+        <div className={`card-body gap-4"`}>
+
+          <h1 className="card-title text-center text-bg">Change Your Password</h1>
+
+          {success && !errors.length ? (
+            <div role="alert" className="alert alert-success alert-soft">
+              <FontAwesomeIcon icon={faCheck} className="text-2xl text-success" />
+              <p>{serverSuccessMessage}</p>
+            </div>
+          ) : (
+            <div
+              role="alert"
+              className={`alert alert-error alert-soft ${passwordFormatError || errors.length ? "" : "hidden"}`}
+            >
+              <FontAwesomeIcon icon={faTriangleExclamation} className="text-2xl text-error" />
+              {passwordFormatError ? (
+                <p>
+                  Password must be at least 8 characters, with <br /> At least one alphabet (a~z, A~Z)
+                  <br /> At least one numerical character (0~9)
+                </p>
+              ) : (
+                <p>{errors[0]}</p>
+              )}
+            </div>
+          )}
+
+          <div className="divider my-0"></div>
+
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text text-base-content">Old Password</span>
+            </label>
+            <input
+              type="password"
+              placeholder="Old Password"
+              className="input input-bordered w-full my-1"
+              value={oldPassword}
+              onChange={handleOldPasswordChange}
+            />
+          </div>
+
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text text-base-content">New Password</span>
+            </label>
+            <input
+              type="password"
+              placeholder="New Password"
+              className="input input-bordered w-full my-1"
+              value={newPassword}
+              onChange={handleNewPasswordChange}
+            />
+          </div>
+
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text text-base-content">Confirm New Password</span>
+            </label>
+            <input
+              type="password"
+              placeholder="Confirm Password"
+              className="input input-bordered w-full my-1"
+              value={confirmPassword}
+              onChange={handleConfirmPasswordChange}
+            />
+          </div>
+
+          <div className="form-control">
+            <button
+              type="submit"
+              className={`btn btn-primary text-primary-content w-full `}
+              onClick={(e) => {
+                if (errors.length) {
+                  e.preventDefault();
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                  return;
+                }
+                if (!oldPassword) {
+                  e.preventDefault();
+                  setErrors((prevErrors) => ["Old Password is required", ...prevErrors]);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                  return;
+                }
+                if (!newPassword) {
+                  e.preventDefault();
+                  setErrors((prevErrors) => ["New Password is required", ...prevErrors]);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                  return;
+                }
+                if (!confirmPassword) {
+                  e.preventDefault();
+                  setErrors((prevErrors) => ["Confirm password is required", ...prevErrors]);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                  return;
+                }
+                if (newPassword !== confirmPassword) {
+                  e.preventDefault();
+                  setErrors((prevErrors) => ["Passwords do not match", ...prevErrors]);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                  return;
+                }
+              }}
+            >
+              {loading ? (
+                <span className="loading loading-dots loading-md bg-base-content"></span>
+              ) : failure ? (
+                "Retry"
+              ) : (
+                "Reset Password"
+              )}
+            </button>
+          </div>
+
+          <div className={`form-control mt-2`}>
+            <button
+              type="button"
+              className="btn btn-secondary w-full bg-base-300 text-base-content border-none"
+              onClick={(): void => {
+                setPasswordInputBoxOpen(false);
+                clearForm();
+                setFailure(false);
+                setPasswordFormatError(false);
+                clearServerError();
+                setErrors([]);
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  )
 }

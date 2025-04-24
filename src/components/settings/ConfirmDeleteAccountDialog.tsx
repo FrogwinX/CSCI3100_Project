@@ -1,12 +1,11 @@
 "use client";
 
 import { useSession } from "@/hooks/useSession";
-import { deleteAccount, login, logout } from "@/utils/authentication";
+import { deleteAccount, logout } from "@/utils/authentication";
 import { faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { clear } from "console";
 
 export default function ConfirmDialog({ setConfirmDialogOpen }: { setConfirmDialogOpen: (value: boolean) => void }) {
 

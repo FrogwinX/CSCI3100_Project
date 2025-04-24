@@ -21,7 +21,7 @@ export default async function SettingPage() {
           <div className="w-full">
             <div className="card-body p-6 gap-10">
               <label className="label">
-                <span className="label-text text-base-content text-2xl">Settings</span>
+                <span className="label-text text-base-content text-4xl">Settings</span>
               </label>
               <UserInfo/>
               <ChangePassword/>

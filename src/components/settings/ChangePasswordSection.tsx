@@ -14,18 +14,19 @@ export default function ChangePassword() {
           <h3 className="text-xl font-bold">Change Password</h3>
           <p className="text-base-content/70">Strengthen your account by setting a stronger password.</p>
         </div>
+
         <div>
           <button
-            className={isPasswordInputBoxOpen ? "btn btn-basic" : "btn btn-primary"}
+            className="btn btn-primary"
             onClick={(): void => {
-              setPasswordInputBoxOpen((prev) => !prev);
+              setPasswordInputBoxOpen(true);
             }}>
             Change Password
           </button>
+          <div className={isPasswordInputBoxOpen ? "" : "hidden"}>
+            <ChangePasswordSection setPasswordInputBoxOpen={setPasswordInputBoxOpen} />
+          </div>
         </div>
-      </div>
-      <div className={isPasswordInputBoxOpen ? "" : "hidden"}>
-        <ChangePasswordSection setPasswordInputBoxOpen={setPasswordInputBoxOpen}/>
       </div>
       <div className="divider my-0"></div>
     </div>

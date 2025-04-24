@@ -8,7 +8,7 @@ export default function UserInfo() {
   const { session } = useSession();
 
   return (
-    <div className="card-body p-0 gap-2">
+    <div className="card lg:min-w-lg gap-2 bg-base-100 shadow-md p-4">
       <div className="h-15 flex items-center gap-6">
         {/* User avatar */}
         <div className="avatar avatar-placeholder items-center gap-1">
@@ -21,7 +21,6 @@ export default function UserInfo() {
           <p className="text-base-content/70">{session.email}</p>
         </div>
       </div>
-      <div className="divider my-0"></div>
     </div>
   );
 }
