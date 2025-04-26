@@ -10,9 +10,11 @@ import LoadingPostPreview from "@/components/posts/LoadingPostPreview";
 export default function PostList({
   filter,
   keyword,
+  authorUserId,
 }: {
-  filter?: "latest" | "recommended" | "following" | "my" | undefined;
+  filter?: "latest" | "recommended" | "following" | "created" | undefined;
   keyword?: string | undefined;
+  authorUserId?: string;
 }) {
   const { selectedTags: tags, setPostsLoading } = useTagContext();
   const [posts, setPosts] = useState<Post[]>([]);
@@ -57,7 +59,14 @@ export default function PostList({
         let initialPosts;
         //switch between getPosts and getSearchPosts based on keyword
         if (!keyword) {
-          initialPosts = await getPosts({ filter });
+          switch (filter) {
+            case "created":
+              initialPosts = await getPosts({ filter, authorUserId });
+              break;
+            default:
+              initialPosts = await getPosts({ filter });
+              break;
+          }
         } else {
           initialPosts = await getSearchPosts({ keyword });
         }
@@ -137,11 +146,23 @@ export default function PostList({
       let newPosts;
       //switch between getPosts and getSearchPosts based on keyword
       if (!keyword) {
-        newPosts = await getPosts({
-          filter,
-          excludingPostIdList: Array.from(excludedPostIds),
-          count: 10,
-        });
+        switch (filter) {
+          case "created":
+            newPosts = await getPosts({
+              filter,
+              excludingPostIdList: Array.from(excludedPostIds),
+              count: 10,
+              authorUserId: authorUserId,
+            });
+            break;
+          default:
+            newPosts = await getPosts({
+              filter,
+              excludingPostIdList: Array.from(excludedPostIds),
+              count: 10,
+            });
+            break;
+        }
       } else {
         newPosts = await getSearchPosts({
           keyword,

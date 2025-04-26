@@ -13,7 +13,7 @@ export interface Users {
 
 export default function UserPreview({ user }: { user: Users }) {
   return (
-    <Link href={`/profile/${user.username}`} className="block">
+    <Link href={`/profile/${user.userId}`} className="block">
       <div className="card hover:bg-base-200/40 px-2">
         <div className="card-body p-4 gap-2">
           <div className="flex items-center gap-4">

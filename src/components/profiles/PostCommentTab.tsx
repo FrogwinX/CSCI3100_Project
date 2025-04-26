@@ -4,7 +4,13 @@ import { Profile } from "@/utils/profiles";
 import { useState } from "react";
 import PostList from "../posts/PostPreviewList";
 
-export default function PostCommentTab({ profile } : { profile : Profile }) {
+export default function PostCommentTab({ 
+  profile,
+  userIdTo, 
+} : { 
+  profile : Profile 
+  userIdTo : string
+}) {
   const [activeTab, setActiveTab] = useState(0);
   const tabs = [`My Posts (${profile.postCount})`, `My Comments (${profile.commentCount})`];
 
@@ -23,7 +29,7 @@ export default function PostCommentTab({ profile } : { profile : Profile }) {
         ))}
       </div>
       <div className="mt-4">
-        {activeTab === 0 && <div><PostList filter="my" /></div>}
+        {activeTab === 0 && <div><PostList filter="created" authorUserId={userIdTo} /></div>}
         {activeTab === 1 && <div>My Comments</div>}
       </div>
     </div>

@@ -8,7 +8,7 @@ export default function PostDetail({ post }: { post: Post }) {
     <div className="card px-2">
       <div className="card-body p-0 gap-4">
         {/** Header, client-sided */}
-        <PostHeader postId={post.postId} postUsername={post.username} postUpdatedAt={post.updatedAt} size="md" />
+        <PostHeader postId={post.postId} postUserId={post.userId} postUsername={post.username} postUpdatedAt={post.updatedAt} postUserAvatar={post.avatar} size="md" />
 
         {/** Body */}
         <div className="flex gap-4">

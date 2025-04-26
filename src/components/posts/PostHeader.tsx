@@ -12,12 +12,14 @@ import UserAvatar from "@/components/users/UserAvatar";
 
 export default function PostHeader({
   postId,
+  postUserId,
   postUsername,
   postUpdatedAt,
   postUserAvatar,
   size = "sm",
 }: {
   postId: string;
+  postUserId: string;
   postUsername: string;
   postUpdatedAt: string;
   postUserAvatar: string | null;
@@ -51,7 +53,7 @@ export default function PostHeader({
       {/** Avatar, username, time */}
       <div className="flex">
         {/** Avatar and username */}
-        <Link href={`/profile/${postUsername}`}>
+        <Link href={`/profile/${postUserId}`}>
           <UserAvatar src={postUserAvatar} username={postUsername} size={size} />
         </Link>
         {/** Time */}

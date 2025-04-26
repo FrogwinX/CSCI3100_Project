@@ -5,19 +5,21 @@ import { cache } from "react";
 import { notFound } from "next/navigation";
 import PostCommentTab from "@/components/profiles/PostCommentTab";
 
+type Params = Promise<{ userId: string }>;
+
 export const metadata: Metadata = {
-  title: "My Profile | FlowChat",
+  title: `Profile | FlowChat`,
   description: "Browse the user profile information.",
 };
 
-export default async function profilePage() {
-
-  const getMyProfile = cache(() => {
-    return getProfileContent("0");
+export default async function profilePage(props: { params: Params }) {
+  const params = await props.params;
+  const getUserProfile = cache(() => {
+    return getProfileContent(params.userId);
   });
 
-  const myProfile = await getMyProfile();
-  if (myProfile === null) {
+  const userProfile = await getUserProfile();
+  if (userProfile === null) {
     notFound();
   }
 
@@ -34,8 +36,8 @@ export default async function profilePage() {
               {/* <label className="label">
                 <span className="label-text text-base-content text-4xl">My Profile</span>
               </label> */}
-              <UserInfo profile={myProfile}/>
-              <PostCommentTab profile={myProfile} userIdTo="0"/>
+              <UserInfo profile={userProfile}/>
+              <PostCommentTab profile={userProfile} userIdTo={params.userId}/>
             </div>
           </div>
         </div>

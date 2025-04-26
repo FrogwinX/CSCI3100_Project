@@ -94,9 +94,10 @@ export async function getAllTags(): Promise<Tag[]> {
 // &postNum=5
 export async function getPosts(
   options: {
-    filter?: "latest" | "recommended" | "following" | "my";
+    filter?: "latest" | "recommended" | "following" | "created";
     excludingPostIdList?: number[];
     count?: number;
+    authorUserId?: string;
   } = {}
 ): Promise<Post[] | null> {
   try {
@@ -113,16 +114,20 @@ export async function getPosts(
       case "following":
         apiUrl += "getFollowingPostPreviewList?";
         break;
-      case "my":
+      case "created":
         apiUrl = "https://flowchatbackend.azurewebsites.net/api/Profile/getMyPostPreviewList?";
         break;
     }
 
     // Add query parameters
     switch (options.filter) {
-      case "my":
+      case "created":
         apiUrl += `userIdFrom=${session.userId}`;
-        apiUrl += `&userIdTo=${session.userId}`
+        if (options.authorUserId === "0") {
+          apiUrl += `&userIdTo=${session.userId}`
+        } else {
+          apiUrl += `&userIdTo=${options.authorUserId}`
+        }
         break;
       default:
         apiUrl += `userId=${session.userId}`; // Add userId to the URL

@@ -25,11 +25,17 @@ interface ProfileContentResponse {
   };
 }
 
-export async function getMyProfileContent(): Promise<Profile | null> {
+export async function getProfileContent(userIdTo : string): Promise<Profile | null> {
   try {
     const session = await getSession();
-    const apiUrl = `https://flowchatbackend.azurewebsites.net/api/Profile/getProfileContent?userIdFrom=${session.userId}&userIdTo=${session.userId}`;
+    let apiUrl = `https://flowchatbackend.azurewebsites.net/api/Profile/getProfileContent?userIdFrom=${session.userId}`;
 
+    if (userIdTo === "0") {
+      apiUrl += `&userIdTo=${session.userId}`;
+    } else {
+      apiUrl += `&userIdTo=${userIdTo}`;
+    }
+    
     const response = await fetch(apiUrl, {
       headers: {
         method: "GET",
