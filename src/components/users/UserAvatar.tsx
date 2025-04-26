@@ -10,7 +10,7 @@ export default function UserAvatar({
 }: {
   src: string | null;
   username?: string | null;
-  size?: "xs" | "sm" | "md" | "lg";
+  size?: "xs" | "sm" | "md" | "lg" | "xl" | "xxl";
 }) {
   const imageUrl = src ? getProxyImageUrl(src) : null;
 
@@ -19,6 +19,8 @@ export default function UserAvatar({
     sm: "w-8 h-8",
     md: "w-10 h-10",
     lg: "w-12 h-12",
+    xl: "w-14 h-14",
+    xxl: "w-20 h-20",
   };
 
   const iconSizes = {
@@ -26,6 +28,8 @@ export default function UserAvatar({
     sm: "1x",
     md: "lg",
     lg: "xl",
+    xl: "2xl",
+    xxl: "2xl",
   } as const;
 
   const textSizes = {
@@ -33,6 +37,8 @@ export default function UserAvatar({
     sm: "text-sm",
     md: "text-md",
     lg: "text-lg",
+    xl: "text-xl",
+    xxl: "text-2xl",
   };
 
   const currentContainerSize = containerSizes[size] || containerSizes.md;

@@ -11,7 +11,7 @@ export default function PostList({
   filter,
   keyword,
 }: {
-  filter?: "latest" | "recommended" | "following" | undefined;
+  filter?: "latest" | "recommended" | "following" | "my" | undefined;
   keyword?: string | undefined;
 }) {
   const { selectedTags: tags, setPostsLoading } = useTagContext();
