@@ -1,3 +1,4 @@
+import { getProxyImageUrl } from "@/utils/images";
 import { IncomingMessage } from "@/utils/messaging";
 import { faBan } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -13,6 +14,8 @@ export default function ChatMessage({
   isSelected?: boolean;
   onMessageClick?: (messageId: number) => void;
 }) {
+  const hasImages = message.imageAPIList && message.imageAPIList.length > 0;
+
   const handleClick = () => {
     // Only allow selection of user's own messages
     if (isOwner && onMessageClick) {
@@ -31,7 +34,23 @@ export default function ChatMessage({
         } font-medium text-sm max-w-[55%] break-words`}
       >
         {message.isActive ? (
-          message.content
+          <div className="flex flex-col gap-1">
+            {" "}
+            {/* Display images if they exist */}
+            {hasImages && (
+              <div className={`grid gap-1 ${message.imageAPIList!.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
+                {message.imageAPIList!.map((imageUrl, index) => (
+                  <img
+                    key={index}
+                    src={imageUrl.startsWith("blob:") ? imageUrl : getProxyImageUrl(imageUrl)}
+                    alt={`Message image ${index + 1}`}
+                    className="rounded max-w-full h-auto object-contain" // Style the image
+                  />
+                ))}
+              </div>
+            )}
+            {message.content}
+          </div>
         ) : (
           <span className="opacity-50 italic font-bold">
             <FontAwesomeIcon icon={faBan} className="mr-2" />

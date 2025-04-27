@@ -51,17 +51,41 @@ async function handleApiResponse(response: Response) {
 export async function POST(request: NextRequest, props: { params: Params }) {
   const params = await props.params;
   const actionPath = params.action.join("/");
-  const body = await request.json();
   const { token } = await getAuthInfo();
 
-  const response = await fetch(`${API_BASE_URL}/${actionPath}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: token,
-    },
-    body: JSON.stringify(body),
-  });
+  let response: Response;
+
+  // Check if it's the image upload endpoint
+  if (actionPath === "Image/uploadImage") {
+    // Handle FormData for image upload
+    const formData = await request.formData();
+
+    response = await fetch(`${API_BASE_URL}/${actionPath}`, {
+      method: "POST",
+      headers: {
+        Authorization: token,
+      },
+      body: formData,
+    });
+  } else {
+    // Handle JSON body for other POST requests
+    try {
+      const body = await request.json();
+
+      response = await fetch(`${API_BASE_URL}/${actionPath}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token,
+        },
+        body: JSON.stringify(body),
+      });
+    } catch (error) {
+      // Handle cases where request is not image upload but body isn't valid JSON
+      console.error("Error parsing JSON body for non-image POST request:", error);
+      return new NextResponse("Invalid JSON body", { status: 400 });
+    }
+  }
 
   return handleApiResponse(response);
 }

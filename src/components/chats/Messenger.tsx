@@ -6,6 +6,9 @@ import {
   faCheckSquare as faCheckedSquare,
   faTrashAlt,
   faMagnifyingGlass,
+  faImages,
+  faMinus,
+  faFileImage,
 } from "@fortawesome/free-solid-svg-icons";
 import { faCheckSquare } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -23,7 +26,7 @@ import {
 import ChatMessage from "@/components/chats/ChatMessage";
 import LoadingContact from "@/components/chats/LoadingContact";
 import UserAvatar from "@/components/users/UserAvatar";
-import { faImage } from "@fortawesome/free-solid-svg-icons";
+import { uploadImage } from "@/utils/images";
 
 export default function Messenger() {
   const { session } = useSession();
@@ -36,7 +39,8 @@ export default function Messenger() {
   const [selectedMessages, setSelectedMessages] = useState<Set<number>>(new Set());
   const [searchInput, setSearchInput] = useState("");
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [filePreviews, setFilePreviews] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const conversationRef = useRef<HTMLDivElement>(null);
   const [isLoadingMoreMessages, setIsLoadingMoreMessages] = useState(false);
   const [hasMoreMessages, setHasMoreMessages] = useState(true);
@@ -45,10 +49,38 @@ export default function Messenger() {
   const connectRetryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleImageSelect: React.ChangeEventHandler<HTMLInputElement> = (e) => {
-    const files = Array.from(e.target.files || []);
-    setSelectedFiles(files);
-    setImagePreviews(files.map((f) => URL.createObjectURL(f)));
+    const newFiles = Array.from(e.target.files || []);
+    if (newFiles.length === 0) return; // Do nothing if no files selected
+
+    // Append new files to the existing selection
+    setSelectedFiles((prevFiles) => [...prevFiles, ...newFiles]);
+
+    // Create object URLs only for the newly added files and append them
+    const newPreviews = newFiles.map((f) => URL.createObjectURL(f));
+    setFilePreviews((prevPreviews) => [...prevPreviews, ...newPreviews]);
+
+    // Clear the file input value to allow selecting the same file again if needed
+    if (e.target) {
+      e.target.value = "";
+    }
   };
+
+  const removeImagePreview = (indexToRemove: number) => {
+    setSelectedFiles((prevFiles) => prevFiles.filter((_, index) => index !== indexToRemove));
+    setFilePreviews((prevPreviews) => {
+      const newPreviews = prevPreviews.filter((_, index) => index !== indexToRemove);
+      // Revoke the object URL for the removed preview to free memory
+      URL.revokeObjectURL(prevPreviews[indexToRemove]);
+      return newPreviews;
+    });
+  };
+
+  // Cleanup object URLs on component unmount
+  useEffect(() => {
+    return () => {
+      filePreviews.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [filePreviews]);
 
   // Keep a ref of the selected contact such that it can be used in the message subscription callback
   const selectedContactRef = useRef<Contact | undefined>(undefined);
@@ -280,11 +312,45 @@ export default function Messenger() {
   }, [selectedContact, conversation]);
 
   // Send message function
-  const sendMessage = () => {
-    if (!messageText.trim() || !session.userId || !selectedContact) return;
+  const sendMessage = async () => {
+    // Allow sending only images without text
+    if (!messageText.trim() && selectedFiles.length === 0) return;
+    if (!session.userId || !selectedContact) return;
 
-    let imageIdList: number[] = [];
-    if (selectedFiles.length) {
+    let uploadedImageIds: number[] = [];
+    let tempImageUrls: string[] = [...filePreviews];
+
+    // Upload images if selected
+    if (selectedFiles.length > 0) {
+      try {
+        // Show loading state for images
+        const uploadPromises = selectedFiles.map((file) => uploadImage(file));
+        const uploadResults = await Promise.all(uploadPromises);
+
+        // Filter out failed uploads and get IDs
+        uploadedImageIds = uploadResults.filter((result) => result.imageId !== 0).map((result) => result.imageId);
+
+        if (uploadedImageIds.length !== selectedFiles.length) {
+          console.warn("Some images failed to upload.");
+          // Handle failed uploads (e.g., show error message)
+          // For now, we'll just send the successfully uploaded ones
+        }
+      } catch (error) {
+        console.error("Error during image upload process:", error);
+        // Handle upload errors (e.g., show error message to user)
+        return; // Stop message sending if uploads fail critically
+      }
+    }
+
+    // No message text and no successfully uploaded images
+    if (!messageText.trim() && uploadedImageIds.length === 0) {
+      console.log("No text or successfully uploaded images to send.");
+      // Clear potentially failed previews if only images were selected and all failed
+      if (selectedFiles.length > 0) {
+        setSelectedFiles([]);
+        setFilePreviews([]);
+      }
+      return;
     }
 
     try {
@@ -298,7 +364,7 @@ export default function Messenger() {
         attachTo: 0,
         sentAt: new Date().toISOString(),
         readAt: null,
-        imageAPIList: null,
+        imageAPIList: tempImageUrls.length > 0 ? tempImageUrls : null,
       };
 
       // Add to UI immediately
@@ -317,14 +383,16 @@ export default function Messenger() {
         userIdTo: selectedContact.contactUserId,
         content: messageText,
         attachTo: 0,
-        imageIdList: [],
+        imageIdList: uploadedImageIds.length > 0 ? uploadedImageIds : null,
         action: "send",
         messageIdList: [],
       });
 
       setMessageText("");
       setSelectedFiles([]);
-      setImagePreviews([]);
+      setFilePreviews([]);
+      // Revoke object URLs for previews that were just sent
+      tempImageUrls.forEach((url) => URL.revokeObjectURL(url));
     } catch (error) {
       console.error("Failed to send message:", error);
     }
@@ -398,13 +466,6 @@ export default function Messenger() {
   const handleSelectionButton = () => {
     setInSelection(!inSelection);
     setSelectedMessages(new Set());
-  };
-
-  // Handle pressing Enter in the input field
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      sendMessage();
-    }
   };
 
   const searchUser = async (uid: string) => {
@@ -517,7 +578,15 @@ export default function Messenger() {
                   <UserAvatar src={contact.contactUserAvatar} username={contact.contactUsername} size="lg" />
                   <div className="flex justify-between items-center text-md">
                     <span className="truncate">
-                      {contact.userIdFrom === session.userId ? `You: ${contact.latestMessage}` : contact.latestMessage}
+                      {contact.userIdFrom === session.userId ? "You: " : ""}
+
+                      {contact.latestMessage ? (
+                        contact.latestMessage
+                      ) : (
+                        <span className="italic opacity-80">
+                          <FontAwesomeIcon icon={faFileImage} /> Image
+                        </span>
+                      )}
                     </span>
                     {contact.unreadMessageCount > 0 && (
                       <span className="badge badge-info badge-sm text-info-content">{contact.unreadMessageCount}</span>
@@ -605,15 +674,48 @@ export default function Messenger() {
                   )}
                 </div>
               </div>
-              <div className="flex p-2 gap-2">
-                <input
-                  type="text"
-                  className="input input-bordered w-full"
-                  placeholder="Type here"
-                  value={messageText}
-                  onChange={(e) => setMessageText(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                />
+
+              {/* Input Area */}
+              <div className="flex flex-col p-2 bg-base-100 border border-base-300">
+                {/* Image Previews */}
+                {filePreviews.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-2 p-2">
+                    {filePreviews.map((previewUrl, index) => (
+                      <div key={index} className="indicator">
+                        <img src={previewUrl} alt={`Preview ${index}`} className="h-16 w-16 object-cover rounded" />
+                        <div className="indicator-item">
+                          <button onClick={() => removeImagePreview(index)} className="btn btn-circle btn-soft btn-xs">
+                            <FontAwesomeIcon icon={faMinus} size="lg" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {/* Text Input and Buttons */}
+                <div className="flex gap-2 items-center">
+                  {/* Hidden File Input */}
+                  <input ref={fileInputRef} type="file" accept="image/*" multiple hidden onChange={handleImageSelect} />
+                  {/* Image Upload Button */}
+                  <button
+                    className="btn btn-ghost btn-circle"
+                    onClick={() => fileInputRef.current?.click()} // Trigger hidden input
+                    aria-label="Attach image"
+                  >
+                    <FontAwesomeIcon icon={faImages} size="lg" />
+                  </button>
+                  <input
+                    type="text"
+                    className="input input-ghost flex-grow"
+                    placeholder="Type here"
+                    value={messageText}
+                    onChange={(e) => setMessageText(e.target.value)}
+                  />
+                  {/* Send Button */}
+                  <button className="btn btn-primary" onClick={sendMessage}>
+                    Send
+                  </button>
+                </div>
               </div>
             </div>
           ) : (
