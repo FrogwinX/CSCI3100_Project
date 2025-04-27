@@ -6,11 +6,16 @@ import { Post } from "@/utils/posts";
 
 export default function PostPreview({ post }: { post: Post }) {
   return (
-    <PostLink href={`/forum/post/${post.postId}`} className="block">
+    <PostLink href={`/forum/post/${post.postId}`} className="block" isBlocked={post.isUserBlocked}>
       <div className="card hover:bg-base-200/40 px-2">
         <div className="card-body p-0 gap-2">
           {/** Header, client-sided */}
-          <PostHeader postId={post.postId} postUserId={post.userId} postUsername={post.username} postUpdatedAt={post.updatedAt} postUserAvatar={post.avatar} />
+          <PostHeader
+            postId={post.postId}
+            postUsername={post.username}
+            postUpdatedAt={post.updatedAt}
+            postUserAvatar={post.avatar}
+          />
           {/** Body */}
           <div className="flex gap-4">
             <div className="flex-1 overflow-hidden">

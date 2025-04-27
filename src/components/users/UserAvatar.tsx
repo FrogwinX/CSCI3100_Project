@@ -50,7 +50,14 @@ export default function UserAvatar({
       <div className={`${!imageUrl ? "bg-neutral text-neutral-content" : ""} ${currentContainerSize} rounded-full `}>
         {/* Show avatar if available, Fallback to icon if not */}
         {imageUrl ? (
-          <Image src={imageUrl} alt={`${username}'s avatar`} width={64} height={64} className="object-cover" />
+          <Image
+            src={imageUrl}
+            alt={`${username}'s avatar`}
+            width={64}
+            height={64}
+            className="object-cover"
+            unoptimized
+          />
         ) : (
           <FontAwesomeIcon icon={faUser} size={currentIconSize} />
         )}

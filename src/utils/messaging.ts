@@ -28,7 +28,8 @@ export interface IncomingMessage {
   userIdFrom: number;
   userIdTo: number;
   content: string;
-  attachTo: number | null;
+  isActive: boolean;
+  attachTo: number;
   sentAt: string;
   readAt: string | null;
   imageAPIList: string[] | null;

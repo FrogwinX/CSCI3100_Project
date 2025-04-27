@@ -1,4 +1,6 @@
 import { IncomingMessage } from "@/utils/messaging";
+import { faBan } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 export default function ChatMessage({
   isOwner,
@@ -28,7 +30,14 @@ export default function ChatMessage({
           isOwner ? "bg-primary text-primary-content" : "bg-neutral text-neutral-content"
         } font-medium text-sm max-w-[55%] break-words`}
       >
-        {message.content}
+        {message.isActive ? (
+          message.content
+        ) : (
+          <span className="opacity-50 italic font-bold">
+            <FontAwesomeIcon icon={faBan} className="mr-2" />
+            Message has been deleted
+          </span>
+        )}
       </div>
       <div className="chat-footer opacity-50">
         <div className="font-bold">{message.readAt ? "Seen" : message.messageId === -1 ? "Sending" : "Sent"}</div>
