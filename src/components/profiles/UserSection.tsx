@@ -2,27 +2,49 @@
 
 import UserAvatar from "@/components/users/UserAvatar";
 import UserStat from "./UserStat";
-import { Profile } from "@/utils/profiles";
+import { Profile, userInteract } from "@/utils/profiles";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEllipsis, faFlag, faPenToSquare } from "@fortawesome/free-solid-svg-icons";
+import { faCommenting, faHeart } from "@fortawesome/free-regular-svg-icons";
+import { faBan, faEllipsis, faPenToSquare, faTimes } from "@fortawesome/free-solid-svg-icons";
 import { useSession } from "@/hooks/useSession";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export default function UserInfo({ profile }: { profile: Profile }) {
 
   const router = useRouter();
   const { session } = useSession();
+  const [userFollowed, setUserFollowed] = useState(profile.isUserFollowed);
+  const [userBlocked, setUserBlocked] = useState(profile.isUserBlocked);
   const isMe = session.username === profile.username;
 
-  const handleEdit = (e: { stopPropagation: () => void; }) => {
-    e.stopPropagation();
-    alert("Edit to be implemented");
-    // router.push(`/forum/post/${postId}/edit`);
+  const handleFollow = () => {
+    if (userFollowed) {
+      setUserFollowed(false);
+      userInteract(profile.userId, "unfollow");
+    } else {
+      setUserFollowed(true);
+      userInteract(profile.userId, "follow");
+    }
   };
 
-  const handleBlock = (e: { stopPropagation: () => void; }) => {
-    e.stopPropagation();
-    alert("Block to be implemented");
+  const handleBlock = () => {
+    if (userBlocked) {
+      setUserBlocked(false);
+      userInteract(profile.userId, "unblock");
+    } else {
+      setUserBlocked(true);
+      userInteract(profile.userId, "block");
+    }
+  };
+
+  const handleMessage = () => {
+    router.push(`/messages`);
+  };
+
+  const handleEdit = () => {
+    alert("Edit to be implemented");
+    // router.push(`/forum/post/${postId}/edit`);
   };
 
   return (
@@ -41,13 +63,31 @@ export default function UserInfo({ profile }: { profile: Profile }) {
         </div>
 
         <div className="w-full">
-          <div className="flex gap-1 flex justify-end">
+          <div className="flex gap-6 flex justify-end">
+
+            {/* Show follow only if user is NOT me */}
+            {!isMe && (
+              <button className={`btn btn-sm ${userFollowed? "btn-error" : "btn-primary"}`} onClick={handleFollow}>
+                {userFollowed ?
+                  <><FontAwesomeIcon icon={faTimes} size="lg" /><span>Unfollow</span></> :
+                  <><FontAwesomeIcon icon={faHeart} size="lg" /><span>Follow</span></>}
+              </button>
+            )}
+
+            {/* Show message button only if user is NOT me */}
+            {!isMe && (
+              <button className="btn btn-sm" onClick={handleMessage}>
+                <FontAwesomeIcon icon={faCommenting} size="lg" />
+                Message
+              </button>
+            )}
+
             {/* Options menu */}
             <div className="dropdown dropdown-end">
               <div tabIndex={0} role="button" className={`btn btn-ghost btn-circle btn-sm`}>
                 <FontAwesomeIcon icon={faEllipsis} size="xl" />
               </div>
-              <ul tabIndex={0} className="dropdown-content menu bg-base-100 rounded-box z-10 shadow-lg w-26">
+              <ul tabIndex={0} className="dropdown-content menu bg-base-100 rounded-box z-10 shadow-lg">
                 {/* Show edit only if user is me */}
                 {isMe && (
                   <>
@@ -64,11 +104,13 @@ export default function UserInfo({ profile }: { profile: Profile }) {
                 {!isMe && (
                   <li>
                     <a onClick={handleBlock}>
-                      <FontAwesomeIcon icon={faFlag} />
-                      <span>Block</span>
+                      {userBlocked ?
+                        <><FontAwesomeIcon icon={faTimes} /><span>Unblock</span></> :
+                        <><FontAwesomeIcon icon={faBan} /><span>Block</span></>}
                     </a>
                   </li>
                 )}
+
               </ul>
             </div>
           </div>
@@ -77,7 +119,7 @@ export default function UserInfo({ profile }: { profile: Profile }) {
           <div className="flex justify-center gap-10 w-full p-4">
             <UserStat data={profile.followingCount} type={"following"} />
             <UserStat data={profile.followerCount} type={"follower"} />
-            <UserStat data={profile.likeCount} type={"like"} />
+            <UserStat data={profile.likeCount - profile.dislikeCount} type={"like"} />
           </div>
 
         </div>

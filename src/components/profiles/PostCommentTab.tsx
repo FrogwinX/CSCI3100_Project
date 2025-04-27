@@ -4,15 +4,18 @@ import { Profile } from "@/utils/profiles";
 import { useState } from "react";
 import PostList from "../posts/PostPreviewList";
 
-export default function PostCommentTab({ 
+export default function PostCommentTab({
   profile,
-  userIdTo, 
-} : { 
-  profile : Profile 
-  userIdTo : string
+  userIdTo,
+}: {
+  profile: Profile
+  userIdTo: string
 }) {
   const [activeTab, setActiveTab] = useState(0);
-  const tabs = [`My Posts (${profile.postCount})`, `My Comments (${profile.commentCount})`];
+  const tabs = [
+    `My Posts (${Intl.NumberFormat("en", { notation: "compact" }).format(profile.postCount)})`,
+    `My Comments (${Intl.NumberFormat("en", { notation: "compact" }).format(profile.commentCount)})`,
+  ];
 
   return (
     <div className="w-full">
@@ -20,8 +23,9 @@ export default function PostCommentTab({
         {tabs.map((tab, index) => (
           <div
             key={index}
-            className={`cursor-pointer py-2 text-xl text-center ${activeTab === index ? 'text-base-content border-b-2 border-black' : 'text-base-content/50'
-              }`}
+            className={
+              `cursor-pointer py-2 text-xl text-center ${activeTab === index ? 'text-base-content border-b-2 border-black' : 'text-base-content/50'}`
+            }
             onClick={() => setActiveTab(index)}
           >
             {tab}

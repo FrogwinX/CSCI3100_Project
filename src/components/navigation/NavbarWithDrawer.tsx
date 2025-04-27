@@ -111,7 +111,7 @@ export default function NavbarWithDrawer() {
                     /* Logged in menu */
                     <>
                       <li>
-                        <Link href="/profile">
+                        <Link href={`/profile/${session.userId}`}>
                           <FontAwesomeIcon icon={faUser} />
                           Profile
                         </Link>

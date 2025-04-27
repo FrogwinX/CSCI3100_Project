@@ -8,13 +8,14 @@ export interface Profile {
   description: string;
   avatar: string | null;
   updatedAt: string;
-  postCount: string;
-  commentCount: string;
-  followingCount: string;
-  followerCount: string;
-  likeCount: string;
-  dislikeCount: string
+  postCount: number;
+  commentCount: number;
+  followingCount: number;
+  followerCount: number;
+  likeCount: number;
+  dislikeCount: number;
   isUserBlocked: boolean;
+  isUserFollowed: boolean;
 }
 
 interface ProfileContentResponse {
@@ -56,6 +57,44 @@ export async function getProfileContent(userIdTo : string): Promise<Profile | nu
 
   } catch (error) {
     console.error("Error fetching user profile:", error);
+    return null;
+  }
+}
+
+export async function userInteract(userIdTo : string, 
+  interaction : "follow" | "unfollow" | "block" | "unblock"
+): Promise<boolean | null> {
+  try {
+    const isRemoveAction = interaction === "unfollow" || interaction === "unblock";
+    const session = await getSession();
+
+    let apiUrl = `https://flowchatbackend.azurewebsites.net/api/Profile/${interaction}User`;
+    
+    const response = await fetch(apiUrl, {
+      method: isRemoveAction ? "DELETE" : "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.token}`,
+      },
+      body: JSON.stringify({
+        userIdFrom: session.userId,
+        userIdTo: userIdTo,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Network Error");
+    }
+
+    const data = await response.json();
+    if (!data.data.isSuccess) {
+      throw new Error("Server does not respond successfully");
+    }
+
+    return data.data.isSuccess;
+
+  } catch (error) {
+    console.error(`Error in ${interaction} interaction api call:`, error);
     return null;
   }
 }

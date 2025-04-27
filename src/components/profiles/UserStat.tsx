@@ -1,10 +1,10 @@
 "use client";
 
 export default function UserStat({
-  data = "0",
+  data = 0,
   type = "following" }:
   {
-    data?: string
+    data?: number
     type?: "following" | "follower" | "like"
   }) {
 
@@ -19,7 +19,9 @@ export default function UserStat({
   return (
     <div className="flex items-center gap-3">
       <h1 className="text-xl">
-        {data}
+        {Intl.NumberFormat("en", {
+          notation: "compact",
+        }).format(data)}
       </h1>
       <h1 className="text-xl text-base-content/70">
         {title}
