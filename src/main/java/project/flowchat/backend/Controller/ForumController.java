@@ -23,7 +23,6 @@ import java.util.Map;
 public class ForumController {
 
     @Autowired
-    private final AccountService accountService;
     private final ForumService forumService;
     private ResponseBodyDTO responseBodyDTO;
 
@@ -274,7 +273,7 @@ public class ForumController {
                                        @RequestParam Integer searchNum) {
         try {
             Map<String, Object> data = new HashMap<>();
-            List<UserInfoDTO> userList = accountService.searchUser(userId, keyword, excludingUserIdList, searchNum);
+            List<UserInfoDTO> userList = forumService.searchUser(userId, keyword, excludingUserIdList, searchNum);
             data.put("isSuccess", true);
             data.put("userList", userList);
             responseBodyDTO.setMessage("The search result is returned");

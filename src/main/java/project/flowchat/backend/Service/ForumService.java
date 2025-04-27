@@ -7,6 +7,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import project.flowchat.backend.DTO.UserInfoDTO;
 import project.flowchat.backend.Model.PostModel;
 import project.flowchat.backend.DTO.PostDTO;
 import project.flowchat.backend.Repository.ForumRepository;
@@ -637,6 +638,21 @@ public class ForumService {
             postPreviewModelList.add(createPostDTO(post, userId));
         }
         return postPreviewModelList;
+    }
+
+    /**
+     * Get a list of user info by searching the usernames and emails with keyword in database
+     * @param userId userId Integer
+     * @param keyword keyword case-insensitive String
+     * @param searchNum required number of post previews
+     * @param excludingUserIdList a list of userId that have already retrieved
+     * @return a list of user info
+     * @throws Exception any exception
+     */
+    public List<UserInfoDTO> searchUser(Integer userId, String keyword, List<Integer> excludingUserIdList, Integer searchNum) throws Exception {
+        securityService.checkUserIdWithToken(userId);
+        keyword = "%" + keyword + "%";
+        return profileService.getUserList(userId, excludingUserIdList, searchNum, keyword);
     }
 
     /**

@@ -358,19 +358,4 @@ public class AccountService {
         }
     }
 
-    /**
-     * Get a list of user info by searching the usernames and emails with keyword in database
-     * @param userId userId Integer
-     * @param keyword keyword case-insensitive String
-     * @param searchNum required number of post previews
-     * @param excludingUserIdList a list of userId that have already retrieved
-     * @return a list of user info
-     * @throws Exception any exception
-     */
-    public List<UserInfoDTO> searchUser(Integer userId, String keyword, List<Integer> excludingUserIdList, Integer searchNum) throws Exception {
-        securityService.checkUserIdWithToken(userId);
-        keyword = "%" + keyword + "%";
-        return profileService.getUserList(userId, excludingUserIdList, searchNum, keyword);
-    }
-
 }

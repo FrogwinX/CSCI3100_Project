@@ -250,6 +250,7 @@ public class ProfileService {
         userProfileDTO.setDislikeCount(count1 + count2);
 
         userProfileDTO.setIsUserBlocked(isUserBlocking(userIdFrom, userIdTo));
+        userProfileDTO.setIsUserFollowed(isUserFollowing(userIdFrom, userIdTo));
         return userProfileDTO;
     }
 
@@ -278,8 +279,8 @@ public class ProfileService {
             userInfoDTO.setDescription(userProfileModel.getDescription());
             userInfoDTO.setAvatar(getUserAvatarByUserId(userProfileModel.getUserId()));
             userInfoDTO.setUpdatedAt(userProfileModel.getUpdatedAt());
-            userInfoDTO.setStatus(  isUserFollowing(userId, userProfileModel.getUserId()) ? "following" :
-                                    isUserBlocking(userId, userProfileModel.getUserId()) ? "blocking" : "not following");
+            userInfoDTO.setIsUserBlocked(isUserBlocking(userId, userProfileModel.getUserId()));
+            userInfoDTO.setIsUserFollowed(isUserFollowing(userId, userProfileModel.getUserId()));
             userInfoDTOList.add(userInfoDTO);
         }
         return userInfoDTOList;
