@@ -100,7 +100,7 @@ public interface UserProfileRepository extends JpaRepository<UserProfileModel, I
      * @param userId userId Integer
      * @return number of followers of a user
      */
-    @NativeQuery("SELECT COUNT(*) FROM PROFILE.Follow WHERE user_id_to = 1")
+    @NativeQuery("SELECT COUNT(*) FROM PROFILE.Follow WHERE user_id_to = ?1")
     Integer countFollowerByUserId(Integer userId);
 
     /**

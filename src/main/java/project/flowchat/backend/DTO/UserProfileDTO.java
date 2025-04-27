@@ -23,4 +23,5 @@ public class UserProfileDTO {
     private Integer likeCount;
     private Integer dislikeCount;
     private Boolean isUserBlocked;
+    private Boolean isUserFollowed;
 }

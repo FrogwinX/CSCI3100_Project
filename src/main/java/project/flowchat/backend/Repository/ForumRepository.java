@@ -40,8 +40,8 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
             "FROM FORUM.Post \n" +
             "WHERE attach_to = ?1\n" +
             "AND is_active = 1\n" +
-            "ORDER BY like_count DESC\n")
-    List<PostModel> findActivePostCommentByAttachTo(Integer postId); // To be changed
+            "ORDER BY popularity_score DESC\n")
+    List<PostModel> findActivePostCommentByAttachTo(Integer postId);
 
     /**
      * Find post content by postId
@@ -479,7 +479,7 @@ public interface ForumRepository extends JpaRepository<PostModel, Integer> {
     @NativeQuery("SELECT user_id, tag_id\n" +
             "FROM FORUM.Recommendation\n" +
             "WHERE DATEADD(HOUR, 8, GETUTCDATE()) > DATEADD(DAY, 3, updated_at)\n" +
-            "AND score != 0")
+            "AND score > 0")
     List<List<Integer>> findInfrequentRecommendation();
 
     /**
