@@ -7,10 +7,12 @@ export default function PostLink({
   children,
   href,
   className = "",
+  isBlocked = false,
 }: {
   children: ReactNode;
   href: string;
   className?: string;
+  isBlocked?: boolean;
 }) {
   const router = useRouter();
 
@@ -34,8 +36,16 @@ export default function PostLink({
   };
 
   return (
-    <div onClick={handleClick} className={`cursor-pointer ${className}`}>
-      {children}
+    <div onClick={isBlocked ? undefined : handleClick} className={`relative ${className}`}>
+      {isBlocked && (
+        <div
+          role="alert"
+          className="alert alert-warning text-warning-content w-fit absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10"
+        >
+          You have blocked this user
+        </div>
+      )}
+      <div className={isBlocked ? "pointer-events-none blur-2xl" : "cursor-pointer"}>{children}</div>
     </div>
   );
 }

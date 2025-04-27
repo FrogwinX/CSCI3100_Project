@@ -171,7 +171,7 @@ export default function Messenger() {
     }
     try {
       const fetchedContacts = await getContactsList(20);
-      setContacts(fetchedContacts);
+      setContacts(fetchedContacts.filter((contact) => !contact.isContactUserBlocked));
     } catch (error) {
       console.error("Error fetching contacts:", error);
       setContacts([]); // Clear contacts on error
@@ -249,7 +249,11 @@ export default function Messenger() {
               );
               break;
             case "delete":
-              setConversation((prev) => prev.filter((m) => !message.readOrDeleteMessageIdList?.includes(m.messageId)));
+              setConversation((prev) =>
+                prev.map((m) =>
+                  message.readOrDeleteMessageIdList?.includes(m.messageId) ? { ...m, isActive: false } : m
+                )
+              );
               break;
           }
         } else {
@@ -290,6 +294,7 @@ export default function Messenger() {
         userIdFrom: session.userId,
         userIdTo: selectedContact.contactUserId,
         content: messageText,
+        isActive: true,
         attachTo: 0,
         sentAt: new Date().toISOString(),
         readAt: null,
@@ -366,9 +371,6 @@ export default function Messenger() {
         action: "delete",
         messageIdList: Array.from(selectedMessages),
       });
-
-      // Update UI immediately for better user experience
-      setConversation((prev) => prev.filter((msg) => !selectedMessages.has(msg.messageId)));
 
       // Exit selection mode
       setInSelection(false);
@@ -464,7 +466,7 @@ export default function Messenger() {
         {/* Contact List (Left)*/}
         <div className="w-1/3 flex flex-col bg-base-100 shadow-md">
           <div className="flex flex-col p-2 gap-2">
-            <h1 className="text-2xl font-bold mt-6">Contacts</h1>
+            <h1 className="text-3xl font-bold mt-6">Contacts</h1>
             <div className="my-2 flex items-center gap-2">
               <span className="text-sm font-medium">Status:</span>
               <span
@@ -597,7 +599,7 @@ export default function Messenger() {
                   {isLoadingMoreMessages ? (
                     <span className="loading loading-spinner loading-md"></span>
                   ) : !hasMoreMessages && conversation.length > 0 ? (
-                    <p className="text-xs text-base-content/50">This is the begining of this chat</p>
+                    <p className="text-xs text-base-content/50">This is the begining of the conversation</p>
                   ) : (
                     <div className="h-1"></div> // Placeholder for observer
                   )}
