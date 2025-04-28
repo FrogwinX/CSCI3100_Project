@@ -24,7 +24,7 @@ public class ContactDTO {
     private String usernameFrom;
     private Integer userIdTo;
     private String usernameTo;
-    private ZonedDateTime sentAt;
-    private ZonedDateTime readAt;
+    private String sentAt;
+    private String readAt;
     private Integer unreadMessageCount;
 }

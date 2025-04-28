@@ -444,7 +444,7 @@ public class ForumService {
         List<PostModel> postModelList = forumRepository.findUserActivePostByRange(userIdTo, excludingPostIdList, postNum);
         List<PostDTO> postPreviewModelList = new ArrayList<>();
         for (PostModel post : postModelList) {
-            PostDTO postPreview = createPostDTO(post, userIdTo);
+            PostDTO postPreview = createPostDTO(post, userIdFrom);
             postPreviewModelList.add(postPreview);
         }
         return postPreviewModelList;

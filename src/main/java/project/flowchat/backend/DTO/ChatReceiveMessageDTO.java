@@ -17,7 +17,7 @@ public class ChatReceiveMessageDTO {
     private ChatMessageDetailsDTO messageDetail;
     private List<Integer> readOrDeleteMessageIdList;
     private String action;
-    private ZonedDateTime time;
+    private String time;
     private Boolean success;
     private String errorMessage;
 }

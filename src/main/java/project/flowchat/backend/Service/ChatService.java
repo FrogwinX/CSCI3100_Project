@@ -2,6 +2,7 @@ package project.flowchat.backend.Service;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -81,7 +82,7 @@ public class ChatService {
         returnMessage.setSuccess(true);
         returnMessage.setMessageDetail(convertToDTO(messageModel, message.getImageIdList()));
         returnMessage.setAction(message.getAction());
-        returnMessage.setTime(ZonedDateTime.now(ZoneId.of("Asia/Hong_Kong")));
+        returnMessage.setTime(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm").format(ZonedDateTime.now(ZoneId.of("Asia/Hong_Kong"))));
 
         return returnMessage;
     }
@@ -115,8 +116,8 @@ public class ChatService {
         messageDTO.setContent(messageModel.getContent());
         messageDTO.setAttachTo(messageModel.getAttachTo());
         messageDTO.setIsActive(messageModel.getIsActive());
-        messageDTO.setSentAt(messageModel.getSentAt());
-        messageDTO.setReadAt(messageModel.getReadAt());
+        messageDTO.setSentAt(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm").format(messageModel.getSentAt()));
+        messageDTO.setReadAt(messageModel.getReadAt() == null? null : DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm").format(messageModel.getReadAt()));
 
         if (imageIdList != null && imageIdList.size() > 0) {
             List<String> imageAPIList = new ArrayList<>();
@@ -131,7 +132,7 @@ public class ChatService {
 
     /**
      * Update the read at time of a message, and return the message id list of the messages that are read.
-     * May have error in message: MESSAGE_ALREADY_DELETED, MESSAGE_ALREADY_READ
+     * May have error in message: MESSAGE_ALREADY_READ
      * @param messageIdList message id list of message being read
      */
     public ChatReceiveMessageDTO updateReadAt(List<Integer> messageIdList){
@@ -139,11 +140,6 @@ public class ChatService {
         ChatReceiveMessageDTO returnMessage  = new ChatReceiveMessageDTO();
         for (Integer messageId : messageIdList) {
             messageModel = messageRepository.findById(messageId).get();
-            if (!messageModel.getIsActive()) {
-                returnMessage.setSuccess(false);
-                returnMessage.setErrorMessage(ExceptionService.MESSAGE_ALREADY_DELETED);
-                return returnMessage;
-            }
             if (messageModel.getReadAt() != null) {
                 returnMessage.setSuccess(false);
                 returnMessage.setErrorMessage(ExceptionService.MESSAGE_ALREADY_READ);
@@ -159,7 +155,7 @@ public class ChatService {
         returnMessage.setSuccess(true);
         returnMessage.setReadOrDeleteMessageIdList(messageIdList);
         returnMessage.setAction("read");
-        returnMessage.setTime(ZonedDateTime.now(ZoneId.of("Asia/Hong_Kong")));
+        returnMessage.setTime(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm").format(ZonedDateTime.now(ZoneId.of("Asia/Hong_Kong"))));
 
         return returnMessage;
     }
@@ -192,7 +188,7 @@ public class ChatService {
         returnMessage.setSuccess(true);
         returnMessage.setReadOrDeleteMessageIdList(messageIdList);
         returnMessage.setAction("delete");
-        returnMessage.setTime(ZonedDateTime.now(ZoneId.of("Asia/Hong_Kong")));
+        returnMessage.setTime(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm").format(ZonedDateTime.now(ZoneId.of("Asia/Hong_Kong"))));
 
         return returnMessage;
     }
@@ -246,8 +242,8 @@ public class ChatService {
                 contactDTO.setUnreadMessageCount(messageRepository.getUnreadMessageCountByUserPair(userIdFrom, userId));
             }
 
-            contactDTO.setSentAt(messageModel.getSentAt());
-            contactDTO.setReadAt(messageModel.getReadAt());
+            contactDTO.setSentAt(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm").format(messageModel.getSentAt()));
+            contactDTO.setReadAt(messageModel.getReadAt() == null? null : DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm").format(messageModel.getReadAt()));
 
 
             contactDTOList.add(contactDTO);
