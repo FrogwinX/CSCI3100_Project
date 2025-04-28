@@ -20,7 +20,7 @@ public class ChatMessageDetailsDTO {
     private String content;
     private Boolean isActive;
     private Integer attachTo;
-    private ZonedDateTime sentAt;
-    private ZonedDateTime readAt;
+    private String sentAt;
+    private String readAt;
     private List<String> imageAPIList;
 }
