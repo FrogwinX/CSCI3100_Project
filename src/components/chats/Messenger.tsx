@@ -1,14 +1,12 @@
 "use client";
 
 import {
-  faEllipsis,
-  faFlag,
-  faCheckSquare as faCheckedSquare,
+  faFileImage,
   faTrashAlt,
   faMagnifyingGlass,
   faImages,
   faMinus,
-  faFileImage,
+  faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import { faCheckSquare } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -47,6 +45,8 @@ export default function Messenger() {
   const messageLoaderRef = useRef<HTMLDivElement>(null);
   const [excludedMessageIds, setExcludedMessageIds] = useState<Set<number>>(new Set());
   const connectRetryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [replyTo, setReplyTo] = useState<IncomingMessage | null>(null);
+  const [scrollingToMessageId, setScrollingToMessageId] = useState<number | null>(null);
 
   const handleImageSelect: React.ChangeEventHandler<HTMLInputElement> = (e) => {
     const newFiles = Array.from(e.target.files || []);
@@ -109,7 +109,7 @@ export default function Messenger() {
     }
   };
 
-  // Function to load more messages (older ones)
+  // Function to load older messages
   const loadMoreMessages = useCallback(async () => {
     if (isLoadingMoreMessages || !hasMoreMessages || !selectedContact || conversation.length === 0) return;
 
@@ -361,7 +361,7 @@ export default function Messenger() {
         userIdTo: selectedContact.contactUserId,
         content: messageText,
         isActive: true,
-        attachTo: 0,
+        attachTo: replyTo ? replyTo.messageId : 0,
         sentAt: new Date().toISOString(),
         readAt: null,
         imageAPIList: tempImageUrls.length > 0 ? tempImageUrls : null,
@@ -382,8 +382,8 @@ export default function Messenger() {
         userIdFrom: session.userId,
         userIdTo: selectedContact.contactUserId,
         content: messageText,
-        attachTo: 0,
-        imageIdList: uploadedImageIds.length > 0 ? uploadedImageIds : null,
+        attachTo: replyTo ? replyTo.messageId : 0,
+        imageIdList: uploadedImageIds.length > 0 ? uploadedImageIds : [],
         action: "send",
         messageIdList: [],
       });
@@ -391,6 +391,7 @@ export default function Messenger() {
       setMessageText("");
       setSelectedFiles([]);
       setFilePreviews([]);
+      setReplyTo(null);
       // Revoke object URLs for previews that were just sent
       tempImageUrls.forEach((url) => URL.revokeObjectURL(url));
     } catch (error) {
@@ -426,8 +427,11 @@ export default function Messenger() {
     }
   };
 
-  const deleteMessages = () => {
-    if (selectedMessages.size === 0 || !session.userId || !selectedContact) return;
+  const deleteMessages = (messageId?: number) => {
+    if (!session.userId || !selectedContact) return;
+
+    // If messageId is provided (from using delete dropdown option), delete that specific message
+    const messageIds = messageId ? [messageId] : Array.from(selectedMessages);
 
     try {
       messagingService.sendMessage(`${session.userId}`, {
@@ -437,7 +441,7 @@ export default function Messenger() {
         attachTo: null,
         imageIdList: null,
         action: "delete",
-        messageIdList: Array.from(selectedMessages),
+        messageIdList: messageIds,
       });
 
       // Exit selection mode
@@ -462,11 +466,63 @@ export default function Messenger() {
     });
   };
 
-  // Exit selection mode
-  const handleSelectionButton = () => {
+  const handleSelectionButton = (messageId?: number) => {
     setInSelection(!inSelection);
-    setSelectedMessages(new Set());
+
+    if (messageId) {
+      // If a message ID is provided, select that message
+      setSelectedMessages(new Set([messageId]));
+    } else {
+      // If no message ID is provided, clear the selection
+      setSelectedMessages(new Set());
+    }
   };
+
+  const handleScrollToMessage = (messageId: number) => {
+    const element = document.getElementById(`${messageId}`);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "center" });
+      // Highlight
+      element.classList.add("bg-info/20", "transition-colors", "duration-1000");
+      setTimeout(() => {
+        element.classList.remove("bg-info/20", "transition-colors", "duration-1000");
+      }, 1000);
+    } else {
+      // If not found, set the target ID to trigger the useEffect loader
+      setScrollingToMessageId(messageId);
+    }
+  };
+
+  // handle loading and scrolling when target is set
+  useEffect(() => {
+    // Only run if we have a target ID and are not currently loading messages
+    if (scrollingToMessageId === null || isLoadingMoreMessages) {
+      return;
+    }
+
+    const targetElement = document.getElementById(`${scrollingToMessageId}`);
+
+    if (targetElement) {
+      targetElement.scrollIntoView({ behavior: "smooth", block: "center" });
+      // Highlight the message
+      targetElement.classList.add("bg-primary/20", "transition-colors", "duration-1000");
+      setTimeout(() => {
+        targetElement.classList.remove("bg-primary/20", "transition-colors", "duration-1000");
+      }, 1000);
+
+      // Reset the target ID
+      setScrollingToMessageId(null);
+    } else {
+      // Message still not found, check if more messages can be loaded
+      if (hasMoreMessages) {
+        // Trigger loading more messages
+        loadMoreMessages();
+      } else {
+        // No more messages to load, and the target wasn't found
+        setScrollingToMessageId(null); // Reset the target ID
+      }
+    }
+  }, [scrollingToMessageId, isLoadingMoreMessages, conversation, hasMoreMessages, loadMoreMessages]);
 
   const searchUser = async (uid: string) => {
     if (!session.userId || !session.token) return;
@@ -610,59 +666,84 @@ export default function Messenger() {
                     <span className="text-md">{selectedContact.contactUsername}</span>
                   </div>
                 </Link>
-                <div className="flex gap-1 place-items-center">
-                  {inSelection && (
-                    <div className="badge badge-outline badge-primary">Selected {selectedMessages.size} messages</div>
-                  )}
-
-                  {/* Options menu */}
-                  <div className="dropdown dropdown-end">
-                    <div tabIndex={0} role="button" className={`btn btn-ghost btn-circle btn-md`}>
-                      <FontAwesomeIcon icon={faEllipsis} size="xl" />
-                    </div>
-                    <ul tabIndex={0} className="dropdown-content menu bg-base-100 rounded-box z-10 shadow-lg w-26">
-                      {/* Selection mode toggle */}
-                      <li>
-                        <a onClick={handleSelectionButton}>
-                          <FontAwesomeIcon icon={inSelection ? faCheckedSquare : faCheckSquare} />
-                          <span>{inSelection ? "Cancel" : "Select"}</span>
-                        </a>
-                      </li>
-
-                      {/* Delete option - only visible when in selection mode and messages selected */}
-                      {inSelection && selectedMessages.size > 0 && (
-                        <li>
-                          <a onClick={deleteMessages}>
-                            <FontAwesomeIcon icon={faTrashAlt} />
-                            <span>Delete</span>
-                          </a>
-                        </li>
+                {/* Action buttons */}
+                <div className="flex gap-2 items-center">
+                  {inSelection ? (
+                    <>
+                      {/* Show count and delete/cancel buttons when in selection mode */}
+                      <span className="text-sm font-medium mr-2">{selectedMessages.size} selected</span>
+                      {selectedMessages.size > 0 && (
+                        <button
+                          className="btn btn-soft btn-error btn-sm"
+                          onClick={() => deleteMessages()}
+                          aria-label="Delete selected messages"
+                        >
+                          <FontAwesomeIcon icon={faTrashAlt} />
+                          Delete
+                        </button>
                       )}
-
-                      {/* Report option */}
-                      <li>
-                        <a>
-                          <FontAwesomeIcon icon={faFlag} />
-                          <span>Report</span>
-                        </a>
-                      </li>
-                    </ul>
-                  </div>
+                      <button
+                        className="btn btn-sm"
+                        onClick={() => handleSelectionButton()}
+                        aria-label="Cancel selection"
+                      >
+                        Cancel
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      {/* Enter selection mode */}
+                      <button
+                        className="btn btn-sm btn-ghost"
+                        onClick={() => handleSelectionButton()}
+                        aria-label="Select messages"
+                      >
+                        <FontAwesomeIcon icon={faCheckSquare} size="xl" />
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
 
               {/* Messages */}
-              <div ref={conversationRef} className="flex flex-col-reverse flex-grow overflow-y-auto p-2">
+              <div ref={conversationRef} className="flex flex-col-reverse flex-grow overflow-y-auto">
                 {/* Map messages */}
-                {conversation.map((message) => (
-                  <ChatMessage
-                    key={message.messageId}
-                    isOwner={message.userIdFrom === session.userId}
-                    message={message}
-                    isSelected={selectedMessages.has(message.messageId)}
-                    onMessageClick={toggleSelection}
-                  />
-                ))}
+                {conversation.map((message) => {
+                  // Find the original message if this is a reply
+                  let originalMessage: IncomingMessage | undefined = undefined;
+                  if (message.attachTo && message.attachTo !== 0) {
+                    originalMessage = conversation.find((m) => m.messageId === message.attachTo) ?? {
+                      messageId: message.attachTo,
+                      userIdFrom: 0,
+                      userIdTo: 0,
+                      content: "[Tap to load and jump to original message]",
+                      isActive: true,
+                      attachTo: 0,
+                      sentAt: new Date().toISOString(),
+                      readAt: null,
+                      imageAPIList: null,
+                    };
+                  }
+
+                  return (
+                    <ChatMessage
+                      key={message.messageId}
+                      myUserId={session.userId!}
+                      message={message}
+                      isSelected={selectedMessages.has(message.messageId)}
+                      onMessageClick={toggleSelection}
+                      handleSelectOption={handleSelectionButton}
+                      handleDeleteOption={deleteMessages}
+                      isInSelectionMode={inSelection}
+                      handleReplyOption={(messageId) =>
+                        setReplyTo(conversation.find((msg) => msg.messageId === messageId) || null)
+                      }
+                      handleScrollToMessage={handleScrollToMessage}
+                      replyTo={originalMessage}
+                      contactUsername={selectedContact.contactUsername}
+                    />
+                  );
+                })}
                 {/* Observer target and loading state for older messages */}
                 <div ref={messageLoaderRef} className="py-2 text-center">
                   {isLoadingMoreMessages ? (
@@ -677,6 +758,23 @@ export default function Messenger() {
 
               {/* Input Area */}
               <div className="flex flex-col p-2 bg-base-100 border border-base-300">
+                {/* Reply Indicator */}
+                {replyTo && (
+                  <div className="flex justify-between items-center p-2 mb-2 rounded-md bg-base-200 border-l-4 border-primary">
+                    <div className="text-xs overflow-hidden">
+                      <p className="font-semibold flex items-center gap-1">
+                        {replyTo.userIdFrom === session.userId ? "You" : selectedContact.contactUsername}
+                      </p>
+                      <p className="truncate opacity-70">
+                        {replyTo.content || (replyTo.imageAPIList ? "[Image]" : "[Original message]")}
+                      </p>
+                    </div>
+                    {/* Remove button */}
+                    <button onClick={() => setReplyTo(null)} className="btn btn-xs btn-circle bg-base-100">
+                      <FontAwesomeIcon icon={faXmark} />
+                    </button>
+                  </div>
+                )}
                 {/* Image Previews */}
                 {filePreviews.length > 0 && (
                   <div className="flex flex-wrap gap-2 mb-2 p-2">
