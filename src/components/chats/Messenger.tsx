@@ -7,6 +7,7 @@ import {
   faImages,
   faMinus,
   faXmark,
+  faArrowLeft,
 } from "@fortawesome/free-solid-svg-icons";
 import { faCheckSquare } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -47,6 +48,7 @@ export default function Messenger() {
   const connectRetryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [replyTo, setReplyTo] = useState<IncomingMessage | null>(null);
   const [scrollingToMessageId, setScrollingToMessageId] = useState<number | null>(null);
+  const [showConversation, setShowConversation] = useState(false);
 
   const handleImageSelect: React.ChangeEventHandler<HTMLInputElement> = (e) => {
     const newFiles = Array.from(e.target.files || []);
@@ -90,6 +92,7 @@ export default function Messenger() {
 
   const handleContactSelect = async (contact: Contact) => {
     setSelectedContact(contact);
+    setShowConversation(true); // Show conversation on mobile
     setConversation([]); // Clear previous conversation
     setIsLoadingMoreMessages(true); // Show loading indicator
     setHasMoreMessages(true); // Reset hasMore flag
@@ -524,6 +527,13 @@ export default function Messenger() {
     }
   }, [scrollingToMessageId, isLoadingMoreMessages, conversation, hasMoreMessages, loadMoreMessages]);
 
+  // Function to go back to contact list on mobile
+  const handleBackButton = () => {
+    setShowConversation(false);
+    setSelectedContact(undefined);
+    setConversation([]);
+  };
+
   const searchUser = async (uid: string) => {
     if (!session.userId || !session.token) return;
 
@@ -581,7 +591,11 @@ export default function Messenger() {
       {/* Middle column - Direct message content */}
       <div className="bg-base-200 min-h-full flex flex-grow w-6/8 shadow-lg">
         {/* Contact List (Left)*/}
-        <div className="w-1/3 flex flex-col bg-base-100 shadow-md">
+        <div
+          className={`w-full lg:w-1/3 flex flex-col bg-base-100 shadow-md ${
+            showConversation ? "hidden md:flex" : "flex"
+          }`}
+        >
           <div className="flex flex-col p-2 gap-2">
             <h1 className="text-3xl font-bold mt-6">Contacts</h1>
             <div className="my-2 flex items-center gap-2">
@@ -654,18 +668,26 @@ export default function Messenger() {
           </ul>
         </div>
         {/* Conversation (Right) */}
-        <div className="w-2/3 flex flex-col">
+        <div className={`w-full lg:w-2/3 flex flex-col ${showConversation ? "flex" : "hidden md:flex"}`}>
           {selectedContact ? (
             <div className="overflow-y-auto flex flex-col flex-grow">
+              {/* Header with contact info and action buttons */}
               <div className="flex h-14 justify-between items-center bg-base-100 shadow-md p-2">
-                <Link href={`/profile/${selectedContact.contactUserId}`}>
-                  <div className="avatar items-center gap-2">
-                    <div className="bg-neutral text-neutral-content place-content-center rounded-full w-10">
-                      {/* <FontAwesomeIcon icon={faUser} /> */}
+                <div className="flex items-center gap-1">
+                  {/* Back Button */}
+                  <button className="btn btn-ghost btn-circle btn-sm" onClick={handleBackButton}>
+                    <FontAwesomeIcon icon={faArrowLeft} size="xl" />
+                  </button>
+                  {/* Contact info and avatar */}
+                  <Link href={`/profile/${selectedContact.contactUserId}`}>
+                    <div className="avatar items-center gap-2">
+                      <div className="bg-neutral text-neutral-content place-content-center rounded-full w-10">
+                        {/* <FontAwesomeIcon icon={faUser} /> */}
+                      </div>
+                      <span className="text-md">{selectedContact.contactUsername}</span>
                     </div>
-                    <span className="text-md">{selectedContact.contactUsername}</span>
-                  </div>
-                </Link>
+                  </Link>
+                </div>
                 {/* Action buttons */}
                 <div className="flex gap-2 items-center">
                   {inSelection ? (

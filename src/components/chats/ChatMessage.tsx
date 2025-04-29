@@ -99,7 +99,7 @@ export default function ChatMessage({
               <input type="checkbox" className="checkbox" checked={isSelected} readOnly />
             ) : (
               /* Show Dropdown Trigger when NOT in selection mode */
-              <div className={`dropdown ${isOwner ? "dropdown-end" : "dropdown-start"}`}>
+              <div className={`dropdown ${isOwner ? "dropdown-start" : "dropdown-end"}`}>
                 <button tabIndex={0} role="button" className="btn btn-circle btn-xs bg-base-100">
                   <FontAwesomeIcon icon={faAngleDown} />
                 </button>
