@@ -8,6 +8,7 @@ import {
   faMinus,
   faXmark,
   faArrowLeft,
+  faAngleDown,
 } from "@fortawesome/free-solid-svg-icons";
 import { faCheckSquare } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -49,6 +50,7 @@ export default function Messenger() {
   const [replyTo, setReplyTo] = useState<IncomingMessage | null>(null);
   const [scrollingToMessageId, setScrollingToMessageId] = useState<number | null>(null);
   const [showConversation, setShowConversation] = useState(false);
+  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
 
   const handleImageSelect: React.ChangeEventHandler<HTMLInputElement> = (e) => {
     const newFiles = Array.from(e.target.files || []);
@@ -314,6 +316,57 @@ export default function Messenger() {
     }
   }, [selectedContact, conversation]);
 
+  const scrollToBottom = (behavior: ScrollBehavior = "smooth") => {
+    if (conversationRef.current) {
+      // Scroll the container itself to the bottom
+      conversationRef.current.scrollTo({
+        top: conversationRef.current.scrollHeight,
+        behavior: behavior,
+      });
+    }
+  };
+
+  const handleScroll = useCallback(() => {
+    const currentDiv = conversationRef.current;
+    if (currentDiv) {
+      const { scrollTop } = currentDiv;
+
+      const threshold = -100; // Pixels from bottom
+
+      if (scrollTop < threshold) {
+        setShowScrollToBottom(true);
+      } else {
+        setShowScrollToBottom(false);
+      }
+    }
+  }, [setShowScrollToBottom]);
+
+  // Handle scroll events for showing/hiding the button
+  useEffect(() => {
+    const conversationDiv = conversationRef.current;
+
+    // Only add listener if the div exists
+    if (conversationDiv) {
+      conversationDiv.addEventListener("scroll", handleScroll, { passive: true });
+
+      // Initial check right after attaching
+      handleScroll();
+
+      // Cleanup function specific to this effect run
+      return () => {
+        conversationDiv.removeEventListener("scroll", handleScroll);
+        // Reset button state when contact changes or unmounts
+        setShowScrollToBottom(false);
+      };
+    } else {
+      // No cleanup needed if listener wasn't attached
+      return () => {
+        // Reset button state if effect re-runs and div is no longer there
+        setShowScrollToBottom(false);
+      };
+    }
+  }, [selectedContact]);
+
   // Send message function
   const sendMessage = async () => {
     // Allow sending only images without text
@@ -373,12 +426,7 @@ export default function Messenger() {
       // Add to UI immediately
       setConversation((prev) => [tempMessage, ...prev]);
       // Scroll to the bottom of the conversation
-      if (conversationRef.current) {
-        conversationRef.current.scrollTo({
-          top: conversationRef.current.scrollHeight,
-          behavior: "smooth",
-        });
-      }
+      scrollToBottom("smooth");
 
       // Send to server
       messagingService.sendMessage(`${session.userId}`, {
@@ -670,7 +718,7 @@ export default function Messenger() {
         {/* Conversation (Right) */}
         <div className={`w-full lg:w-2/3 flex flex-col ${showConversation ? "flex" : "hidden md:flex"}`}>
           {selectedContact ? (
-            <div className="overflow-y-auto flex flex-col flex-grow">
+            <div className="relative overflow-y-auto flex flex-col flex-grow">
               {/* Header with contact info and action buttons */}
               <div className="flex h-14 justify-between items-center bg-base-100 shadow-md p-2">
                 <div className="flex items-center gap-1">
@@ -777,6 +825,16 @@ export default function Messenger() {
                   )}
                 </div>
               </div>
+
+              {/* Scroll to Bottom Button */}
+              {showScrollToBottom && (
+                <button
+                  onClick={() => scrollToBottom()}
+                  className="absolute bottom-20 right-4 btn btn-circle btn-sm z-40 shadow-lg" // Positioned button
+                >
+                  <FontAwesomeIcon icon={faAngleDown} />
+                </button>
+              )}
 
               {/* Input Area */}
               <div className="flex flex-col p-2 bg-base-100 border border-base-300">
