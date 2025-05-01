@@ -192,16 +192,6 @@ export default function NavbarWithDrawer() {
 
             <li>
               <Link
-                href="/notifications"
-                className={`flex items-center gap-4 ${isActive("/notifications") ? "bg-base-300 font-bold" : ""}`}
-              >
-                <FontAwesomeIcon icon={faBell} size="xl" />
-                <span>Notifications</span>
-              </Link>
-            </li>
-
-            <li>
-              <Link
                 href="/settings"
                 className={`flex items-center gap-4 ${isActive("/settings") ? "bg-base-300 font-bold" : ""}`}
               >
