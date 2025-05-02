@@ -24,27 +24,18 @@ export default async function profilePage(props: { params: Params }) {
   }
 
   return (
-    <div className="flex h-fit min-h-full w-full gap-x-2 md:px-32">
-      {/* Left column - conditionally rendered back button */}
-      <div className="hidden lg:flex w-1/6 flex-col items-end pt-4 pr-4 sticky h-fit"></div>
+    <div className="flex h-fit min-h-full w-full">
+      {/* Left column */}
+      <div className="hidden lg:flex w-1/6"></div>
 
       {/* Middle column - main content */}
-      <div className="flex-grow w-full lg:w-4/6">
-        <div className="bg-base-100 min-h-full">
-          <div className="w-full">
-            <div className="card-body p-6 gap-10">
-              {/* <label className="label">
-                <span className="label-text text-base-content text-4xl">My Profile</span>
-              </label> */}
-              <UserInfo profile={userProfile}/>
-              <PostCommentTab profile={userProfile} userIdTo={params.userId}/>
-            </div>
-          </div>
-        </div>
+      <div className="flex flex-grow flex-col w-full lg:w-4/6 bg-base-100 min-h-full px-8 py-4">
+        <UserInfo profile={userProfile} />
+        <PostCommentTab profile={userProfile} userIdTo={params.userId} />
       </div>
 
-      {/* Right column - conditionally rendered action menu */}
-      <div className="hidden md:block w-1/6"></div>
+      {/* Right column */}
+      <div className="hidden lg:flex w-1/6"></div>
     </div>
   );
 }

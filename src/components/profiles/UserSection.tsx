@@ -12,7 +12,6 @@ import { useState } from "react";
 import EditableBox from "./EditableBox";
 
 export default function UserInfo({ profile }: { profile: Profile }) {
-
   const router = useRouter();
   const { session } = useSession();
   const [isDropdownMenuOpen, setIsDropdownMenuOpen] = useState(true);
@@ -64,35 +63,45 @@ export default function UserInfo({ profile }: { profile: Profile }) {
   };
 
   return (
-    <div className="card lg:min-w-lg gap-0 bg-base-100 shadow-md p-2">
-      <div className="flex gap-6">
-        <div className="flex items-center gap-6 p-4 w-full">
+    <>
+      <div className="flex min-h-32 gap-6">
+        {/* User avatar and name */}
+        <div className="flex items-center gap-6">
           {/* User avatar */}
-          <div className="avatar avatar-placeholder items-center gap-1">
-            <UserAvatar src={profile.avatar!} size="xxl" />
-          </div>
+          <UserAvatar src={profile.avatar!} size="xxl" />
 
           {/* Username */}
-          <div className=" w-full break-words">
-            <h3 className="text-2xl font-bold">
-              {isEditing ? (
-                <EditableBox initialText={usernameFormData} onSave={(newText: string) => { setUsername(newText); }} />
-              ) : (
-                <div className="w-full break-words">{usernameFormData}</div>
-              )}
-            </h3>
+          <div className="text-3xl font-bold break-words">
+            {isEditing ? (
+              <EditableBox
+                initialText={usernameFormData}
+                onSave={(newText: string) => {
+                  setUsername(newText);
+                }}
+              />
+            ) : (
+              usernameFormData
+            )}
           </div>
         </div>
 
-        <div>
-          <div className="flex gap-6 flex justify-end">
-
+        {/* User stats and action */}
+        <div className="flex flex-col flex-grow items-end place-content-between">
+          <div className="flex gap-6">
             {/* Show follow only if user is NOT me */}
             {!isMe && (
               <button className={`btn btn-sm ${userFollowed ? "btn-error" : "btn-primary"}`} onClick={handleFollow}>
-                {userFollowed ?
-                  <><FontAwesomeIcon icon={faTimes} size="lg" /><span>Unfollow</span></> :
-                  <><FontAwesomeIcon icon={faHeart} size="lg" /><span>Follow</span></>}
+                {userFollowed ? (
+                  <>
+                    <FontAwesomeIcon icon={faTimes} size="lg" />
+                    <span>Unfollow</span>
+                  </>
+                ) : (
+                  <>
+                    <FontAwesomeIcon icon={faHeart} size="lg" />
+                    <span>Follow</span>
+                  </>
+                )}
               </button>
             )}
 
@@ -106,17 +115,25 @@ export default function UserInfo({ profile }: { profile: Profile }) {
 
             {/* Edit confirm buttons */}
             <div className="flex justify-end gap-6 p-1 w-full" hidden={!isEditing}>
-              <button onClick={() => { setIsEditing(false); }}>
+              <button
+                onClick={() => {
+                  setIsEditing(false);
+                }}
+              >
                 <FontAwesomeIcon icon={faXmark} size="lg" />
               </button>
-              <button onClick={() => {editProfile(); }}>
+              <button
+                onClick={() => {
+                  editProfile();
+                }}
+              >
                 <FontAwesomeIcon icon={faCheck} size="lg" />
               </button>
             </div>
 
             {/* Options menu */}
             <div className="dropdown dropdown-end" hidden={isEditing}>
-              <div tabIndex={0} role="button" className={`btn btn-ghost btn-circle btn-sm`}>
+              <div tabIndex={0} role="button" className={`btn btn-ghost btn-circle`}>
                 <FontAwesomeIcon icon={faEllipsis} size="xl" />
               </div>
               <ul tabIndex={0} className="dropdown-content menu bg-base-100 rounded-box z-10 shadow-lg">
@@ -136,37 +153,46 @@ export default function UserInfo({ profile }: { profile: Profile }) {
                 {!isMe && (
                   <li>
                     <a onClick={handleBlock}>
-                      {userBlocked ?
-                        <><FontAwesomeIcon icon={faTimes} /><span>Unblock</span></> :
-                        <><FontAwesomeIcon icon={faBan} /><span>Block</span></>}
+                      {userBlocked ? (
+                        <>
+                          <FontAwesomeIcon icon={faTimes} />
+                          <span>Unblock</span>
+                        </>
+                      ) : (
+                        <>
+                          <FontAwesomeIcon icon={faBan} />
+                          <span>Block</span>
+                        </>
+                      )}
                     </a>
                   </li>
                 )}
-
               </ul>
             </div>
           </div>
 
           {/* User Stat */}
-          <div className="flex justify-center gap-10 w-full p-4">
+          <div className="flex gap-10">
             <UserStat data={profile.followingCount} type={"following"} />
             <UserStat data={profile.followerCount} type={"follower"} />
             <UserStat data={profile.likeCount - profile.dislikeCount} type={"like"} />
           </div>
-
         </div>
-
       </div>
 
-      <div className="flex items-center gap-6 p-4">
-        <h3 className="text-md text-base-content/70 w-full">
-          {isEditing ? (
-            <EditableBox initialText={userDescriptionFormData} onSave={(newText: string) => { setUserDescription(newText); }} />
-          ) : (
-            <div className="w-full break-words">{userDescriptionFormData}</div>
-          )}
-        </h3>
+      {/* User description */}
+      <div className="flex py-4 text-md text-base-content/70 w-full break-words">
+        {isEditing ? (
+          <EditableBox
+            initialText={userDescriptionFormData}
+            onSave={(newText: string) => {
+              setUserDescription(newText);
+            }}
+          />
+        ) : (
+          userDescriptionFormData
+        )}
       </div>
-    </div>
+    </>
   );
 }
