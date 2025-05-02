@@ -26,6 +26,13 @@ interface ProfileContentResponse {
   };
 }
 
+interface UpdateProfileResponse {
+  message: string;
+  data: {
+    isSuccess: boolean;
+  };
+}
+
 export async function getProfileContent(userIdTo : string): Promise<Profile | null> {
   try {
     const session = await getSession();
@@ -58,6 +65,43 @@ export async function getProfileContent(userIdTo : string): Promise<Profile | nu
   } catch (error) {
     console.error("Error fetching user profile:", error);
     return null;
+  }
+}
+
+export async function updateProfile(username: string, description: string): Promise<void> {
+  try {
+    const session = await getSession();
+    let apiUrl = `https://flowchatbackend.azurewebsites.net/api/Profile/updatePersonalProfile`;
+
+    const requestBody = {
+      userId: session.userId,
+      username: username,
+      description: description,
+    };
+
+    const formData = new FormData();
+    const requestBodyBlob = new Blob([JSON.stringify(requestBody)], { type: "application/json" });
+    formData.append("requestBody", requestBodyBlob);
+    
+    const response = await fetch(apiUrl, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${session.token}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error("Network Error");
+    }
+
+    const data: UpdateProfileResponse = await response.json();
+    if (!data.data.isSuccess) {
+      throw new Error("Server does not respond successfully");
+    }
+
+  } catch (error) {
+    console.error("Error in updating user profile:", error);
   }
 }
 

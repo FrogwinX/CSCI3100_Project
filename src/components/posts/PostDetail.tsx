@@ -20,6 +20,7 @@ export default function PostDetail({ post }: { post: Post }) {
             {/** Header, client-sided */}
             <PostHeader
               postId={post.postId}
+              postUserId={post.userId}
               postUsername={post.username}
               postUpdatedAt={post.updatedAt}
               size="md"
