@@ -46,7 +46,6 @@ export default function Messenger() {
   const [hasMoreMessages, setHasMoreMessages] = useState(true);
   const messageLoaderRef = useRef<HTMLDivElement>(null);
   const [excludedMessageIds, setExcludedMessageIds] = useState<Set<number>>(new Set());
-  const connectRetryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [replyTo, setReplyTo] = useState<IncomingMessage | null>(null);
   const [scrollingToMessageId, setScrollingToMessageId] = useState<number | null>(null);
   const [showConversation, setShowConversation] = useState(false);
@@ -169,37 +168,6 @@ export default function Messenger() {
     };
   }, [hasMoreMessages, isLoadingMoreMessages, loadMoreMessages]);
 
-  // Connect to the messaging service with retry logic
-  const connectWithRetry = useCallback(
-    async (attempt = 1): Promise<void> => {
-      // Clear any existing retry timeout
-      if (connectRetryTimeoutRef.current) {
-        clearTimeout(connectRetryTimeoutRef.current);
-        connectRetryTimeoutRef.current = null;
-      }
-
-      if (messagingService.getStatus() === ConnectionStatus.CONNECTED) {
-        console.log("Already connected.");
-        return;
-      }
-      if (attempt > 20) {
-        // Limit retries
-        console.error("WebSocket connection failed after multiple attempts.");
-        setConnectionStatus(ConnectionStatus.ERROR); // Set error state explicitly
-        return;
-      }
-
-      setConnectionStatus(ConnectionStatus.CONNECTING); // Ensure status is connecting
-
-      try {
-        await messagingService.connect(session.token!);
-      } catch (error) {
-        connectRetryTimeoutRef.current = setTimeout(() => connectWithRetry(attempt + 1), 500);
-      }
-    },
-    [session.token]
-  );
-
   const fetchContacts = useCallback(async () => {
     // Don't fetch if not connected or already loading
     if (messagingService.getStatus() !== ConnectionStatus.CONNECTED) {
@@ -215,34 +183,19 @@ export default function Messenger() {
     }
   }, [ConnectionStatus]);
 
-  // Connect to websocket
+  // Listen for status changes and update local state
   useEffect(() => {
-    if (!session.isLoggedIn || !session.token || !session.userId) {
-      // If session is lost, disconnect and clear state
-      messagingService.disconnect();
-      setContacts([]);
-      setSelectedContact(undefined);
-      setConversation([]);
-      return;
-    }
-
-    // Subscribe to status changes
+    // Subscribe to status changes to update local state
     const unsubscribeStatus = messagingService.onStatusChange(setConnectionStatus);
 
-    // Attempt initial connection if disconnected
-    if (messagingService.getStatus() === ConnectionStatus.DISCONNECTED) {
-      connectWithRetry();
-    }
+    // Update status immediately in case it changed between initial state and effect run
+    setConnectionStatus(messagingService.getStatus());
 
     // Cleanup function
     return () => {
       unsubscribeStatus();
-      // Clear any pending retry timeout on component unmount or session change
-      if (connectRetryTimeoutRef.current) {
-        clearTimeout(connectRetryTimeoutRef.current);
-      }
     };
-  }, [session.isLoggedIn, session.token, session.userId, connectWithRetry]);
+  }, []);
 
   // Subscribe to user channel and fetch contacts
   useEffect(() => {
@@ -646,20 +599,6 @@ export default function Messenger() {
         >
           <div className="flex flex-col p-2 gap-2">
             <h1 className="text-3xl font-bold mt-6">Contacts</h1>
-            <div className="my-2 flex items-center gap-2">
-              <span className="text-sm font-medium">Status:</span>
-              <span
-                className={`badge ${
-                  connectionStatus === ConnectionStatus.CONNECTED
-                    ? "badge-success"
-                    : connectionStatus === ConnectionStatus.CONNECTING
-                    ? "badge-warning"
-                    : "badge-error"
-                } badge-sm`}
-              >
-                {connectionStatus.toLowerCase()}
-              </span>
-            </div>
             {/* Search bar */}
             <div className="relative bg-base-200 rounded-full p-1">
               <FontAwesomeIcon
@@ -776,7 +715,7 @@ export default function Messenger() {
               </div>
 
               {/* Messages */}
-              <div ref={conversationRef} className="flex flex-col-reverse flex-grow overflow-y-auto">
+              <div ref={conversationRef} className="flex flex-col-reverse flex-grow overflow-y-auto px-2">
                 {/* Map messages */}
                 {conversation.map((message) => {
                   // Find the original message if this is a reply
