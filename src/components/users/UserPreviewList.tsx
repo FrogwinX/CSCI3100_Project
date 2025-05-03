@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { getSearchUser } from "@/utils/users";
-import { Users } from "@/components/users/UserPreview";
+import { Users } from "@/utils/users";
 import UserPreview from "./UserPreview";
 
 export default function UserList({ searchKeyword = "" }: { searchKeyword?: string }) {
