@@ -115,11 +115,14 @@ public class ProfileController {
                                                 @RequestPart(required = false, value = "avatar") MultipartFile avatar) {
         try {
             Map<String, Object> data = new HashMap<>();
-            profileService.updatePersonalProfile((Integer) requestBody.get("userId"), 
-                                                (String) requestBody.get("username"), 
-                                                (String) requestBody.get("description"), 
-                                                avatar);
+            Map<String, String> profileInfo = profileService.updatePersonalProfile(   (Integer) requestBody.get("userId"),
+                                                                                            (String) requestBody.get("username"),
+                                                                                            (String) requestBody.get("description"),
+                                                                                            avatar);
             data.put("isSuccess", true);
+            data.put("username", profileInfo.get("username"));
+            data.put("description", profileInfo.get("description"));
+            data.put("avatar", profileInfo.get("avatar"));
             responseBodyDTO.setMessage("The user personal profile is updated");
             responseBodyDTO.setData(data);
         } catch (ExceptionService e) {

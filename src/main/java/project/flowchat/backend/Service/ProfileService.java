@@ -5,7 +5,9 @@ import lombok.AllArgsConstructor;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -182,7 +184,7 @@ public class ProfileService {
      * @param avatar new avatar, empty file if user wants to delete it
      * @throws Exception
      */
-    public void updatePersonalProfile(Integer userId, String username, String description, MultipartFile avatar) throws Exception {
+    public Map<String, String> updatePersonalProfile(Integer userId, String username, String description, MultipartFile avatar) throws Exception {
         securityService.checkUserIdWithToken(userId);
         UserProfileModel userProfileModel = userProfileRepository.findById(userId).get();
         if (username != null) {
@@ -211,6 +213,12 @@ public class ProfileService {
         }
         userProfileModel.setUpdatedAt(ZonedDateTime.now(ZoneId.of("Asia/Hong_Kong")));
         userProfileRepository.save(userProfileModel);
+
+        Map<String, String> profileInfo = new HashMap<>();
+        profileInfo.put("username", userProfileModel.getUsername());
+        profileInfo.put("description", userProfileModel.getDescription());
+        profileInfo.put("avatar", imageService.getImageAPI(userProfileModel.getAvatarId()));
+        return profileInfo;
     }
 
     /**
