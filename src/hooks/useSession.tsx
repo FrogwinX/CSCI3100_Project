@@ -2,23 +2,28 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode, useRef, useCallback } from "react";
 import { SessionData, defaultSession } from "@/utils/sessions";
-import { ConnectionStatus, messagingService } from "@/utils/messaging";
+import { ConnectionStatus, getUnreadMessageCount, messagingService } from "@/utils/messaging";
 
 // Context setup
 const SessionContext = createContext<{
   session: SessionData;
   loading: boolean;
   refresh: () => Promise<void>;
+  unreadCount: number;
+  refreshUnreadCount: () => Promise<void>;
 }>({
   session: defaultSession,
   loading: true,
   refresh: async () => {},
+  unreadCount: 0,
+  refreshUnreadCount: async () => {},
 });
 
 // Provider component
 export function SessionProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<SessionData>(defaultSession);
   const [loading, setLoading] = useState(true);
+  const [unreadCount, setUnreadCount] = useState(0);
   const connectRetryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Function to fetch session data
@@ -36,7 +41,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Load session on mount
+  // Fetch session data on mount
   useEffect(() => {
     refresh();
   }, []);
@@ -101,7 +106,26 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     };
   }, [session.isLoggedIn, session.token, connectWithRetry]);
 
-  return <SessionContext.Provider value={{ session, loading, refresh }}>{children}</SessionContext.Provider>;
+  // Function to fetch unread message count
+  const fetchUnreadCount = useCallback(async () => {
+    if (!session.isLoggedIn || !session.userId) {
+      setUnreadCount(0); // Reset if not logged in
+      return;
+    }
+    try {
+      const count = await getUnreadMessageCount(session.userId);
+      setUnreadCount(count);
+    } catch (error) {
+      console.error("Failed to fetch unread message count:", error);
+      setUnreadCount(0); // Reset on error
+    }
+  }, [session.isLoggedIn, session.userId]);
+
+  return (
+    <SessionContext.Provider value={{ session, loading, refresh, unreadCount, refreshUnreadCount: fetchUnreadCount }}>
+      {children}
+    </SessionContext.Provider>
+  );
 }
 
 // Hook to use the session

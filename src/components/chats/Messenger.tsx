@@ -29,7 +29,7 @@ import UserAvatar from "@/components/users/UserAvatar";
 import { uploadImage } from "@/utils/images";
 
 export default function Messenger() {
-  const { session } = useSession();
+  const { session, refreshUnreadCount } = useSession();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [selectedContact, setSelectedContact] = useState<Contact>();
   const [conversation, setConversation] = useState<IncomingMessage[]>([]);
@@ -426,6 +426,8 @@ export default function Messenger() {
         action: "read",
         messageIdList: messageIds,
       });
+
+      refreshUnreadCount(); // Refresh unread count after marking as read
     } catch (error) {
       console.error("Failed to mark messages as read:", error);
     }
