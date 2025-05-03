@@ -30,6 +30,9 @@ interface UpdateProfileResponse {
   message: string;
   data: {
     isSuccess: boolean;
+    username: string;
+    description: string;
+    avatar: string;
   };
 }
 
@@ -68,7 +71,7 @@ export async function getProfileContent(userIdTo : string): Promise<Profile | nu
   }
 }
 
-export async function updateProfile(username: string, description: string): Promise<void> {
+export async function updateProfile(username: string, description: string, avatar: File | null): Promise<void> {
   try {
     const session = await getSession();
     let apiUrl = `https://flowchatbackend.azurewebsites.net/api/Profile/updatePersonalProfile`;
@@ -82,6 +85,9 @@ export async function updateProfile(username: string, description: string): Prom
     const formData = new FormData();
     const requestBodyBlob = new Blob([JSON.stringify(requestBody)], { type: "application/json" });
     formData.append("requestBody", requestBodyBlob);
+    if (avatar) {
+      formData.append("avatar", avatar);
+    }
     
     const response = await fetch(apiUrl, {
       method: "PUT",
@@ -97,8 +103,18 @@ export async function updateProfile(username: string, description: string): Prom
 
     const data: UpdateProfileResponse = await response.json();
     if (!data.data.isSuccess) {
-      throw new Error("Server does not respond successfully");
+      throw new Error(`Server does not respond successfully: ${data.message}`);
     }
+
+    const newSession = await getSession();
+    newSession.userId = session.userId;
+    newSession.username = data.data.username;
+    newSession.roles = session.roles;
+    newSession.isLoggedIn = true;
+    newSession.token = session.token;
+    newSession.avatar = data.data.avatar;
+    newSession.email = session.email;
+    await newSession.save();
 
   } catch (error) {
     console.error("Error in updating user profile:", error);

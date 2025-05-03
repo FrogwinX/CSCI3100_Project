@@ -5,14 +5,16 @@ import UserStat from "./UserStat";
 import { Profile, updateProfile, userInteract } from "@/utils/profiles";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCommenting, faHeart } from "@fortawesome/free-regular-svg-icons";
-import { faBan, faCheck, faEllipsis, faPenToSquare, faTimes, faXmark } from "@fortawesome/free-solid-svg-icons";
+import { faBan, faCheck, faEllipsis, faImage, faPenToSquare, faTimes, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { useSession } from "@/hooks/useSession";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import EditableBox from "./EditableBox";
+import { getSession } from "@/utils/sessions";
 
 export default function UserInfo({ profile }: { profile: Profile }) {
 
+  const maxImageSize = 5 * 1024 * 1024;
   const router = useRouter();
   const { session } = useSession();
   const [isDropdownMenuOpen, setIsDropdownMenuOpen] = useState(true);
@@ -21,16 +23,16 @@ export default function UserInfo({ profile }: { profile: Profile }) {
   const [isEditing, setIsEditing] = useState(false);
   const [username, setUsername] = useState(profile.username);
   const [userDescription, setUserDescription] = useState(profile.description);
-  const [usernameFormData, setUsernameFormData] = useState(profile.username);
-  const [userDescriptionFormData, setUserDescriptionFormData] = useState(profile.description);
-  const [userAvatarFormData, setUserAvatarFormData] = useState(profile.avatar);
+  const [userAvatar, setUserAvatar] = useState<File | null>(null);
+  const [userAvatarPreview, setUserAvatarPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const isMe = session.username === profile.username;
 
   const editProfile = async () => {
     setIsEditing(false);
-    setUsernameFormData(username);
-    setUserDescriptionFormData(userDescription);
-    await updateProfile(usernameFormData, userDescriptionFormData);
+    profile.username = username;
+    profile.description = userDescription;
+    await updateProfile(username, userDescription, userAvatar);
   };
 
   const handleFollow = () => {
@@ -63,22 +65,61 @@ export default function UserInfo({ profile }: { profile: Profile }) {
     setIsDropdownMenuOpen(true);
   };
 
+  const handleUploadAvatar = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.size > maxImageSize) {
+        alert(`File size exceeds the ${maxImageSize / 1024 / 1024} MB limit.`);
+        return;
+      }
+      setUserAvatar(file);
+      setUserAvatarPreview(URL.createObjectURL(file));
+    }
+  };
+
   return (
     <div className="card lg:min-w-lg gap-0 bg-base-100 shadow-md p-2">
       <div className="flex gap-6">
         <div className="flex items-center gap-6 p-4 w-full">
           {/* User avatar */}
           <div className="avatar avatar-placeholder items-center gap-1">
-            <UserAvatar src={profile.avatar!} size="xxl" />
+            <div className="z-10">
+              {userAvatarPreview ?
+                <UserAvatar src={userAvatarPreview!} size="xxl" /> :
+                <UserAvatar src={profile.avatar!} size="xxl" />
+              }
+
+            </div>
+            <div className="absolute z-20">
+              {isEditing ? (
+                <div className="avatar avatar-placeholder gap-1 items-center">
+                  <div className="bg-neutral/50 text-neutral-content w-20 h-20 rounded-full z-20" onClick={handleUploadAvatar}>
+                    <FontAwesomeIcon icon={faImage} size="lg" />
+                    <input
+                      type="file"
+                      size={maxImageSize}
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      ref={fileInputRef}
+                      className="hidden"
+                    />
+                  </div>
+                </div>
+              ) : ("")}
+            </div>
           </div>
 
           {/* Username */}
           <div className=" w-full break-words">
             <h3 className="text-2xl font-bold">
               {isEditing ? (
-                <EditableBox initialText={usernameFormData} onSave={(newText: string) => { setUsername(newText); }} />
+                <EditableBox initialText={username} onSave={(newText: string) => { setUsername(newText); }} />
               ) : (
-                <div className="w-full break-words">{usernameFormData}</div>
+                <div className="w-full break-words">{username}</div>
               )}
             </h3>
           </div>
@@ -106,10 +147,16 @@ export default function UserInfo({ profile }: { profile: Profile }) {
 
             {/* Edit confirm buttons */}
             <div className="flex justify-end gap-6 p-1 w-full" hidden={!isEditing}>
-              <button onClick={() => { setIsEditing(false); }}>
+              <button onClick={() => {
+                setIsEditing(false);
+                setUsername(profile.username);
+                setUserDescription(profile.description);
+                setUserAvatar(null);
+                setUserAvatarPreview(null);
+              }}>
                 <FontAwesomeIcon icon={faXmark} size="lg" />
               </button>
-              <button onClick={() => {editProfile(); }}>
+              <button onClick={() => { editProfile(); }}>
                 <FontAwesomeIcon icon={faCheck} size="lg" />
               </button>
             </div>
@@ -161,9 +208,9 @@ export default function UserInfo({ profile }: { profile: Profile }) {
       <div className="flex items-center gap-6 p-4">
         <h3 className="text-md text-base-content/70 w-full">
           {isEditing ? (
-            <EditableBox initialText={userDescriptionFormData} onSave={(newText: string) => { setUserDescription(newText); }} />
+            <EditableBox initialText={userDescription} onSave={(newText: string) => { setUserDescription(newText); }} />
           ) : (
-            <div className="w-full break-words">{userDescriptionFormData}</div>
+            <div className="w-full break-words">{userDescription}</div>
           )}
         </h3>
       </div>
