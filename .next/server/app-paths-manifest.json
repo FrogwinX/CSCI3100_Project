@@ -1,7 +1,0 @@
-{
-  "/api/[...action]/route": "app/api/[...action]/route.js",
-  "/api/session/route": "app/api/session/route.js",
-  "/forum/latest/page": "app/forum/latest/page.js",
-  "/login/page": "app/login/page.js",
-  "/profile/[userId]/page": "app/profile/[userId]/page.js"
-}
