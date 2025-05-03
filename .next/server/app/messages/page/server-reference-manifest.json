@@ -1,0 +1,16 @@
+{
+  "node": {
+    "00d347e48e6d2236e1f2b1fadcb1fb08f178d130b4": {
+      "workers": {
+        "app/messages/page": {
+          "moduleId": "[project]/.next-internal/server/app/messages/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/utils/authentication.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/messages/page": "action-browser"
+      }
+    }
+  },
+  "edge": {}
+}

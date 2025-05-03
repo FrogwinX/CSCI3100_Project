@@ -1,0 +1,49 @@
+{
+  "node": {
+    "00d347e48e6d2236e1f2b1fadcb1fb08f178d130b4": {
+      "workers": {
+        "app/forum/recommended/page": {
+          "moduleId": "[project]/.next-internal/server/app/forum/recommended/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/utils/authentication.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/src/utils/posts.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/forum/recommended/page": "action-browser"
+      }
+    },
+    "00ea58ac1cac156effee2a42784344f8a6315042d2": {
+      "workers": {
+        "app/forum/recommended/page": {
+          "moduleId": "[project]/.next-internal/server/app/forum/recommended/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/utils/authentication.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/src/utils/posts.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/forum/recommended/page": "action-browser"
+      }
+    },
+    "40dce588911040281a23d1a5c8c49e04ac16d57a05": {
+      "workers": {
+        "app/forum/recommended/page": {
+          "moduleId": "[project]/.next-internal/server/app/forum/recommended/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/utils/authentication.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/src/utils/posts.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/forum/recommended/page": "action-browser"
+      }
+    },
+    "400f4e9440d1f535054541e77b34a614f79fb16664": {
+      "workers": {
+        "app/forum/recommended/page": {
+          "moduleId": "[project]/.next-internal/server/app/forum/recommended/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/utils/authentication.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/src/utils/posts.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/forum/recommended/page": "action-browser"
+      }
+    }
+  },
+  "edge": {}
+}
