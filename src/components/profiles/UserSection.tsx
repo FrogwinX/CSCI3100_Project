@@ -10,6 +10,7 @@ import { useSession } from "@/hooks/useSession";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import EditableBox from "./EditableBox";
+import Link from "next/link";
 
 export default function UserInfo({ profile }: { profile: Profile }) {
   const router = useRouter();
@@ -52,10 +53,6 @@ export default function UserInfo({ profile }: { profile: Profile }) {
     }
   };
 
-  const handleMessage = () => {
-    router.push(`/messages`);
-  };
-
   const handleEdit = () => {
     setIsDropdownMenuOpen(false);
     setIsEditing(true);
@@ -64,9 +61,9 @@ export default function UserInfo({ profile }: { profile: Profile }) {
 
   return (
     <>
-      <div className="flex min-h-32 gap-6">
+      <div className="flex gap-6">
         {/* User avatar and name */}
-        <div className="flex items-center gap-6">
+        <div className="flex items-center min-h-32 gap-6">
           {/* User avatar */}
           <UserAvatar src={profile.avatar!} size="xxl" />
 
@@ -90,16 +87,16 @@ export default function UserInfo({ profile }: { profile: Profile }) {
           <div className="flex gap-6">
             {/* Show follow only if user is NOT me */}
             {!isMe && (
-              <button className={`btn btn-sm ${userFollowed ? "btn-error" : "btn-primary"}`} onClick={handleFollow}>
+              <button className={`btn ${userFollowed ? "btn-error btn-soft" : "btn-primary"}`} onClick={handleFollow}>
                 {userFollowed ? (
                   <>
                     <FontAwesomeIcon icon={faTimes} size="lg" />
-                    <span>Unfollow</span>
+                    Unfollow
                   </>
                 ) : (
                   <>
                     <FontAwesomeIcon icon={faHeart} size="lg" />
-                    <span>Follow</span>
+                    Follow
                   </>
                 )}
               </button>
@@ -107,10 +104,12 @@ export default function UserInfo({ profile }: { profile: Profile }) {
 
             {/* Show message button only if user is NOT me */}
             {!isMe && (
-              <button className="btn btn-sm" onClick={handleMessage}>
-                <FontAwesomeIcon icon={faCommenting} size="lg" />
-                Message
-              </button>
+              <Link href={`/messages`}>
+                <button className="btn">
+                  <FontAwesomeIcon icon={faCommenting} size="lg" />
+                  Message
+                </button>
+              </Link>
             )}
 
             {/* Edit confirm buttons */}
@@ -174,7 +173,7 @@ export default function UserInfo({ profile }: { profile: Profile }) {
           {/* User Stat */}
           <div className="flex gap-10">
             <UserStat data={profile.followingCount} type={"following"} />
-            <UserStat data={profile.followerCount} type={"follower"} />
+            <UserStat data={profile.followerCount} type={"followers"} />
             <UserStat data={profile.likeCount - profile.dislikeCount} type={"like"} />
           </div>
         </div>
