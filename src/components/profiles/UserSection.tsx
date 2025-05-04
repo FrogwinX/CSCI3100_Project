@@ -10,49 +10,57 @@ import { useSession } from "@/hooks/useSession";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import EditableBox from "./EditableBox";
-import { getSession } from "@/utils/sessions";
+import { checkUsernameUnique } from "@/utils/authentication";
 
 export default function UserInfo({ profile }: { profile: Profile }) {
 
-  const maxImageSize = 5 * 1024 * 1024;
+  const maxImageSize = 1 * 1024 * 1024; // Change this when the config has changed
   const router = useRouter();
-  const { session } = useSession();
+  const { session, refresh } = useSession();
   const [isDropdownMenuOpen, setIsDropdownMenuOpen] = useState(true);
   const [userFollowed, setUserFollowed] = useState(profile.isUserFollowed);
   const [userBlocked, setUserBlocked] = useState(profile.isUserBlocked);
   const [isEditing, setIsEditing] = useState(false);
   const [username, setUsername] = useState(profile.username);
+  const [usernameErrorMessage, setUsernameErrorMessage] = useState("");
   const [userDescription, setUserDescription] = useState(profile.description);
   const [userAvatar, setUserAvatar] = useState<File | null>(null);
   const [userAvatarPreview, setUserAvatarPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const isMe = session.username === profile.username;
+  const isMe = (session.userId ? session.userId.toString() == profile.userId : true);
 
   const editProfile = async () => {
+    if (usernameErrorMessage.length > 0) {
+      return;
+    }
     setIsEditing(false);
     profile.username = username;
     profile.description = userDescription;
     await updateProfile(username, userDescription, userAvatar);
+    await refresh();
+    window.location.reload();
   };
 
-  const handleFollow = () => {
+  const handleFollow = async () => {
     if (userFollowed) {
       setUserFollowed(false);
-      userInteract(profile.userId, "unfollow");
+      await userInteract(profile.userId, "unfollow");
     } else {
       setUserFollowed(true);
-      userInteract(profile.userId, "follow");
+      await userInteract(profile.userId, "follow");
     }
   };
 
-  const handleBlock = () => {
+  const handleBlock = async () => {
     if (userBlocked) {
-      setUserBlocked(false);
-      userInteract(profile.userId, "unblock");
+      await userInteract(profile.userId, "unblock");
     } else {
-      setUserBlocked(true);
-      userInteract(profile.userId, "block");
+      await userInteract(profile.userId, "block");
+      if (userFollowed) {
+        await userInteract(profile.userId, "unfollow");
+      }
     }
+    window.location.reload();
   };
 
   const handleMessage = () => {
@@ -69,8 +77,8 @@ export default function UserInfo({ profile }: { profile: Profile }) {
     fileInputRef.current?.click();
   };
 
-  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (file) {
       if (file.size > maxImageSize) {
         alert(`File size exceeds the ${maxImageSize / 1024 / 1024} MB limit.`);
@@ -81,10 +89,37 @@ export default function UserInfo({ profile }: { profile: Profile }) {
     }
   };
 
+  const handleUsernameChange = async (newUsername : string) => {
+    if (newUsername.length === 0) {
+      setUsernameErrorMessage("Username cannot be empty");
+      return;
+    }
+    else if (newUsername.length > 50) {
+      setUsernameErrorMessage("Username cannot exceed 50 characters");
+      return;
+    }
+    else if (newUsername.includes("@") || newUsername.includes(" ") || newUsername.includes(":")) {
+      setUsernameErrorMessage("Username cannot contain the symbol ':', '@' or space");
+      return;
+    }
+    else {
+      setUsernameErrorMessage("");
+    }
+
+    const result = await checkUsernameUnique(newUsername);
+    if (!result.data.isUsernameUnique) {
+      setUsernameErrorMessage("This username has been used");
+      return;
+    }
+    else {
+      setUsernameErrorMessage("");
+    }
+  };
+
   return (
     <div className="card lg:min-w-lg gap-0 bg-base-100 shadow-md p-2">
       <div className="flex gap-6">
-        <div className="flex items-center gap-6 p-4 w-full">
+        <div className="flex items-center gap-6 p-4 overflow-auto w-full">
           {/* User avatar */}
           <div className="avatar avatar-placeholder items-center gap-1">
             <div className="z-10">
@@ -114,31 +149,35 @@ export default function UserInfo({ profile }: { profile: Profile }) {
           </div>
 
           {/* Username */}
-          <div className=" w-full break-words">
-            <h3 className="text-2xl font-bold">
+          <div className="flex-1 min-w-0 w-full overflow-auto">
+            <div className={`${username.length > 18 ? "text-xl" : "text-2xl"} whitespace-normal break-words`}>
               {isEditing ? (
-                <EditableBox initialText={username} onSave={(newText: string) => { setUsername(newText); }} />
+                <EditableBox initialText={username} isEnterEable={false} onSave={(newText: string) => {
+                  setUsername(newText);
+                  handleUsernameChange(newText);
+                }} />
               ) : (
-                <div className="w-full break-words">{username}</div>
+                username
               )}
-            </h3>
+              {isEditing && usernameErrorMessage.length > 0? <div className="text-xs text-error">*{usernameErrorMessage}</div>:""}
+            </div>
           </div>
         </div>
 
-        <div>
+        <div className="">
           <div className="flex gap-6 flex justify-end">
 
-            {/* Show follow only if user is NOT me */}
-            {!isMe && (
-              <button className={`btn btn-sm ${userFollowed ? "btn-error" : "btn-primary"}`} onClick={handleFollow}>
+            {/* Show follow only if user is NOT me and not blocked */}
+            {!isMe && !userBlocked && (
+              <button className={`btn btn-sm ${userFollowed ? "btn-soft btn-error" : "btn-primary"}`} onClick={handleFollow}>
                 {userFollowed ?
                   <><FontAwesomeIcon icon={faTimes} size="lg" /><span>Unfollow</span></> :
                   <><FontAwesomeIcon icon={faHeart} size="lg" /><span>Follow</span></>}
               </button>
             )}
 
-            {/* Show message button only if user is NOT me */}
-            {!isMe && (
+            {/* Show message button only if user is NOT me and not blocked */}
+            {!isMe && !userBlocked && (
               <button className="btn btn-sm" onClick={handleMessage}>
                 <FontAwesomeIcon icon={faCommenting} size="lg" />
                 Message
@@ -153,6 +192,7 @@ export default function UserInfo({ profile }: { profile: Profile }) {
                 setUserDescription(profile.description);
                 setUserAvatar(null);
                 setUserAvatarPreview(null);
+                setUsernameErrorMessage("");
               }}>
                 <FontAwesomeIcon icon={faXmark} size="lg" />
               </button>
@@ -208,9 +248,9 @@ export default function UserInfo({ profile }: { profile: Profile }) {
       <div className="flex items-center gap-6 p-4">
         <h3 className="text-md text-base-content/70 w-full">
           {isEditing ? (
-            <EditableBox initialText={userDescription} onSave={(newText: string) => { setUserDescription(newText); }} />
+            <EditableBox initialText={userDescription} isEnterEable={true} onSave={(newText: string) => { setUserDescription(newText); }} />
           ) : (
-            <div className="w-full break-words">{userDescription}</div>
+            <div className="w-full break-words whitespace-pre-wrap">{userDescription}</div>
           )}
         </h3>
       </div>

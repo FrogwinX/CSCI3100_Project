@@ -1,6 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 
-export default function EditableBox({ initialText, onSave }: { initialText: string, onSave: (text: string) => void }) {
+export default function EditableBox({ initialText, onSave, isEnterEable } :
+    {
+        initialText: string,
+        onSave: (text: string) => void,
+        isEnterEable: boolean,
+    }) {
     const [text, setText] = useState(initialText);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -18,12 +23,17 @@ export default function EditableBox({ initialText, onSave }: { initialText: stri
 
     return (
         <textarea
-            className="w-full p-2 rounded border"
+            className="w-full p-2 rounded border overflow-hidden"
             value={text}
             ref={textareaRef}
             wrap="soft"
             rows={1}
             onChange={handleChange}
+            onKeyDown={(event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+                if (event.key === 'Enter' && !isEnterEable) {
+                    event.preventDefault();
+                }
+            }}
             autoFocus
         />
     );

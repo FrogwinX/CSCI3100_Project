@@ -36,8 +36,8 @@ export default async function profilePage(props: { params: Params }) {
               {/* <label className="label">
                 <span className="label-text text-base-content text-4xl">My Profile</span>
               </label> */}
-              <UserInfo profile={userProfile}/>
-              <PostCommentTab profile={userProfile} userIdTo={params.userId}/>
+              <UserInfo profile={userProfile} />
+              <PostCommentTab profile={userProfile} userIdTo={params.userId} />
             </div>
           </div>
         </div>

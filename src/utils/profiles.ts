@@ -36,7 +36,7 @@ interface UpdateProfileResponse {
   };
 }
 
-export async function getProfileContent(userIdTo : string): Promise<Profile | null> {
+export async function getProfileContent(userIdTo: string): Promise<Profile | null> {
   try {
     const session = await getSession();
     let apiUrl = `https://flowchatbackend.azurewebsites.net/api/Profile/getProfileContent?userIdFrom=${session.userId}`;
@@ -46,7 +46,7 @@ export async function getProfileContent(userIdTo : string): Promise<Profile | nu
     } else {
       apiUrl += `&userIdTo=${userIdTo}`;
     }
-    
+
     const response = await fetch(apiUrl, {
       headers: {
         method: "GET",
@@ -76,11 +76,18 @@ export async function updateProfile(username: string, description: string, avata
     const session = await getSession();
     let apiUrl = `https://flowchatbackend.azurewebsites.net/api/Profile/updatePersonalProfile`;
 
-    const requestBody = {
-      userId: session.userId,
-      username: username,
-      description: description,
-    };
+    const requestBody = (username === session.username ?
+      {
+        userId: session.userId,
+        description: description,
+      }
+      :
+      {
+        userId: session.userId,
+        username: username,
+        description: description,
+      }
+    );
 
     const formData = new FormData();
     const requestBodyBlob = new Blob([JSON.stringify(requestBody)], { type: "application/json" });
@@ -88,7 +95,7 @@ export async function updateProfile(username: string, description: string, avata
     if (avatar) {
       formData.append("avatar", avatar);
     }
-    
+
     const response = await fetch(apiUrl, {
       method: "PUT",
       headers: {
@@ -103,7 +110,7 @@ export async function updateProfile(username: string, description: string, avata
 
     const data: UpdateProfileResponse = await response.json();
     if (!data.data.isSuccess) {
-      throw new Error(`Server does not respond successfully: ${data.message}`);
+      throw new Error(`${data.message}`);
     }
 
     const newSession = await getSession();
@@ -121,15 +128,15 @@ export async function updateProfile(username: string, description: string, avata
   }
 }
 
-export async function userInteract(userIdTo : string, 
-  interaction : "follow" | "unfollow" | "block" | "unblock"
+export async function userInteract(userIdTo: string,
+  interaction: "follow" | "unfollow" | "block" | "unblock"
 ): Promise<boolean | null> {
   try {
     const isRemoveAction = interaction === "unfollow" || interaction === "unblock";
     const session = await getSession();
 
     let apiUrl = `https://flowchatbackend.azurewebsites.net/api/Profile/${interaction}User`;
-    
+
     const response = await fetch(apiUrl, {
       method: isRemoveAction ? "DELETE" : "POST",
       headers: {
