@@ -1,6 +1,15 @@
 "use server";
 import { getSession } from "@/utils/sessions";
-import { Users } from "@/components/users/UserPreview";
+
+export interface Users {
+  userId: number;
+  username: string;
+  description: string;
+  avatar: string | null;
+  updatedAt: string;
+  isUserBlocked: boolean;
+  isUserFollowed: boolean;
+}
 
 interface UsersPreviewResponse {
   message: string;
@@ -62,7 +71,9 @@ export async function getSearchUser(
     const users: Users[] = data.data.userPreviewList.map((user) => ({
       userId: user.userId,
       username: user.username,
-      profileImage: user.profileImage,
+      description: user.description,
+      avatar: user.avatar,
+      updatedAt: user.updatedAt,
       isUserBlocked: user.isUserBlocked,
       isUserFollowed: user.isUserFollowed,
     }));

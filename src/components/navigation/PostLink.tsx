@@ -38,10 +38,7 @@ export default function PostLink({
   return (
     <div onClick={isBlocked ? undefined : handleClick} className={`relative ${className}`}>
       {isBlocked && (
-        <div
-          role="alert"
-          className="alert alert-warning text-warning-content w-fit absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10"
-        >
+        <div role="alert" className="alert w-fit absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
           You have blocked this user
         </div>
       )}

@@ -17,7 +17,7 @@ export default function NavbarWithDrawer() {
   const [isSearchOpen, setSearchOpen] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const pathname = usePathname();
-  const { session, refresh } = useSession();
+  const { session, refresh, unreadCount, refreshUnreadCount } = useSession();
   const router = useRouter();
 
   // Check if a path is active
@@ -33,6 +33,7 @@ export default function NavbarWithDrawer() {
 
   const toggleSidebar = (): void => {
     setSidebarOpen((prev) => !prev);
+    refreshUnreadCount(); // Refresh unread count when sidebar is opened
   };
 
   const toggleSearch = (): void => {
@@ -205,17 +206,10 @@ export default function NavbarWithDrawer() {
                 className={`flex items-center gap-4 ${isActive("/direct-messages") ? "bg-base-300 font-bold" : ""}`}
               >
                 <FontAwesomeIcon icon={faPaperPlane} size="xl" />
-                <span>Direct Messages</span>
-              </Link>
-            </li>
-
-            <li>
-              <Link
-                href="/notifications"
-                className={`flex items-center gap-4 ${isActive("/notifications") ? "bg-base-300 font-bold" : ""}`}
-              >
-                <FontAwesomeIcon icon={faBell} size="xl" />
-                <span>Notifications</span>
+                <div className="indicator w-full">
+                  {unreadCount > 0 && <span className="indicator-item badge badge-primary">{unreadCount}</span>}
+                  <div className="">Direct Messages</div>
+                </div>
               </Link>
             </li>
 

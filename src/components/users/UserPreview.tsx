@@ -2,6 +2,7 @@
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUser, faHeart, faCross } from "@fortawesome/free-solid-svg-icons";
+import { Users } from "@/utils/users";
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
@@ -31,10 +32,10 @@ export default function UserPreview({ user }: { user: Users }) {
           <div className="flex items-center gap-4">
             {/* User avatar */}
             <div className="avatar">
-              {user.profileImage ? (
+              {user.avatar ? (
                 <div className="w-16 h-16 rounded-full">
                   <Image
-                    src={user.profileImage}
+                    src={user.avatar}
                     alt={user.username}
                     width={64}
                     height={64}

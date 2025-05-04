@@ -33,7 +33,7 @@ export default function PostPreview({ post }: { post: Post }) {
               </div>
             )}
           </div>
-          {/* Show image below title if no description */}
+          {/* Show image below title for short description */}
           {post.imageAPIList && post.content.trim().length < 50 && (
             <div className="relative w-full overflow-hidden rounded-xl bg-base-300 ">
               <LoadingImage
