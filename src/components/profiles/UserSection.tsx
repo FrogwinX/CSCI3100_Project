@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import EditableBox from "./EditableBox";
 import { checkUsernameUnique } from "@/utils/authentication";
+import Link from "next/link";
 
 export default function UserInfo({ profile }: { profile: Profile }) {
 
@@ -63,10 +64,6 @@ export default function UserInfo({ profile }: { profile: Profile }) {
     window.location.reload();
   };
 
-  const handleMessage = () => {
-    router.push(`/messages`);
-  };
-
   const handleEdit = () => {
     setIsDropdownMenuOpen(false);
     setIsEditing(true);
@@ -89,7 +86,7 @@ export default function UserInfo({ profile }: { profile: Profile }) {
     }
   };
 
-  const handleUsernameChange = async (newUsername : string) => {
+  const handleUsernameChange = async (newUsername: string) => {
     if (newUsername.length === 0) {
       setUsernameErrorMessage("Username cannot be empty");
       return;
@@ -107,7 +104,7 @@ export default function UserInfo({ profile }: { profile: Profile }) {
     }
 
     const result = await checkUsernameUnique(newUsername);
-    if (!result.data.isUsernameUnique) {
+    if (!result.data.isUsernameUnique && newUsername !== session.username) {
       setUsernameErrorMessage("This username has been used");
       return;
     }
@@ -117,7 +114,7 @@ export default function UserInfo({ profile }: { profile: Profile }) {
   };
 
   return (
-    <div className="card lg:min-w-lg gap-0 bg-base-100 shadow-md p-2">
+    <>
       <div className="flex gap-6">
         <div className="flex items-center gap-6 p-4 overflow-auto w-full">
           {/* User avatar */}
@@ -132,7 +129,7 @@ export default function UserInfo({ profile }: { profile: Profile }) {
             <div className="absolute z-20">
               {isEditing ? (
                 <div className="avatar avatar-placeholder gap-1 items-center">
-                  <div className="bg-neutral/50 text-neutral-content w-20 h-20 rounded-full z-20" onClick={handleUploadAvatar}>
+                  <div className="bg-neutral/50 text-neutral-content w-28 h-28 rounded-full" onClick={handleUploadAvatar}>
                     <FontAwesomeIcon icon={faImage} size="lg" />
                     <input
                       type="file"
@@ -159,17 +156,17 @@ export default function UserInfo({ profile }: { profile: Profile }) {
               ) : (
                 username
               )}
-              {isEditing && usernameErrorMessage.length > 0? <div className="text-xs text-error">*{usernameErrorMessage}</div>:""}
+              {isEditing && usernameErrorMessage.length > 0 ? <div className="text-xs text-error">*{usernameErrorMessage}</div> : ""}
             </div>
           </div>
         </div>
 
-        <div className="">
+        <div className="flex flex-col h-full p-1">
           <div className="flex gap-6 flex justify-end">
 
             {/* Show follow only if user is NOT me and not blocked */}
             {!isMe && !userBlocked && (
-              <button className={`btn btn-sm ${userFollowed ? "btn-soft btn-error" : "btn-primary"}`} onClick={handleFollow}>
+              <button className={`btn ${userFollowed ? "btn-soft btn-error" : "btn-primary"}`} onClick={handleFollow}>
                 {userFollowed ?
                   <><FontAwesomeIcon icon={faTimes} size="lg" /><span>Unfollow</span></> :
                   <><FontAwesomeIcon icon={faHeart} size="lg" /><span>Follow</span></>}
@@ -178,14 +175,16 @@ export default function UserInfo({ profile }: { profile: Profile }) {
 
             {/* Show message button only if user is NOT me and not blocked */}
             {!isMe && !userBlocked && (
-              <button className="btn btn-sm" onClick={handleMessage}>
-                <FontAwesomeIcon icon={faCommenting} size="lg" />
-                Message
-              </button>
+              <Link href={`/messages`}>
+                <button className="btn">
+                  <FontAwesomeIcon icon={faCommenting} size="lg" />
+                  Message
+                </button>
+              </Link>
             )}
 
             {/* Edit confirm buttons */}
-            <div className="flex justify-end gap-6 p-1 w-full" hidden={!isEditing}>
+            <div className="flex justify-end gap-6 p-2 w-full" hidden={!isEditing}>
               <button onClick={() => {
                 setIsEditing(false);
                 setUsername(profile.username);
@@ -203,7 +202,7 @@ export default function UserInfo({ profile }: { profile: Profile }) {
 
             {/* Options menu */}
             <div className="dropdown dropdown-end" hidden={isEditing}>
-              <div tabIndex={0} role="button" className={`btn btn-ghost btn-circle btn-sm`}>
+              <div tabIndex={0} role="button" className={`btn btn-ghost btn-circle`}>
                 <FontAwesomeIcon icon={faEllipsis} size="xl" />
               </div>
               <ul tabIndex={0} className="dropdown-content menu bg-base-100 rounded-box z-10 shadow-lg">
@@ -223,26 +222,31 @@ export default function UserInfo({ profile }: { profile: Profile }) {
                 {!isMe && (
                   <li>
                     <a onClick={handleBlock}>
-                      {userBlocked ?
-                        <><FontAwesomeIcon icon={faTimes} /><span>Unblock</span></> :
-                        <><FontAwesomeIcon icon={faBan} /><span>Block</span></>}
+                      {userBlocked ? (
+                        <>
+                          <FontAwesomeIcon icon={faTimes} />
+                          Unblock
+                        </>
+                      ) : (
+                        <>
+                          <FontAwesomeIcon icon={faBan} />
+                          Block
+                        </>
+                      )}
                     </a>
                   </li>
                 )}
-
               </ul>
             </div>
           </div>
 
           {/* User Stat */}
-          <div className="flex justify-center gap-10 w-full p-4">
+          <div className="flex gap-10 p-4 items-center">
             <UserStat data={profile.followingCount} type={"following"} />
-            <UserStat data={profile.followerCount} type={"follower"} />
+            <UserStat data={profile.followerCount} type={"followers"} />
             <UserStat data={profile.likeCount - profile.dislikeCount} type={"like"} />
           </div>
-
         </div>
-
       </div>
 
       <div className="flex items-center gap-6 p-4">
@@ -254,6 +258,6 @@ export default function UserInfo({ profile }: { profile: Profile }) {
           )}
         </h3>
       </div>
-    </div>
+    </>
   );
 }

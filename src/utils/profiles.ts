@@ -1,6 +1,8 @@
 "use server";
 
 import { getSession } from "@/utils/sessions";
+import { Users } from "@/utils/users";
+import { match } from "assert";
 
 export interface Profile {
   userId: string;
@@ -36,6 +38,14 @@ interface UpdateProfileResponse {
   };
 }
 
+interface GetRelationListResponse {
+  message: string;
+  data: {
+    isSuccess: boolean;
+    userList: Users[];
+  };
+}
+
 export async function getProfileContent(userIdTo: string): Promise<Profile | null> {
   try {
     const session = await getSession();
@@ -64,7 +74,6 @@ export async function getProfileContent(userIdTo: string): Promise<Profile | nul
     }
 
     return data.data.profile;
-
   } catch (error) {
     console.error("Error fetching user profile:", error);
     return null;
@@ -128,7 +137,8 @@ export async function updateProfile(username: string, description: string, avata
   }
 }
 
-export async function userInteract(userIdTo: string,
+export async function userInteract(
+  userIdTo: string,
   interaction: "follow" | "unfollow" | "block" | "unblock"
 ): Promise<boolean | null> {
   try {
@@ -159,9 +169,76 @@ export async function userInteract(userIdTo: string,
     }
 
     return data.data.isSuccess;
-
   } catch (error) {
     console.error(`Error in ${interaction} interaction api call:`, error);
+    return null;
+  }
+}
+
+export async function getUserRelations(options: {
+  userIdTo: string;
+  relationship: "following" | "followers" | "blocked";
+  excludingUserIdList?: number[];
+  count?: number;
+}): Promise<Users[] | null> {
+  try {
+    const session = await getSession();
+
+    let apiUrl = `https://flowchatbackend.azurewebsites.net/api/Profile/`;
+
+    switch (options.relationship) {
+      case "following":
+        apiUrl += `getMyFollowingList?`;
+        break;
+      case "followers":
+        apiUrl += `getMyFollowerList?`;
+        break;
+      case "blocked":
+        apiUrl += `getMyBlockingList?`;
+        break;
+    }
+
+    // Add query parameters
+    apiUrl += `userId=${session.userId}`; // Add userId to the URL
+    if (options.excludingUserIdList) {
+      while (options.excludingUserIdList.length > 0) {
+        apiUrl += `&excludingUserIdList=${options.excludingUserIdList.shift()}`;
+      }
+    } else {
+      //default value = 0
+      apiUrl += `&excludingUserIdList=0`;
+    }
+
+    apiUrl += `&userNum=${options.count || 10}`;
+
+    // Fetch data from the API
+    const response = await fetch(apiUrl, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${session.token}`,
+      },
+    });
+
+    if (!response.ok) {
+      console.error(`Failed to fetch search users with status ${response.status}`);
+      return null;
+    }
+
+    const data: GetRelationListResponse = await response.json();
+
+    const users: Users[] = data.data.userList.map((user) => ({
+      userId: user.userId,
+      username: user.username,
+      description: user.description,
+      avatar: user.avatar,
+      updatedAt: user.updatedAt,
+      isUserBlocked: user.isUserBlocked,
+      isUserFollowed: user.isUserFollowed,
+    }));
+
+    return users;
+  } catch (error) {
+    console.error("Error fetching posts:", error);
     return null;
   }
 }

@@ -20,7 +20,7 @@ export default function UserAvatar({
     md: "w-10 h-10",
     lg: "w-12 h-12",
     xl: "w-14 h-14",
-    xxl: "w-20 h-20",
+    xxl: "w-28 h-28",
   };
 
   const iconSizes = {
@@ -29,7 +29,7 @@ export default function UserAvatar({
     md: "lg",
     lg: "xl",
     xl: "2xl",
-    xxl: "2xl",
+    xxl: "4x",
   } as const;
 
   const textSizes = {
