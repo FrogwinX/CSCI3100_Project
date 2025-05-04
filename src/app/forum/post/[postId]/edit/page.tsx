@@ -117,7 +117,7 @@ export default function EditPost({ params: paramsPromise }: { params: Promise<{ 
                   <div class="image-container">
                     <div class="skeleton w-full h-48"></div>
                     <img src="${proxyImageUrl}" alt="Existing Image" style="max-width: 100%; height: auto; display: none;" data-image-id="${imageUrl}" />
-                    <p class="text-red-500" style="display: none;">Failed to load image: Server error</p>
+                    <p class="text-red-500" style="display: none;"></p>
                   </div>
                 `;
                 placeholder.replaceWith(imgWrapper);
