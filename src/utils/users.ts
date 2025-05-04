@@ -42,7 +42,7 @@ export async function getSearchUser(
       apiUrl += `&excludingUserIdList=0`;
     }
 
-    apiUrl += `&postNum=${options.count || 10}`;
+    apiUrl += `&searchNum=${options.count || 10}`;
 
     // Fetch data from the API
     const response = await fetch(apiUrl, {
@@ -63,6 +63,8 @@ export async function getSearchUser(
       userId: user.userId,
       username: user.username,
       profileImage: user.profileImage,
+      isUserBlocked: user.isUserBlocked,
+      isUserFollowed: user.isUserFollowed,
     }));
 
     return users;

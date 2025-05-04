@@ -1,17 +1,29 @@
 "use client";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faUser } from "@fortawesome/free-solid-svg-icons";
+import { faUser, faHeart, faCross } from "@fortawesome/free-solid-svg-icons";
 import Link from "next/link";
 import Image from "next/image";
+import { useState } from "react";
 
 export interface Users {
   userId: number;
   username: string;
   profileImage: string;
+  isUserBlocked?: boolean;
+  isUserFollowed?: boolean;
 }
 
 export default function UserPreview({ user }: { user: Users }) {
+  const [isFollowed, setIsFollowed] = useState(user.isUserFollowed);
+
+  const handleFollowToggle = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent navigation when clicking the button
+    e.stopPropagation(); // Stop event propagation
+    setIsFollowed(!isFollowed);
+    // Here you would call an API to follow/unfollow the user
+    // For example: followUser(user.userId) or unfollowUser(user.userId)
+  };
   return (
     <Link href={`/profile/${user.username}`} className="block">
       <div className="card hover:bg-base-200/40 px-2">
