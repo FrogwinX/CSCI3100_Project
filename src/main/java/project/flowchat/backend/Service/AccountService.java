@@ -93,11 +93,14 @@ public class AccountService {
      * @param username username string
      * @param email email string
      * @return Boolean: true if the username or email is active
-     * @throws ExceptionService TOO_MANY_PARAMS, ACCOUNT_NOT_ACTIVE
+     * @throws ExceptionService TOO_MANY_PARAMS, ACCOUNT_NOT_ACTIVE, NULL_PARAMS
      */
     public Boolean isAccountActive(String username, String email) throws Exception {
         if (username != null && email != null) {
             ExceptionService.throwException(ExceptionService.TOO_MANY_PARAMS);
+        }
+        if (username == null && email == null) {
+            ExceptionService.throwException(ExceptionService.NULL_PARAMS);
         }
         else if (username != null) {
             checkUsernameFormat(username);
