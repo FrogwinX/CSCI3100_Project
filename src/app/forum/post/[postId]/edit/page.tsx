@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useSession } from "@/hooks/useSession";
 import { getAllTags, Tag, getPostById, updatePost } from "@/utils/posts";
 import { useRouter } from "next/navigation";
-import { getProxyImageUrl } from "@/utils/images";
+import { getProxyImageUrl, uploadImage } from "@/utils/images";
 import { Post } from "@/utils/posts";
 
 // EditPost component for editing an existing post
@@ -23,6 +23,7 @@ export default function EditPost({ params: paramsPromise }: { params: Promise<{ 
   const [existingImages, setExistingImages] = useState<string[]>([]); // Existing image URLs from the post
   const fileInputRef = useRef<HTMLInputElement>(null); // Reference to file input for image upload
   const contentRef = useRef<HTMLDivElement>(null); // Reference to content editable div
+  const [showPreview, setShowPreview] = useState<boolean>(false);   
 
   const { session, loading, refresh } = useSession();
   const router = useRouter();
@@ -45,7 +46,7 @@ export default function EditPost({ params: paramsPromise }: { params: Promise<{ 
         setTagFetchError("Please log in to load tags");
         return;
       }
-
+      console.log(images);
       try {
         // Fetch all available tags
         const allTags = await getAllTags();
@@ -187,8 +188,8 @@ export default function EditPost({ params: paramsPromise }: { params: Promise<{ 
   };
 
   // Handle image upload
-  const handleImageUpload = () => {
-    const file = fileInputRef.current?.files?.[0];
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (file) {
       // Validate file type (only PNG and JPEG allowed)
       if (!file.type.match("image/(png|jpeg)")) {
@@ -203,25 +204,32 @@ export default function EditPost({ params: paramsPromise }: { params: Promise<{ 
         return;
       }
 
-      // Rename file using a unique format
-      const extension = file.name.split(".").pop();
-      const newFileName = `new-image-${images.length + existingImages.length + 1}.${extension}`;
-      const renamedFile = new File([file], newFileName, { type: file.type });
+      try {
+        // Upload the image and get the imageAPI
+        const { imageAPI } = await uploadImage(file);
+        if (!imageAPI) {
+          setSubmitError("Failed to upload image");
+          return;
+        }
 
-      // Add the image to the images state
-      setImages((prevImages) => [...prevImages, renamedFile]);
+        // Add the image to the images state
+        setImages((prevImages) => [...prevImages, file]);
 
-      // Display the image in the editor using a temporary URL and insert a placeholder
-      const imgSrc = URL.createObjectURL(file);
-      const imgElement = document.createElement("img");
-      imgElement.src = imgSrc;
-      imgElement.alt = "Uploaded Image";
-      imgElement.dataset.imageId = newFileName;
-      imgElement.style.maxWidth = "100%";
-      imgElement.style.height = "auto";
-      if (contentRef.current) {
-        contentRef.current.appendChild(imgElement);
-        contentRef.current.appendChild(document.createElement("br"));
+        // Display the image in the editor using a temporary URL and insert a placeholder
+        const imgSrc = URL.createObjectURL(file);
+        const imgElement = document.createElement("img");
+        imgElement.src = imgSrc;
+        imgElement.alt = "Uploaded Image";
+        imgElement.dataset.imageId = imageAPI; // Use imageAPI as the image ID
+        imgElement.style.maxWidth = "100%";
+        imgElement.style.height = "auto";
+        if (contentRef.current) {
+          contentRef.current.appendChild(imgElement);
+          contentRef.current.appendChild(document.createElement("br"));
+        }
+      } catch (error) {
+        console.error("Error uploading image:", error);
+        setSubmitError("Failed to upload image");
       }
     }
   };
@@ -268,11 +276,13 @@ export default function EditPost({ params: paramsPromise }: { params: Promise<{ 
       setExistingImages((prevImages) => {
         return prevImages.filter((imageUrl) => remainingImageIds.includes(imageUrl));
       });
+      
 
       // Update images to only include new uploads still present in the content
       setImages((prevImages) => {
         return prevImages.filter((image) => remainingImageIds.includes(image.name));
       });
+      console.log("remainingImageIds", remainingImageIds, "existingImages", existingImages);
     }
   };
 
@@ -357,6 +367,7 @@ export default function EditPost({ params: paramsPromise }: { params: Promise<{ 
     }
 
     try {
+      console.log("images", images, "existingImages", existingImages);
       await updatePost(postId, title, content, tags, images, existingImages);
       router.push(`/forum/post/${postId}`);
     } catch (error: unknown) {
@@ -374,6 +385,11 @@ export default function EditPost({ params: paramsPromise }: { params: Promise<{ 
         setSubmitError(message || "Failed to update post, please try again later");
       }
     }
+  };
+
+    
+  const handlePreviewToggle = () => {
+    setShowPreview((prev) => !prev);
   };
 
   return (

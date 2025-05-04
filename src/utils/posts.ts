@@ -331,6 +331,8 @@ export async function createPost(title: string, content: string, tags: Tag[], im
       });
     }
 
+    console.log(images);
+
     const apiUrl = "https://flowchatbackend.azurewebsites.net/api/Forum/createPostOrComment";
     const response = await fetch(apiUrl, {
       method: "POST",
@@ -405,6 +407,7 @@ export async function updatePost(
   existingImages: string[]
 ): Promise<string | null> {
   try {
+    console.log(images, "images", existingImages, "existingImages");
     // Retrieve the current session
     const session = await getSession();
 
@@ -440,7 +443,10 @@ export async function updatePost(
       images.forEach((image) => {
         formData.append("imageList", image);
       });
-    }
+    } else if (images.length === 0) {
+      formData.append("imageList", new Blob([], { type: "application/json" }));
+      };
+    
 
     // API endpoint for updating a post or comment
     const apiUrl = "https://flowchatbackend.azurewebsites.net/api/Forum/updatePostOrComment";
