@@ -19,7 +19,6 @@ interface UsersPreviewResponse {
   };
 }
 
-//to be implemented
 // Sample API call:
 //https://flowchatbackend.azurewebsites.net/api/Forum/searchUser?
 // userId=1&
@@ -51,7 +50,7 @@ export async function getSearchUser(
       apiUrl += `&excludingUserIdList=0`;
     }
 
-    apiUrl += `&postNum=${options.count || 10}`;
+    apiUrl += `&searchNum=${options.count || 10}`;
 
     // Fetch data from the API
     const response = await fetch(apiUrl, {
@@ -82,5 +81,71 @@ export async function getSearchUser(
   } catch (error) {
     console.error("Error fetching posts:", error);
     return null;
+  }
+}
+
+export async function followUser(userIdTo: number): Promise<boolean> {
+  try {
+    const session = await getSession();
+
+    const response = await fetch("https://flowchatbackend.azurewebsites.net/api/Profile/followUser", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.token}`,
+      },
+      body: JSON.stringify({
+        userIdFrom: session.userId,
+        userIdTo: userIdTo,
+      }),
+    });
+
+    if (!response.ok) {
+      console.error(`Failed to follow user with status ${response.status}`);
+      return false;
+    }
+
+    const data = await response.json();
+    if (!data.isSuccess) {
+      console.error(`Failed to follow user: ${data.message}`);
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error("Error following user:", error);
+    return false;
+  }
+}
+
+export async function unfollowUser(userIdTo: number): Promise<boolean> {
+  try {
+    const session = await getSession();
+
+    const response = await fetch("https://flowchatbackend.azurewebsites.net/api/Profile/unfollowUser", {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.token}`,
+      },
+      body: JSON.stringify({
+        userIdFrom: session.userId,
+        userIdTo: userIdTo,
+      }),
+    });
+
+    if (!response.ok) {
+      console.error(`Failed to unfollow user with status ${response.status}`);
+      return false;
+    }
+
+    const data = await response.json();
+    if (!data.isSuccess) {
+      console.error(`Failed to unfollow user: ${data.message}`);
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error("Error unfollowing user:", error);
+    return false;
   }
 }

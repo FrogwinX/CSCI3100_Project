@@ -205,7 +205,7 @@ export async function getSearchPosts(
       apiUrl += `&excludingPostIdList=0`;
     }
 
-    apiUrl += `&postNum=${options.count || 10}`;
+    apiUrl += `&searchNum=${options.count || 10}`;
 
     // Fetch data from the API
     const response = await fetch(apiUrl, {

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, FormEvent } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBars, faMagnifyingGlass, faXmark, faUser, faCog } from "@fortawesome/free-solid-svg-icons";
 import { faComments, faPaperPlane, faBell, faEnvelope } from "@fortawesome/free-regular-svg-icons";
@@ -15,6 +15,7 @@ import UserAvatar from "@/components/users/UserAvatar";
 export default function NavbarWithDrawer() {
   const [isSidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const [isSearchOpen, setSearchOpen] = useState<boolean>(false);
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const pathname = usePathname();
   const { session, refresh, unreadCount, refreshUnreadCount } = useSession();
   const router = useRouter();
@@ -39,13 +40,23 @@ export default function NavbarWithDrawer() {
     setSearchOpen((prev) => !prev);
   };
 
+  // Handle search submission
+  const handleSearch = (e?: FormEvent) => {
+    if (e) e.preventDefault();
+
+    if (searchQuery.trim()) {
+      router.push(`/forum/search-results?q=${encodeURIComponent(searchQuery.trim())}`);
+      if (isSearchOpen) toggleSearch(); // Close mobile search bar after search
+    }
+  };
+
   return (
     <>
       <div className="navbar bg-base-100 shadow-md px-4 z-50 fixed top-0">
         {isSearchOpen ? (
           // Mobile Search UI - Replaces navbar content when active
-          <div className="w-full flex items-center sm:hidden">
-            <button onClick={toggleSearch} className="btn btn-ghost btn-circle mr-2 flex-none">
+          <form onSubmit={handleSearch} className="w-full flex items-center sm:hidden">
+            <button type="button" onClick={toggleSearch} className="btn btn-ghost btn-circle mr-2 flex-none">
               <FontAwesomeIcon icon={faXmark} size="lg" />
             </button>
             <div className="relative flex-1 h-10">
@@ -57,9 +68,14 @@ export default function NavbarWithDrawer() {
                 placeholder="Search FlowChat"
                 className="w-full h-full rounded-full bg-base-200 pl-10 pr-4 border-base-300"
                 autoFocus
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-          </div>
+            <button type="submit" className="btn btn-ghost btn-circle ml-2">
+              <FontAwesomeIcon icon={faMagnifyingGlass} />
+            </button>
+          </form>
         ) : (
           // Regular Navbar Content
           <>
@@ -84,7 +100,7 @@ export default function NavbarWithDrawer() {
             </div>
 
             <div className="navbar-center">
-              <div className="relative hidden sm:block w-full max-w-sm min-w-sm lg:min-w-lg h-10">
+              <form onSubmit={handleSearch} className="relative hidden sm:block w-full max-w-sm min-w-sm lg:min-w-lg h-10">
                 <div className="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/60">
                   <FontAwesomeIcon icon={faMagnifyingGlass} />
                 </div>
@@ -92,8 +108,11 @@ export default function NavbarWithDrawer() {
                   type="text"
                   placeholder="Search FlowChat"
                   className="bg-base-300 w-full h-full rounded-full text-sm pl-10"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                 />
-              </div>
+                <button type="submit" className="hidden"></button>
+              </form>
             </div>
 
             <div className="navbar-end">
@@ -144,9 +163,8 @@ export default function NavbarWithDrawer() {
       <div className="h-16"></div>
 
       <aside
-        className={`h-[calc(100vh-4rem)] shadow bg-base-100 fixed top-16 z-40 transition-transform duration-300 flex flex-col p-4 w-[85vw] sm:w-70 ${
-          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`h-[calc(100vh-4rem)] shadow bg-base-100 fixed top-16 z-40 transition-transform duration-300 flex flex-col p-4 w-[85vw] sm:w-70 ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
       >
         <div className="flex-grow overflow-y-auto">
           <ul className="menu bg-base-100 w-full space-y-3">
