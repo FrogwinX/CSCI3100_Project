@@ -46,7 +46,6 @@ export default function NavbarWithDrawer() {
 
     if (searchQuery.trim()) {
       router.push(`/forum/search-results?q=${encodeURIComponent(searchQuery.trim())}`);
-      setSearchQuery("");
       if (isSearchOpen) toggleSearch(); // Close mobile search bar after search
     }
   };

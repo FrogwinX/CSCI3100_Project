@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import PostList from "@/components/posts/PostPreviewList";
 import UserList from "@/components/users/UserPreviewList";
 
-export default function SearchResultsPage({ searchInput }: { searchInput: string }) {
-  const [activeTab, setActiveTab] = useState<"posts" | "users">("posts");
-
+export default function SearchResultsPage() {
+  const [activeTab, setActiveTab] = useState<"posts" | "users">("users");
+  const searchParams = useSearchParams();
+  const searchInput = searchParams.get('q') || '';
   return (
     <div className="flex flex-col">
       {/* Tab switcher */}
@@ -21,7 +23,7 @@ export default function SearchResultsPage({ searchInput }: { searchInput: string
 
       {/* Content based on active tab */}
       {activeTab === "posts" ? (
-        PostList({ filter: "latest", keyword: searchInput })
+        <PostList filter="latest" keyword={searchInput} />
       ) : (
         <UserList searchKeyword={searchInput} />
       )}

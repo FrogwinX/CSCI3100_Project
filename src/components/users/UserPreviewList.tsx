@@ -5,7 +5,7 @@ import { getSearchUser } from "@/utils/users";
 import { Users } from "@/utils/users";
 import UserPreview from "./UserPreview";
 
-export default function UserList({ searchKeyword = "" }: { searchKeyword?: string }) {
+export default function UserList({ searchKeyword, }: { searchKeyword?: string }) {
   const [users, setUsers] = useState<Users[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hasMore, setHasMore] = useState(true);
@@ -17,9 +17,13 @@ export default function UserList({ searchKeyword = "" }: { searchKeyword?: strin
     const fetchInitialUsers = async () => {
       setIsLoading(true);
       try {
+        console.log("call getSearchUser");
+
         const initialUsers = await getSearchUser({
           keyword: searchKeyword,
         });
+
+        console.log("Initial users:", initialUsers);
 
         if (!initialUsers) {
           setHasMore(false);
