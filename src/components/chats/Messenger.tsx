@@ -55,6 +55,20 @@ export default function Messenger() {
     const newFiles = Array.from(e.target.files || []);
     if (newFiles.length === 0) return; // Do nothing if no files selected
 
+    // File Size Validation
+    const currentTotalSize = selectedFiles.reduce((sum, file) => sum + file.size, 0);
+    const newFilesTotalSize = newFiles.reduce((sum, file) => sum + file.size, 0);
+
+    // Check if the total size exceeds 25 MB (26214400 bytes)
+    if (currentTotalSize + newFilesTotalSize > 26214400) {
+      alert(`Cannot upload files. Total size exceeds 25 MB.`);
+      // Clear the file input value even if validation fails
+      if (e.target) {
+        e.target.value = "";
+      }
+      return;
+    }
+
     // Append new files to the existing selection
     setSelectedFiles((prevFiles) => [...prevFiles, ...newFiles]);
 
@@ -324,6 +338,12 @@ export default function Messenger() {
 
   // Send message function
   const sendMessage = async () => {
+    // Limit message length to 500 characters
+    if (messageText.length > 500) {
+      alert(`Message is too long. Maximum length is 500 characters.`);
+      return;
+    }
+
     // Allow sending only images without text
     if (!messageText.trim() && selectedFiles.length === 0) return;
     if (!session.userId || !selectedContact) return;
