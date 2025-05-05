@@ -95,6 +95,8 @@ export default function Messenger() {
     setSelectedContact(contact);
     setShowConversation(true); // Show conversation on mobile
     setConversation([]); // Clear previous conversation
+    setInSelection(false); // Reset selection mode
+    setSelectedMessages(new Set()); // Clear selected messages
     setIsLoadingMoreMessages(true); // Show loading indicator
     setHasMoreMessages(true); // Reset hasMore flag
     try {
@@ -669,12 +671,7 @@ export default function Messenger() {
                   </button>
                   {/* Contact info and avatar */}
                   <Link href={`/profile/${selectedContact.contactUserId}`}>
-                    <div className="avatar items-center gap-2">
-                      <div className="bg-neutral text-neutral-content place-content-center rounded-full w-10">
-                        {/* <FontAwesomeIcon icon={faUser} /> */}
-                      </div>
-                      <span className="text-md">{selectedContact.contactUsername}</span>
-                    </div>
+                    <UserAvatar src={selectedContact.contactUserAvatar} username={selectedContact.contactUsername} />
                   </Link>
                 </div>
                 {/* Action buttons */}
@@ -771,7 +768,7 @@ export default function Messenger() {
               {showScrollToBottom && (
                 <button
                   onClick={() => scrollToBottom()}
-                  className="absolute bottom-20 right-4 btn btn-circle btn-sm z-40 shadow-lg" // Positioned button
+                  className="absolute bottom-20 right-4 btn btn-circle btn-sm z-40 shadow-lg"
                 >
                   <FontAwesomeIcon icon={faAngleDown} />
                 </button>
@@ -829,6 +826,11 @@ export default function Messenger() {
                     placeholder="Type here"
                     value={messageText}
                     onChange={(e) => setMessageText(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        sendMessage();
+                      }
+                    }}
                   />
                   {/* Send Button */}
                   <button className="btn btn-primary" onClick={sendMessage}>

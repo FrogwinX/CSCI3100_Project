@@ -75,37 +75,38 @@ export default function ChatMessage({
       id={message.messageId.toString()}
       className={`chat ${isOwner ? "chat-end" : "chat-start"} ${isSelected ? "bg-primary/20" : ""}`}
       onClick={handleClick} // selection toggling
+      onMouseEnter={() => setIsHovering(true)}
+      onMouseLeave={() => setIsHovering(false)}
     >
       <div
         className={`chat-bubble relative ${
           isOwner ? "bg-primary text-primary-content" : "bg-neutral text-neutral-content"
         } font-medium text-sm break-words max-w-[85%] lg:max-w-[60%] ${isOwner ? "flex-row" : "flex-row-reverse"}`}
-        onMouseEnter={() => setIsHovering(true)}
-        onMouseLeave={() => setIsHovering(false)}
       >
         {/* Action Menu (Checkbox or Dropdown) */}
-        {message.isActive && message.messageId !== -1 && (
+        {message.isActive && message.messageId !== -1 && (isHovering || isInSelectionMode) && (
           <div
             className={`
            absolute top-1/2 transform -translate-y-1/2
            ${isOwner ? "right-full mr-2" : "left-full ml-2"}
            z-10 flex items-center
            transition-opacity duration-150
-           ${isHovering || isInSelectionMode ? "opacity-100" : "opacity-0"}
           `}
           >
             {/* Show Checkbox when in selection mode */}
-            {isInSelectionMode ? (
+            {isInSelectionMode && isOwner && (
               <input type="checkbox" className="checkbox" checked={isSelected} readOnly />
-            ) : (
-              /* Show Dropdown Trigger when NOT in selection mode */
+            )}
+
+            {/* Show Dropdown Trigger when NOT in selection mode */}
+            {!isInSelectionMode && (
               <div className={`dropdown dropdown-top ${isOwner ? "dropdown-start" : "dropdown-end"}`}>
                 <button tabIndex={0} role="button" className="btn btn-circle btn-xs bg-base-100">
                   <FontAwesomeIcon icon={faAngleDown} />
                 </button>
                 <ul
                   tabIndex={0}
-                  className="dropdown-content menu rounded-box w-26 shadow text-base-content bg-base-100"
+                  className="dropdown-content menu rounded-box w-fit shadow text-base-content bg-base-100"
                 >
                   <li>
                     <a onClick={handleReplyAction}>
@@ -147,9 +148,16 @@ export default function ChatMessage({
                 <p className="font-semibold text-xs opacity-90">
                   {replyTo.userIdFrom === myUserId ? "You" : contactUsername}
                 </p>
-                <p className="text-xs opacity-80 truncate">
-                  {replyTo.content ? replyTo.content : <span className="italic opacity-80">Image</span>}
-                </p>
+                {replyTo.isActive ? (
+                  <p className="text-xs opacity-80 truncate">
+                    {replyTo.content ? replyTo.content : <span className="italic opacity-80">Image</span>}
+                  </p>
+                ) : (
+                  <span className="opacity-50 italic font-bold">
+                    <FontAwesomeIcon icon={faBan} className="mr-2" />
+                    Message has been deleted
+                  </span>
+                )}
               </div>
             )}
             {/* Display images if they exist */}
