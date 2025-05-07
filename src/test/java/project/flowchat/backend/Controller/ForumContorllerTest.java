@@ -38,7 +38,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull; // Added for null check
 
 @WebMvcTest(ForumController.class)
 @AutoConfigureMockMvc(addFilters = false) // Disable filters in MockMvc

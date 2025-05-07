@@ -14,18 +14,12 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
-import project.flowchat.backend.Model.LicenseModel;
-import project.flowchat.backend.Model.UserAccountModel; // Keep for potential reads if needed
-import project.flowchat.backend.Repository.LicenseRepository;
-import project.flowchat.backend.Repository.UserAccountRepository;
 import project.flowchat.backend.Service.ExceptionService;
-import project.flowchat.backend.Service.SecurityService;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.TimeZone; // Import TimeZone
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -48,16 +42,6 @@ public class AccountControllerIntegrationTest {
 
     @Autowired
     private ObjectMapper objectMapper; // For converting objects to JSON
-
-    // Keep repositories if needed for verification, but not for primary setup via JPA save
-    @Autowired
-    private UserAccountRepository userAccountRepository;
-
-    @Autowired
-    private LicenseRepository licenseRepository;
-
-    @Autowired
-    private SecurityService securityService; // To generate tokens if needed
 
     @Autowired
     private JdbcTemplate jdbcTemplate; // Autowire JdbcTemplate

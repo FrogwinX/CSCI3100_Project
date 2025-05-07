@@ -12,7 +12,6 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.multipart.MultipartFile;
 import project.flowchat.backend.DTO.PostDTO;
-import project.flowchat.backend.DTO.UserInfoDTO;
 import project.flowchat.backend.Model.PostModel;
 import project.flowchat.backend.Repository.ForumRepository;
 import project.flowchat.backend.Repository.UserAccountRepository;

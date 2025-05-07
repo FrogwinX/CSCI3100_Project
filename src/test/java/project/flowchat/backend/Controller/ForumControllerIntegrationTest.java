@@ -15,8 +15,6 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
-import project.flowchat.backend.Repository.UserAccountRepository;
-import project.flowchat.backend.Service.SecurityService;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -51,12 +49,6 @@ public class ForumControllerIntegrationTest {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
-
-    @Autowired
-    private UserAccountRepository userAccountRepository;
-
-    @Autowired
-    private SecurityService securityService;
 
     private final String BASE_URL = "/api/Forum";
     private final String ACCOUNT_BASE_URL = "/api/Account";
@@ -133,12 +125,6 @@ public class ForumControllerIntegrationTest {
         // no created_at column in H2; let DB default the timestamp
         jdbcTemplate.update("INSERT INTO FORUM.\"Like\" (post_id, user_id) VALUES (?, ?)", postId, userId);
         jdbcTemplate.update("UPDATE FORUM.Post SET like_count = like_count + 1 WHERE post_id = ?", postId);
-    }
-
-    private void createDislike(Integer postId, Long userId) {
-        // no created_at column in H2; let DB default the timestamp
-        jdbcTemplate.update("INSERT INTO FORUM.Dislike (post_id, user_id) VALUES (?, ?)", postId, userId);
-        jdbcTemplate.update("UPDATE FORUM.Post SET dislike_count = dislike_count + 1 WHERE post_id = ?", postId);
     }
 
     @BeforeEach

@@ -1,6 +1,5 @@
 package project.flowchat.backend.Controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatcher;
@@ -16,7 +15,6 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 import project.flowchat.backend.Config.JWTFilter;
 import project.flowchat.backend.DTO.ChatMessageDetailsDTO;
-import project.flowchat.backend.DTO.ChatSendMessageDTO;
 import project.flowchat.backend.DTO.ContactDTO;
 import project.flowchat.backend.DTO.ResponseBodyDTO;
 import project.flowchat.backend.Service.ChatService;
@@ -28,7 +26,6 @@ import java.util.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(ChatController.class)
@@ -39,9 +36,6 @@ class ChatControllerTest {
     private WebApplicationContext webApplicationContext;
 
     private MockMvc mockMvc;
-
-    @Autowired
-    private ObjectMapper objectMapper;
     
     // Use MockBean for all service and component dependencies
     @MockBean
@@ -58,11 +52,6 @@ class ChatControllerTest {
     
     @MockBean
     private JWTFilter jwtFilter;
-
-    // --- Argument Matcher Helper ---
-    private static ArgumentMatcher<Map<String, Object>> mapContaining(String key, Object value) {
-        return map -> map != null && Objects.equals(map.get(key), value);
-    }
 
     private static ArgumentMatcher<Map<String, Object>> mapContainingExactly(Map<String, Object> expectedMap) {
         return map -> map != null && map.equals(expectedMap);

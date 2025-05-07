@@ -11,7 +11,6 @@ import project.flowchat.backend.Model.UserProfileModel;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -31,10 +30,6 @@ public class UserProfileRepositoryTest {
 
     @Autowired
     private UserProfileRepository userProfileRepository;
-
-    // Keep UserAccountRepository for creating prerequisite accounts if needed
-    @Autowired
-    private UserAccountRepository userAccountRepository;
 
     private UserAccountModel user1Account, user2Account, user3Account, inactiveAccount;
     private UserProfileModel user1Profile, user2Profile, user3Profile, inactiveProfile;
