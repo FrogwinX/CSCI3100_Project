@@ -15,7 +15,7 @@ interface UsersPreviewResponse {
   message: string;
   data: {
     isSuccess: boolean;
-    userPreviewList: Users[];
+    userList: Users[];
   };
 }
 
@@ -67,7 +67,7 @@ export async function getSearchUser(
 
     const data: UsersPreviewResponse = await response.json();
 
-    const users: Users[] = data.data.userPreviewList.map((user) => ({
+    const users: Users[] = data.data.userList.map((user) => ({
       userId: user.userId,
       username: user.username,
       description: user.description,
