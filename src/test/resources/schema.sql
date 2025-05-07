@@ -4,6 +4,12 @@ CREATE SCHEMA IF NOT EXISTS FORUM;
 CREATE SCHEMA IF NOT EXISTS IMAGE;
 CREATE SCHEMA IF NOT EXISTS PROFILE;
 
+CREATE ALIAS IF NOT EXISTS GETUTCDATE AS '
+java.time.LocalDateTime utcDateTime() {
+    return java.time.LocalDateTime.now(java.time.ZoneOffset.UTC);
+}
+';
+
 -- ACCOUNT tables
 
 CREATE TABLE IF NOT EXISTS ACCOUNT.Authentication (
@@ -122,7 +128,7 @@ CREATE TABLE IF NOT EXISTS FORUM.Recommendation (
    CONSTRAINT fk_recommend_tag FOREIGN KEY (tag_id) REFERENCES FORUM.Tag_Data(tag_id)
 );
 
-CREATE TABLE IF NOT EXISTS FORUM.View (
+CREATE TABLE IF NOT EXISTS FORUM."View" (
    post_id INT NOT NULL,
    user_id INT NOT NULL,
    PRIMARY KEY (post_id, user_id)
