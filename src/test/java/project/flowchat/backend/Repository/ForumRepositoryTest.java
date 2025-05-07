@@ -284,7 +284,7 @@ public class ForumRepositoryTest {
 
         // Act & Assert - Before View (using native query with correct quoting - UPPERCASE)
         Integer viewBefore = (Integer) entityManager.getEntityManager()
-            .createNativeQuery("SELECT post_id FROM FORUM.\"VIEW\" WHERE post_id = :postId AND user_id = :userId") // Changed to uppercase "VIEW"
+            .createNativeQuery("SELECT post_id FROM FORUM.\"View\" WHERE post_id = :postId AND user_id = :userId") // Changed to uppercase "View"
             .setParameter("postId", post.getPostId())
             .setParameter("userId", user2.getUserId())
             .getResultStream().findFirst().orElse(null);
@@ -292,7 +292,7 @@ public class ForumRepositoryTest {
 
         // Act - Add View (using native query with correct quoting - UPPERCASE)
         entityManager.getEntityManager()
-            .createNativeQuery("INSERT INTO FORUM.\"VIEW\" (post_id, user_id) VALUES (?, ?)") // Changed to uppercase "VIEW"
+            .createNativeQuery("INSERT INTO FORUM.\"View\" (post_id, user_id) VALUES (?, ?)") // Changed to uppercase "View"
             .setParameter(1, post.getPostId())
             .setParameter(2, user2.getUserId())
             .executeUpdate();
@@ -301,7 +301,7 @@ public class ForumRepositoryTest {
 
         // Assert - After View (using native query with correct quoting - UPPERCASE)
         Integer viewAfter = (Integer) entityManager.getEntityManager()
-            .createNativeQuery("SELECT post_id FROM FORUM.\"VIEW\" WHERE post_id = :postId AND user_id = :userId") // Changed to uppercase "VIEW"
+            .createNativeQuery("SELECT post_id FROM FORUM.\"View\" WHERE post_id = :postId AND user_id = :userId") // Changed to uppercase "View"
             .setParameter("postId", post.getPostId())
             .setParameter("userId", user2.getUserId())
             .getResultStream().findFirst().orElse(null);
