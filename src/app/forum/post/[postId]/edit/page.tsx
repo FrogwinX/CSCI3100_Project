@@ -153,6 +153,19 @@ export default function EditPost({ params: paramsPromise }: { params: Promise<{ 
 
           const cleanText = div.textContent || "";
           setTextLength(getTextLength(cleanText));
+
+          const imageIndexes = (cleanText.match(/\[image:(?:image-)?(\d+)\.jpg\]/g) || [])
+            .map(tag => Number(tag.match(/\[image:(?:image-)?(\d+)\.jpg\]/)?.[1] ?? 0));
+          console.log("[image:x] 的 x 值：", imageIndexes);
+          // 檢查是否連續
+          const isContinuous = imageIndexes.every((val, idx) => val === idx + 1);
+          console.log("x 是否連續且從 1 開始：", isContinuous);
+
+          const brTags = cleanText.match(/\[br\]/g) || [];
+          console.log("[br] 標籤數量：", brTags.length);
+
+          const htmlTags = cleanText.match(/<[^>]+>/g) || [];
+          console.log("殘留的 html tags：", htmlTags);
         } else {
           setTagFetchError("Post not found");
         }
@@ -283,6 +296,22 @@ export default function EditPost({ params: paramsPromise }: { params: Promise<{ 
         return prevImages.filter((image) => remainingImageIds.includes(image.name));
       });
       console.log("remainingImageIds", remainingImageIds, "existingImages", existingImages);
+
+      console.log("刪除後 imageAPIList：", existingImages);
+      console.log("刪除後文本中的 [image:x] 標籤：", cleanText.match(/\[image:(?:image-)?(\d+)\.jpg\]/g) || []);
+
+      const imageIndexes = (cleanText.match(/\[image:(?:image-)?(\d+)\.jpg\]/g) || [])
+        .map(tag => Number(tag.match(/\[image:(?:image-)?(\d+)\.jpg\]/)?.[1] ?? 0));
+      console.log("[image:x] 的 x 值：", imageIndexes);
+      // 檢查是否連續
+      const isContinuous = imageIndexes.every((val, idx) => val === idx + 1);
+      console.log("x 是否連續且從 1 開始：", isContinuous);
+
+      const brTags = cleanText.match(/\[br\]/g) || [];
+      console.log("[br] 標籤數量：", brTags.length);
+
+      const htmlTags = cleanText.match(/<[^>]+>/g) || [];
+      console.log("殘留的 html tags：", htmlTags);
     }
   };
 

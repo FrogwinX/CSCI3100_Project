@@ -511,3 +511,43 @@ export async function updatePost(
     throw error;
   }
 }
+
+// Get comment list for a post
+export async function getCommentList(postId: string, userId: string) {
+  const apiUrl = `https://flowchatbackend.azurewebsites.net/api/Forum/getCommentList?postId=${postId}&userId=${userId}`;
+  const session = await getSession();
+  const response = await fetch(apiUrl, {
+    headers: {
+      Authorization: `Bearer ${session.token}`,
+    },
+  });
+  if (!response.ok) throw new Error("Failed to fetch comments");
+  const data = await response.json();
+  return data.data.commentList || [];
+}
+
+// Create a comment for a post
+export async function createComment(postId: string, userId: string, content: string) {
+  const apiUrl = `https://flowchatbackend.azurewebsites.net/api/Forum/createPostOrComment`;
+  const session = await getSession();
+  const requestBody = {
+    userId: parseInt(userId, 10),
+    title: "", // comments have no title
+    content: content.replace(/\n/g, '<br>'),
+    tag: [],
+    attachTo: parseInt(postId, 10),
+  };
+  const formData = new FormData();
+  const requestBodyBlob = new Blob([JSON.stringify(requestBody)], { type: "application/json" });
+  formData.append("requestBody", requestBodyBlob);
+  const response = await fetch(apiUrl, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${session.token}`,
+    },
+    body: formData,
+  });
+  if (!response.ok) throw new Error("Failed to create comment");
+  const data = await response.json();
+  return data;
+}
