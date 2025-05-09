@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import CommentForm from "./CommentForm";
 import CommentList from "./CommentList";
 
@@ -9,9 +9,13 @@ interface Props {
 }
 
 export default function CommentSection({ postId, userId }: Props) {
-  const [refreshKey, setRefreshKey] = useState(0);
   const [replyTo, setReplyTo] = useState(null);
   const [subCommentVisibility, setSubCommentVisibility] = useState<Record<string, boolean>>({});
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  const handleAnyReplySuccess = useCallback(() => {
+    setRefreshTrigger(prev => prev + 1);
+  }, []);
 
   return (
     <div id="comments" className="bg-white rounded-xl shadow p-6 min-h-screen w-full mx-auto mt-6">
@@ -21,17 +25,15 @@ export default function CommentSection({ postId, userId }: Props) {
         userId={userId}
         replyTo={replyTo}
         onCancelReply={() => setReplyTo(null)}
-        onCommentSuccess={() => {
-          setRefreshKey((k) => k + 1);
-          setReplyTo(null);
-        }}
+        onCommentSuccess={handleAnyReplySuccess}
       />
       <CommentList 
         postId={postId} 
         userId={userId} 
-        key={refreshKey} 
         subCommentVisibility={subCommentVisibility}
         setSubCommentVisibility={setSubCommentVisibility}
+        onReplySuccess={handleAnyReplySuccess}
+        key={refreshTrigger}
       />
     </div>
   );

@@ -540,14 +540,25 @@ export async function createComment(postId: string, userId: string, content: str
   const formData = new FormData();
   const requestBodyBlob = new Blob([JSON.stringify(requestBody)], { type: "application/json" });
   formData.append("requestBody", requestBodyBlob);
-  const response = await fetch(apiUrl, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${session.token}`,
-    },
-    body: formData,
-  });
-  if (!response.ok) throw new Error("Failed to create comment");
-  const data = await response.json();
-  return data;
+  
+  try {
+    const response = await fetch(apiUrl, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${session.token}`,
+      },
+      body: formData,
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to create comment");
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error creating comment:", error);
+    throw error;
+  }
 }

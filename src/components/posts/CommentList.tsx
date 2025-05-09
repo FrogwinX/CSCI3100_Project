@@ -11,6 +11,7 @@ interface CommentListProps {
   userId: string;
   subCommentVisibility: Record<string, boolean>;
   setSubCommentVisibility: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+  onReplySuccess: () => void;
 }
 
 function CommentFormInline({ parentId, userId, onSuccess, replyToNumber, nextSubNumber }: { parentId: string; userId: string; onSuccess: () => void; replyToNumber?: string; nextSubNumber?: string }) {
@@ -28,13 +29,27 @@ function CommentFormInline({ parentId, userId, onSuccess, replyToNumber, nextSub
     setError(null);
     try {
       let finalContent = content;
-      if (nextSubNumber) {
-        finalContent = nextSubNumber + (replyToNumber ? ` (reply to ${replyToNumber}) ` : " ") + content;
+      if (nextSubNumber && replyToNumber) {
+        // sub comment reply: 內容加上(reply to Cx-y)
+        finalContent = `${nextSubNumber} (reply to ${replyToNumber}) ${content}`;
+      } else if (nextSubNumber) {
+        // 主comment reply: 只加sub number
+        finalContent = `${nextSubNumber} ${content}`;
+      } else if (replyToNumber) {
+        // sub comment reply（自動分配sub number）
+        finalContent = `(reply to ${replyToNumber}) ${content}`;
       }
-      await createComment(parentId, userId, finalContent);
-      setContent("");
-      if (onSuccess) onSuccess();
+      const response = await createComment(parentId, userId, finalContent);
+      if (response) {
+        setContent("");
+        if (onSuccess) {
+          onSuccess();
+        }
+      } else {
+        throw new Error("Failed to create comment");
+      }
     } catch (err) {
+      console.error("Error creating comment:", err);
       setError("Failed to post comment");
     } finally {
       setLoading(false);
@@ -62,6 +77,16 @@ function CommentFormInline({ parentId, userId, onSuccess, replyToNumber, nextSub
   );
 }
 
+// 工具函數：提取標號字串（如C1、C2-3）轉為可排序的數組
+function parseCommentNumber(str: string) {
+  // 只取開頭的標號部分
+  const match = str.match(/^C(\d+)(?:-(\d+))?/);
+  if (!match) return [Infinity];
+  const main = parseInt(match[1], 10);
+  const sub = match[2] ? parseInt(match[2], 10) : 0;
+  return [main, sub];
+}
+
 function CommentItem({
   comment,
   userId,
@@ -72,6 +97,8 @@ function CommentItem({
   index = 0,
   subCommentVisibility,
   setSubCommentVisibility,
+  mainCommentId,
+  mainCommentNumber,
 }: {
   comment: any;
   userId: string;
@@ -82,17 +109,28 @@ function CommentItem({
   index?: number;
   subCommentVisibility?: Record<string, boolean>;
   setSubCommentVisibility?: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+  mainCommentId?: string;
+  mainCommentNumber?: string;
 }) {
   const [showReplyBox, setShowReplyBox] = useState(false);
   const [replyToNumber, setReplyToNumber] = useState<string | undefined>(undefined);
   const [replyToSubNumber, setReplyToSubNumber] = useState<string | undefined>(undefined);
+  const [showSubReplyBox, setShowSubReplyBox] = useState(false);
+  const [subReplyToNumber, setSubReplyToNumber] = useState<string | undefined>(undefined);
 
   const commentNumber = numberPrefix ? `${numberPrefix}-${index + 1}` : `C${index + 1}`;
   let contentWithNumber = comment.content;
   if (!contentWithNumber.startsWith("C")) {
     contentWithNumber = `${commentNumber} ${contentWithNumber}`;
   }
-  const subComments = Array.isArray(comment.commentList) ? comment.commentList : [];
+  const subComments = Array.isArray(comment.commentList) ? comment.commentList.slice().sort((a: any, b: any) => {
+    const aNum = parseCommentNumber(a.content);
+    const bNum = parseCommentNumber(b.content);
+    for (let i = 0; i < Math.max(aNum.length, bNum.length); i++) {
+      if ((aNum[i] || 0) !== (bNum[i] || 0)) return (aNum[i] || 0) - (bNum[i] || 0);
+    }
+    return 0;
+  }) : [];
   const nextSubNumber = (subComments.length > 0)
     ? `${commentNumber}-${subComments.length + 1}`
     : `${commentNumber}-1`;
@@ -129,6 +167,9 @@ function CommentItem({
     }
   };
 
+  const mainId = mainCommentId ?? comment.postId;
+  const mainNumber = mainCommentNumber ?? commentNumber;
+
   return (
     <div className={`w-full ${numberPrefix ? "ml-12 border-l-2 border-base-300 pl-6 max-w-[92%]" : "max-w-full"} pb-2`}>
       <div className="flex items-start justify-between w-full">
@@ -141,21 +182,35 @@ function CommentItem({
               <span className="text-xs text-gray-400 align-middle">{new Date(comment.updatedAt).toLocaleString()}</span>
             </div>
             <div className="text-base-content break-words whitespace-pre-wrap">
-              <span dangerouslySetInnerHTML={{ __html: comment.content }} />
+              <span dangerouslySetInnerHTML={{ __html: contentWithNumber }} />
             </div>
             <div className="flex gap-2 mt-2">
-              <button
-                className="btn btn-xs btn-ghost"
-                onClick={() => {
-                  setShowReplyBox((v) => !v);
-                  setReplyToNumber(undefined);
-                  setReplyToSubNumber(undefined);
-                }}
-              >
-                {showReplyBox && !replyToSubNumber ? "Cancel" : "Reply"}
-              </button>
+              {/* 主comment reply按鈕 */}
+              {isMainComment ? (
+                <button
+                  className="btn btn-xs btn-ghost"
+                  onClick={() => {
+                    setShowReplyBox((v) => !v);
+                    setReplyToNumber(undefined);
+                    setReplyToSubNumber(undefined);
+                  }}
+                >
+                  {showReplyBox && !replyToSubNumber ? "Cancel" : "Reply"}
+                </button>
+              ) : (
+                <button
+                  className="btn btn-xs btn-ghost"
+                  onClick={() => {
+                    setShowSubReplyBox((v) => !v);
+                    setSubReplyToNumber(showSubReplyBox ? undefined : commentNumber);
+                  }}
+                >
+                  {showSubReplyBox ? "Cancel" : "Reply"}
+                </button>
+              )}
             </div>
-            {showReplyBox && !replyToSubNumber && (
+            {/* 主comment reply表單 */}
+            {isMainComment && showReplyBox && !replyToSubNumber && (
               <div className="mt-2">
                 <CommentFormInline
                   parentId={comment.postId}
@@ -163,6 +218,22 @@ function CommentItem({
                   onSuccess={onReplySuccess}
                   replyToNumber={undefined}
                   nextSubNumber={nextSubNumber}
+                />
+              </div>
+            )}
+            {/* sub comment reply表單，永遠append到主comment的sub comment list */}
+            {!isMainComment && showSubReplyBox && subReplyToNumber && (
+              <div className="mt-2">
+                <CommentFormInline
+                  parentId={mainId}
+                  userId={userId}
+                  onSuccess={() => {
+                    setShowSubReplyBox(false);
+                    setSubReplyToNumber(undefined);
+                    onReplySuccess();
+                  }}
+                  replyToNumber={commentNumber}
+                  nextSubNumber={undefined}
                 />
               </div>
             )}
@@ -211,6 +282,10 @@ function CommentItem({
                   showLikeDislike={showLikeDislike}
                   numberPrefix={commentNumber}
                   index={idx}
+                  subCommentVisibility={subCommentVisibility}
+                  setSubCommentVisibility={setSubCommentVisibility}
+                  mainCommentId={mainCommentId}
+                  mainCommentNumber={mainCommentNumber}
                 />
               ))}
             </div>
@@ -221,42 +296,46 @@ function CommentItem({
   );
 }
 
-export default function CommentList({ postId, userId, subCommentVisibility, setSubCommentVisibility }: CommentListProps) {
+export default function CommentList({ postId, userId, subCommentVisibility, setSubCommentVisibility, onReplySuccess }: CommentListProps) {
   const [comments, setComments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
 
-  useEffect(() => {
-    getCommentList(postId, userId)
-      .then((list) => {
-        setComments(list);
-        // 只對新出現的主 comment 設定預設值，保留用戶已經操作過的狀態
-        setSubCommentVisibility((prev) => {
-          const updated = { ...prev };
-          list.forEach((c: any) => {
-            if (!(c.postId in updated)) {
-              updated[c.postId] = false;
-            }
-          });
-          return updated;
-        });
+  const fetchComments = async () => {
+    try {
+      setLoading(true);
+      let list = await getCommentList(postId, userId);
+      // 根據標號排序（主comment）
+      list = list.slice().sort((a: any, b: any) => {
+        const aNum = parseCommentNumber(a.content);
+        const bNum = parseCommentNumber(b.content);
+        for (let i = 0; i < Math.max(aNum.length, bNum.length); i++) {
+          if ((aNum[i] || 0) !== (bNum[i] || 0)) return (aNum[i] || 0) - (bNum[i] || 0);
+        }
+        return 0;
       });
-  }, [postId, userId]);
+      setComments(list);
+      setError(null);
+      setSubCommentVisibility((prev) => {
+        const updated = { ...prev };
+        list.forEach((c: any) => {
+          if (!(c.postId in updated)) {
+            updated[c.postId] = false;
+          }
+        });
+        return updated;
+      });
+    } catch (err) {
+      console.error("Error fetching comments:", err);
+      setError("Failed to load comments");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    setLoading(true);
-    getCommentList(postId, userId)
-      .then((list) => {
-        setComments(list);
-        setError(null);
-      })
-      .catch((err) => {
-        setError("Failed to load comments");
-      })
-      .finally(() => setLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [postId, userId, refreshKey]);
+    fetchComments();
+  }, [postId, userId]);
 
   // Like/dislike handler
   const handleLikeDislike = async (commentId: string, action: "like" | "dislike" | "unlike" | "undislike") => {
@@ -305,24 +384,31 @@ export default function CommentList({ postId, userId, subCommentVisibility, setS
   if (error) return <div className="text-red-500">{error}</div>;
   if (!comments.length) return <div>No comments yet.</div>;
 
-  const handleAnyReplySuccess = () => setRefreshKey((k) => k + 1);
+  const handleAnyReplySuccess = () => {
+    fetchComments(); 
+  };
 
   return (
     <div className="flex flex-col gap-2">
-      {comments.map((comment, idx) => (
-        <CommentItem
-          key={comment.postId}
-          comment={comment}
-          userId={userId}
-          onReplySuccess={handleAnyReplySuccess}
-          onLikeDislike={handleLikeDislike}
-          showLikeDislike={true}
-          numberPrefix=""
-          index={idx}
-          subCommentVisibility={subCommentVisibility}
-          setSubCommentVisibility={setSubCommentVisibility}
-        />
-      ))}
+      {comments.map((comment, idx) => {
+        const commentNumber = `C${idx + 1}`;
+        return (
+          <CommentItem
+            key={comment.postId}
+            comment={comment}
+            userId={userId}
+            onReplySuccess={handleAnyReplySuccess}
+            onLikeDislike={handleLikeDislike}
+            showLikeDislike={true}
+            numberPrefix=""
+            index={idx}
+            subCommentVisibility={subCommentVisibility}
+            setSubCommentVisibility={setSubCommentVisibility}
+            mainCommentId={comment.postId}
+            mainCommentNumber={commentNumber}
+          />
+        );
+      })}
     </div>
   );
 } 

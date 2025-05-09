@@ -24,14 +24,21 @@ export default function CommentForm({ postId, userId, replyTo, onCancelReply, on
     setLoading(true);
     setError(null);
     try {
-      await createComment(
+      const response = await createComment(
         replyTo?.postId ? replyTo.postId : postId,
         userId,
         content
       );
-      setContent("");
-      if (onCommentSuccess) onCommentSuccess();
+      if (response) {
+        setContent("");
+        if (onCommentSuccess) {
+          onCommentSuccess();
+        }
+      } else {
+        throw new Error("Failed to post comment");
+      }
     } catch (err) {
+      console.error("Error posting comment:", err);
       setError("Failed to post comment");
     } finally {
       setLoading(false);
