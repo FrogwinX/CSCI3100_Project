@@ -87,6 +87,11 @@ function parseCommentNumber(str: string) {
   return [main, sub];
 }
 
+// 工具函數：去除開頭標號，只保留內容
+function stripCommentNumber(str: string) {
+  return str.replace(/^C\d+(?:-\d+)?\s*/, "");
+}
+
 function CommentItem({
   comment,
   userId,
@@ -182,7 +187,7 @@ function CommentItem({
               <span className="text-xs text-gray-400 align-middle">{new Date(comment.updatedAt).toLocaleString()}</span>
             </div>
             <div className="text-base-content break-words whitespace-pre-wrap">
-              <span dangerouslySetInnerHTML={{ __html: contentWithNumber }} />
+              <span dangerouslySetInnerHTML={{ __html: stripCommentNumber(comment.content) }} />
             </div>
             <div className="flex gap-2 mt-2">
               {/* 主comment reply按鈕 */}
