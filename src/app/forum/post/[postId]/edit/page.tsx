@@ -297,8 +297,8 @@ export default function EditPost({ params: paramsPromise }: { params: Promise<{ 
       });
       console.log("remainingImageIds", remainingImageIds, "existingImages", existingImages);
 
-      console.log("刪除後 imageAPIList：", existingImages);
-      console.log("刪除後文本中的 [image:x] 標籤：", cleanText.match(/\[image:(?:image-)?(\d+)\.jpg\]/g) || []);
+      console.log("After deletion imageAPIList:", existingImages);
+      console.log("After deletion [image:x] tags in text:", cleanText.match(/\[image:(?:image-)?(\d+)\.jpg\]/g) || []);
 
       const imageIndexes = (cleanText.match(/\[image:(?:image-)?(\d+)\.jpg\]/g) || [])
         .map(tag => Number(tag.match(/\[image:(?:image-)?(\d+)\.jpg\]/)?.[1] ?? 0));

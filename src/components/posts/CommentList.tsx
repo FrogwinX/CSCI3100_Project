@@ -77,9 +77,7 @@ function CommentFormInline({ parentId, userId, onSuccess, replyToNumber, nextSub
   );
 }
 
-// 工具函數：提取標號字串（如C1、C2-3）轉為可排序的數組
 function parseCommentNumber(str: string) {
-  // 只取開頭的標號部分
   const match = str.match(/^C(\d+)(?:-(\d+))?/);
   if (!match) return [Infinity];
   const main = parseInt(match[1], 10);
@@ -87,16 +85,12 @@ function parseCommentNumber(str: string) {
   return [main, sub];
 }
 
-// 工具函數：去除開頭標號，只保留內容
 function stripCommentNumber(str: string) {
   return str.replace(/^C\d+(?:-\d+)?\s*/, "");
 }
 
-// 工具函數：將(reply to CX-Y)或CX-Y句首標號轉為藍色細字span
 function renderCommentContent(str: string) {
-  // 1. 處理(reply to CX-Y)
   let html = str.replace(/\(reply to (C\d+(?:-\d+)?)\)/, '<span style="color:#2563eb;font-size:0.95em;font-weight:400;">$1</span>');
-  // 2. 處理句首的CX-Y
   html = html.replace(/^(C\d+(?:-\d+)?)(?=\s)/, '<span style="color:#2563eb;font-size:0.95em;font-weight:400;">$1</span>');
   return html;
 }
@@ -199,7 +193,7 @@ function CommentItem({
               <span dangerouslySetInnerHTML={{ __html: renderCommentContent(stripCommentNumber(comment.content)) }} />
             </div>
             <div className="flex gap-2 mt-2">
-              {/* 主comment reply按鈕 */}
+              {/* comment reply */}
               {isMainComment ? (
                 <button
                   className="btn btn-xs btn-ghost"
@@ -223,7 +217,7 @@ function CommentItem({
                 </button>
               )}
             </div>
-            {/* 主comment reply表單 */}
+            {/* comment reply list */}
             {isMainComment && showReplyBox && !replyToSubNumber && (
               <div className="mt-2">
                 <CommentFormInline
@@ -235,7 +229,7 @@ function CommentItem({
                 />
               </div>
             )}
-            {/* sub comment reply表單，永遠append到主comment的sub comment list */}
+            {/* sub comment reply list */}
             {!isMainComment && showSubReplyBox && subReplyToNumber && (
               <div className="mt-2">
                 <CommentFormInline
@@ -254,8 +248,11 @@ function CommentItem({
           </div>
         </div>
         {showLikeDislike && (
-          <div className="flex flex-col items-end ml-4 min-w-[70px]">
-            <div className="flex items-center bg-base-200 rounded-xl px-3 py-1 gap-2 mb-1">
+          <div className="flex flex-col items-end ml-4 min-w-[120px] gap-1">
+            <button className="btn btn-sm btn-ghost p-0 h-4 min-h-0 py-0" title="More options">
+              <span className="text-xl">...</span>
+            </button>
+            <div className="flex items-center bg-base-200 rounded-xl px-3 py-1 gap-2 mt-1">
               <button className="btn btn-sm btn-ghost p-0" onClick={handleLike} title="Like">
                 <FontAwesomeIcon icon={comment.isLiked ? faThumbsUpSolid : faThumbsUp} size="lg" />
               </button>
@@ -266,13 +263,10 @@ function CommentItem({
                 <FontAwesomeIcon icon={comment.isDisliked ? faThumbsDownSolid : faThumbsDown} size="lg" />
               </button>
             </div>
-            <button className="btn btn-sm btn-ghost p-0" title="More options">
-              <span className="text-xl">...</span>
-            </button>
           </div>
         )}
       </div>
-      {/* 子留言（回覆） */}
+      {/* sub comment (reply) */}
       {subComments.length > 0 && (
         <>
           {isMainComment && (
@@ -319,7 +313,7 @@ export default function CommentList({ postId, userId, subCommentVisibility, setS
     try {
       setLoading(true);
       let list = await getCommentList(postId, userId);
-      // 根據標號排序（主comment）
+      // sort by comment number (main comment)
       list = list.slice().sort((a: any, b: any) => {
         const aNum = parseCommentNumber(a.content);
         const bNum = parseCommentNumber(b.content);
