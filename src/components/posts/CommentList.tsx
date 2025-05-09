@@ -3,7 +3,11 @@ import React, { useEffect, useState } from "react";
 import { getCommentList, createComment } from "@/utils/posts";
 import UserAvatar from "@/components/users/UserAvatar";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faThumbsUp as faThumbsUpSolid, faThumbsDown as faThumbsDownSolid } from "@fortawesome/free-solid-svg-icons";
+import {
+  faThumbsUp as faThumbsUpSolid,
+  faThumbsDown as faThumbsDownSolid,
+  faEllipsis,
+} from "@fortawesome/free-solid-svg-icons";
 import { faThumbsUp, faThumbsDown } from "@fortawesome/free-regular-svg-icons";
 
 interface CommentListProps {
@@ -14,7 +18,19 @@ interface CommentListProps {
   onReplySuccess: () => void;
 }
 
-function CommentFormInline({ parentId, userId, onSuccess, replyToNumber, nextSubNumber }: { parentId: string; userId: string; onSuccess: () => void; replyToNumber?: string; nextSubNumber?: string }) {
+function CommentFormInline({
+  parentId,
+  userId,
+  onSuccess,
+  replyToNumber,
+  nextSubNumber,
+}: {
+  parentId: string;
+  userId: string;
+  onSuccess: () => void;
+  replyToNumber?: string;
+  nextSubNumber?: string;
+}) {
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -90,8 +106,14 @@ function stripCommentNumber(str: string) {
 }
 
 function renderCommentContent(str: string) {
-  let html = str.replace(/\(reply to (C\d+(?:-\d+)?)\)/, '<span style="color:#2563eb;font-size:0.95em;font-weight:400;">$1</span>');
-  html = html.replace(/^(C\d+(?:-\d+)?)(?=\s)/, '<span style="color:#2563eb;font-size:0.95em;font-weight:400;">$1</span>');
+  let html = str.replace(
+    /\(reply to (C\d+(?:-\d+)?)\)/,
+    '<span style="color:#2563eb;font-size:0.95em;font-weight:400;">$1</span>'
+  );
+  html = html.replace(
+    /^(C\d+(?:-\d+)?)(?=\s)/,
+    '<span style="color:#2563eb;font-size:0.95em;font-weight:400;">$1</span>'
+  );
   return html;
 }
 
@@ -131,17 +153,17 @@ function CommentItem({
   if (!contentWithNumber.startsWith("C")) {
     contentWithNumber = `${commentNumber} ${contentWithNumber}`;
   }
-  const subComments = Array.isArray(comment.commentList) ? comment.commentList.slice().sort((a: any, b: any) => {
-    const aNum = parseCommentNumber(a.content);
-    const bNum = parseCommentNumber(b.content);
-    for (let i = 0; i < Math.max(aNum.length, bNum.length); i++) {
-      if ((aNum[i] || 0) !== (bNum[i] || 0)) return (aNum[i] || 0) - (bNum[i] || 0);
-    }
-    return 0;
-  }) : [];
-  const nextSubNumber = (subComments.length > 0)
-    ? `${commentNumber}-${subComments.length + 1}`
-    : `${commentNumber}-1`;
+  const subComments = Array.isArray(comment.commentList)
+    ? comment.commentList.slice().sort((a: any, b: any) => {
+        const aNum = parseCommentNumber(a.content);
+        const bNum = parseCommentNumber(b.content);
+        for (let i = 0; i < Math.max(aNum.length, bNum.length); i++) {
+          if ((aNum[i] || 0) !== (bNum[i] || 0)) return (aNum[i] || 0) - (bNum[i] || 0);
+        }
+        return 0;
+      })
+    : [];
+  const nextSubNumber = subComments.length > 0 ? `${commentNumber}-${subComments.length + 1}` : `${commentNumber}-1`;
 
   // Like/dislike handler
   const handleLike = () => {
@@ -166,9 +188,10 @@ function CommentItem({
   };
 
   const isMainComment = numberPrefix === "";
-  const showSubComments = isMainComment && subCommentVisibility && comment.postId in subCommentVisibility
-    ? subCommentVisibility[comment.postId]
-    : true;
+  const showSubComments =
+    isMainComment && subCommentVisibility && comment.postId in subCommentVisibility
+      ? subCommentVisibility[comment.postId]
+      : true;
   const toggleSubComments = () => {
     if (isMainComment && setSubCommentVisibility) {
       setSubCommentVisibility((prev) => ({ ...prev, [comment.postId]: !prev[comment.postId] }));
@@ -182,12 +205,22 @@ function CommentItem({
     <div className={`w-full ${numberPrefix ? "ml-12 border-l-2 border-base-300 pl-6 max-w-[92%]" : "max-w-full"} pb-2`}>
       <div className="flex items-start justify-between w-full">
         <div className="flex items-start w-full">
-          <UserAvatar src={comment.avatar} username={comment.username} size="sm" />
+          <UserAvatar src={comment.avatar} size="md" />
           <div className="ml-3 w-full">
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-xs text-gray-400 font-mono bg-gray-100 rounded px-1.5 py-0.5 mr-1 align-middle">{commentNumber}</span>
+              <span className="text-xs text-base-content font-mono bg-base-200 rounded px-1.5 py-0.5 mr-1 align-middle">
+                {commentNumber}
+              </span>
               <span className="font-semibold text-base align-middle">{comment.username}</span>
-              <span className="text-xs text-gray-400 align-middle">{new Date(comment.updatedAt).toLocaleString()}</span>
+              <span className="text-xs text-gray-400 align-middle">
+                {new Date(comment.updatedAt).toLocaleString(undefined, {
+                  year: "2-digit",
+                  month: "numeric",
+                  day: "numeric",
+                  hour: "numeric",
+                  minute: "numeric",
+                })}
+              </span>
             </div>
             <div className="text-base-content break-words whitespace-pre-wrap">
               <span dangerouslySetInnerHTML={{ __html: renderCommentContent(stripCommentNumber(comment.content)) }} />
@@ -248,10 +281,7 @@ function CommentItem({
           </div>
         </div>
         {showLikeDislike && (
-          <div className="flex flex-col items-end ml-4 min-w-[120px] gap-1">
-            <button className="btn btn-sm btn-ghost p-0 h-4 min-h-0 py-0" title="More options">
-              <span className="text-xl">...</span>
-            </button>
+          <div className="flex items-center gap-1">
             <div className="flex items-center bg-base-200 rounded-xl px-3 py-1 gap-2 mt-1">
               <button className="btn btn-sm btn-ghost p-0" onClick={handleLike} title="Like">
                 <FontAwesomeIcon icon={comment.isLiked ? faThumbsUpSolid : faThumbsUp} size="lg" />
@@ -263,6 +293,9 @@ function CommentItem({
                 <FontAwesomeIcon icon={comment.isDisliked ? faThumbsDownSolid : faThumbsDown} size="lg" />
               </button>
             </div>
+            <button className="btn btn-sm btn-ghost btn-circle" title="More options">
+              <FontAwesomeIcon icon={faEllipsis} size="lg" />
+            </button>
           </div>
         )}
       </div>
@@ -272,7 +305,7 @@ function CommentItem({
           {isMainComment && (
             <button
               className="block text-gray-400 text-sm my-2 mx-2 hover:underline hover:text-gray-600"
-              style={{ fontFamily: 'monospace', letterSpacing: 1 }}
+              style={{ fontFamily: "monospace", letterSpacing: 1 }}
               onClick={toggleSubComments}
             >
               {showSubComments ? "----- Hide comment" : "----- Show comment"}
@@ -304,7 +337,13 @@ function CommentItem({
   );
 }
 
-export default function CommentList({ postId, userId, subCommentVisibility, setSubCommentVisibility, onReplySuccess }: CommentListProps) {
+export default function CommentList({
+  postId,
+  userId,
+  subCommentVisibility,
+  setSubCommentVisibility,
+  onReplySuccess,
+}: CommentListProps) {
   const [comments, setComments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -393,7 +432,7 @@ export default function CommentList({ postId, userId, subCommentVisibility, setS
   if (!comments.length) return <div>No comments yet.</div>;
 
   const handleAnyReplySuccess = () => {
-    fetchComments(); 
+    fetchComments();
   };
 
   return (
@@ -419,4 +458,4 @@ export default function CommentList({ postId, userId, subCommentVisibility, setS
       })}
     </div>
   );
-} 
+}

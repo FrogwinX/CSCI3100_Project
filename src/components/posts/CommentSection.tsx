@@ -14,7 +14,7 @@ export default function CommentSection({ postId, userId }: Props) {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const handleAnyReplySuccess = useCallback(() => {
-    setRefreshTrigger(prev => prev + 1);
+    setRefreshTrigger((prev) => prev + 1);
   }, []);
 
   return (
@@ -27,9 +27,9 @@ export default function CommentSection({ postId, userId }: Props) {
         onCancelReply={() => setReplyTo(null)}
         onCommentSuccess={handleAnyReplySuccess}
       />
-      <CommentList 
-        postId={postId} 
-        userId={userId} 
+      <CommentList
+        postId={postId}
+        userId={userId}
         subCommentVisibility={subCommentVisibility}
         setSubCommentVisibility={setSubCommentVisibility}
         onReplySuccess={handleAnyReplySuccess}
@@ -37,4 +37,4 @@ export default function CommentSection({ postId, userId }: Props) {
       />
     </div>
   );
-} 
+}
