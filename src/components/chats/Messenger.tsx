@@ -656,7 +656,15 @@ export default function Messenger() {
                   }`}
                   onClick={() => handleContactSelect(contact)}
                 >
-                  <UserAvatar src={contact.contactUserAvatar} username={contact.contactUsername} size="lg" />
+                  <div className="flex place-content-between items-start">
+                    <UserAvatar src={contact.contactUserAvatar} username={contact.contactUsername} size="lg" />
+                    <span className="text-xs text-base-content/50">
+                      {new Date(contact.sentAt).toLocaleString(undefined, {
+                        dateStyle: "short",
+                        timeStyle: "short",
+                      })}
+                    </span>
+                  </div>
                   <div className="flex justify-between items-center text-md">
                     <span className="truncate">
                       {contact.userIdFrom === session.userId ? "You: " : ""}
