@@ -10,6 +10,7 @@ interface Props {
 
 export default function CommentSection({ postId, userId }: Props) {
   const [refreshKey, setRefreshKey] = useState(0);
+  const [replyTo, setReplyTo] = useState(null);
 
   return (
     <div id="comments" className="card bg-base-100 p-4 min-h-screen scroll-mt-16">
@@ -17,7 +18,12 @@ export default function CommentSection({ postId, userId }: Props) {
       <CommentForm
         postId={postId}
         userId={userId}
-        onCommentSuccess={() => setRefreshKey((k) => k + 1)}
+        replyTo={replyTo}
+        onCancelReply={() => setReplyTo(null)}
+        onCommentSuccess={() => {
+          setRefreshKey((k) => k + 1);
+          setReplyTo(null);
+        }}
       />
       <CommentList postId={postId} userId={userId} key={refreshKey} />
     </div>
