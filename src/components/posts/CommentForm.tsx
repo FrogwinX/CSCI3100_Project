@@ -39,7 +39,7 @@ export default function CommentForm({ postId, userId, replyTo, onCancelReply, on
   };
 
   return (
-    <form onSubmit={handleSubmit} className="mb-4">
+    <form onSubmit={handleSubmit} className="mb-6">
       {replyTo && (
         <div className="mb-2 p-2 bg-base-200 rounded flex items-center justify-between">
           <span className="text-xs">Replying to <b>{replyTo.username}</b></span>
@@ -47,7 +47,7 @@ export default function CommentForm({ postId, userId, replyTo, onCancelReply, on
         </div>
       )}
       <textarea
-        className="textarea textarea-bordered w-full min-h-[4rem]"
+        className="textarea textarea-bordered w-full min-h-[4rem] rounded-lg border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 transition"
         placeholder={replyTo ? `Reply to ${replyTo.username}...` : "Write a comment..."}
         value={content}
         onChange={(e) => setContent(e.target.value)}
@@ -56,7 +56,7 @@ export default function CommentForm({ postId, userId, replyTo, onCancelReply, on
       />
       <div className="flex justify-between items-center mt-2">
         <span className="text-xs text-gray-400">{content.length}/500</span>
-        <button type="submit" className="btn btn-primary" disabled={loading}>
+        <button type="submit" className="btn btn-primary rounded-lg px-4 py-1 text-sm" disabled={loading}>
           {loading ? "Posting..." : replyTo ? "Reply" : "Post Comment"}
         </button>
       </div>

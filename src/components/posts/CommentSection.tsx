@@ -11,10 +11,11 @@ interface Props {
 export default function CommentSection({ postId, userId }: Props) {
   const [refreshKey, setRefreshKey] = useState(0);
   const [replyTo, setReplyTo] = useState(null);
+  const [subCommentVisibility, setSubCommentVisibility] = useState<Record<string, boolean>>({});
 
   return (
-    <div id="comments" className="card bg-base-100 p-4 min-h-screen scroll-mt-16">
-      <h2 className="text-xl font-bold mb-4">Comments</h2>
+    <div id="comments" className="bg-white rounded-xl shadow p-6 min-h-screen w-full mx-auto mt-6">
+      <h2 className="text-xl font-bold mb-6">Comments</h2>
       <CommentForm
         postId={postId}
         userId={userId}
@@ -25,7 +26,13 @@ export default function CommentSection({ postId, userId }: Props) {
           setReplyTo(null);
         }}
       />
-      <CommentList postId={postId} userId={userId} key={refreshKey} />
+      <CommentList 
+        postId={postId} 
+        userId={userId} 
+        key={refreshKey} 
+        subCommentVisibility={subCommentVisibility}
+        setSubCommentVisibility={setSubCommentVisibility}
+      />
     </div>
   );
 } 
