@@ -30,13 +30,13 @@ function CommentFormInline({ parentId, userId, onSuccess, replyToNumber, nextSub
     try {
       let finalContent = content;
       if (nextSubNumber && replyToNumber) {
-        // sub comment reply: 內容加上(reply to Cx-y)
+        // sub comment reply: add (reply to Cx-y) to content
         finalContent = `${nextSubNumber} (reply to ${replyToNumber}) ${content}`;
       } else if (nextSubNumber) {
-        // 主comment reply: 只加sub number
+        // main comment reply: only add sub number
         finalContent = `${nextSubNumber} ${content}`;
       } else if (replyToNumber) {
-        // sub comment reply（自動分配sub number）
+        // sub comment reply (auto-assign sub number)
         finalContent = `(reply to ${replyToNumber}) ${content}`;
       }
       const response = await createComment(parentId, userId, finalContent);
@@ -90,6 +90,15 @@ function parseCommentNumber(str: string) {
 // 工具函數：去除開頭標號，只保留內容
 function stripCommentNumber(str: string) {
   return str.replace(/^C\d+(?:-\d+)?\s*/, "");
+}
+
+// 工具函數：將(reply to CX-Y)或CX-Y句首標號轉為藍色細字span
+function renderCommentContent(str: string) {
+  // 1. 處理(reply to CX-Y)
+  let html = str.replace(/\(reply to (C\d+(?:-\d+)?)\)/, '<span style="color:#2563eb;font-size:0.95em;font-weight:400;">$1</span>');
+  // 2. 處理句首的CX-Y
+  html = html.replace(/^(C\d+(?:-\d+)?)(?=\s)/, '<span style="color:#2563eb;font-size:0.95em;font-weight:400;">$1</span>');
+  return html;
 }
 
 function CommentItem({
@@ -187,7 +196,7 @@ function CommentItem({
               <span className="text-xs text-gray-400 align-middle">{new Date(comment.updatedAt).toLocaleString()}</span>
             </div>
             <div className="text-base-content break-words whitespace-pre-wrap">
-              <span dangerouslySetInnerHTML={{ __html: stripCommentNumber(comment.content) }} />
+              <span dangerouslySetInnerHTML={{ __html: renderCommentContent(stripCommentNumber(comment.content)) }} />
             </div>
             <div className="flex gap-2 mt-2">
               {/* 主comment reply按鈕 */}
