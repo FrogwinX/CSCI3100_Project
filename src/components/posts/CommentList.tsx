@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { getCommentList, createComment } from "@/utils/posts";
 import UserAvatar from "@/components/users/UserAvatar";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -347,31 +347,45 @@ export default function CommentList({
   const [comments, setComments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(true);
+  const observerTarget = useRef<HTMLDivElement>(null);
+  const [excludedCommentIds, setExcludedCommentIds] = useState<Set<number>>(new Set());
 
-  const fetchComments = async () => {
+  const fetchComments = async (isInitial: boolean = false) => {
     try {
       setLoading(true);
-      let list = await getCommentList(postId, userId);
-      // sort by comment number (main comment)
-      list = list.slice().sort((a: any, b: any) => {
-        const aNum = parseCommentNumber(a.content);
-        const bNum = parseCommentNumber(b.content);
-        for (let i = 0; i < Math.max(aNum.length, bNum.length); i++) {
-          if ((aNum[i] || 0) !== (bNum[i] || 0)) return (aNum[i] || 0) - (bNum[i] || 0);
-        }
-        return 0;
+      let list = await getCommentList(postId, userId, {
+        excludingCommentIdList: isInitial ? [] : Array.from(excludedCommentIds),
+        count: 10
       });
-      setComments(list);
-      setError(null);
-      setSubCommentVisibility((prev) => {
-        const updated = { ...prev };
-        list.forEach((c: any) => {
-          if (!(c.postId in updated)) {
-            updated[c.postId] = false;
-          }
+
+      if (!list || list.length === 0) {
+        setHasMore(false);
+        return;
+      }
+
+      // Update excludedCommentIds with new comments
+      setExcludedCommentIds((prevExcludedIds) => {
+        const newExcludedIds = new Set(prevExcludedIds);
+        list.forEach((comment: any) => newExcludedIds.add(Number(comment.postId)));
+        return newExcludedIds;
+      });
+
+      if (isInitial) {
+        setComments(list);
+        setSubCommentVisibility((prev) => {
+          const updated = { ...prev };
+          list.forEach((c: any) => {
+            if (!(c.postId in updated)) {
+              updated[c.postId] = false;
+            }
+          });
+          return updated;
         });
-        return updated;
-      });
+      } else {
+        setComments((prevComments) => [...prevComments, ...list]);
+      }
+      setError(null);
     } catch (err) {
       console.error("Error fetching comments:", err);
       setError("Failed to load comments");
@@ -381,8 +395,30 @@ export default function CommentList({
   };
 
   useEffect(() => {
-    fetchComments();
+    fetchComments(true);
   }, [postId, userId]);
+
+  // Infinite scrolling observer
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loading) {
+          fetchComments(false);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => {
+      if (observerTarget.current) {
+        observer.unobserve(observerTarget.current);
+      }
+    };
+  }, [hasMore, loading]);
 
   // Like/dislike handler
   const handleLikeDislike = async (commentId: string, action: "like" | "dislike" | "unlike" | "undislike") => {
@@ -427,12 +463,12 @@ export default function CommentList({
     });
   };
 
-  if (loading) return <div>Loading comments...</div>;
+  if (loading && comments.length === 0) return <div>Loading comments...</div>;
   if (error) return <div className="text-red-500">{error}</div>;
   if (!comments.length) return <div>No comments yet.</div>;
 
   const handleAnyReplySuccess = () => {
-    fetchComments();
+    fetchComments(true);
   };
 
   return (
@@ -456,6 +492,21 @@ export default function CommentList({
           />
         );
       })}
+
+      {/* Observer target and loading state */}
+      <div ref={observerTarget} className="py-2">
+        {loading ? (
+          <div className="flex justify-center py-4">
+            <span className="loading loading-spinner loading-xl"></span>
+          </div>
+        ) : hasMore ? (
+          <div className="h-10"></div>
+        ) : (
+          <div className="text-center text-base-content/50 my-4">
+            <p className="text-sm">You&apos;ve reached the end</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
