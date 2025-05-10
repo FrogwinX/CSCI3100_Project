@@ -9,6 +9,7 @@ import {
   faEllipsis,
 } from "@fortawesome/free-solid-svg-icons";
 import { faThumbsUp, faThumbsDown } from "@fortawesome/free-regular-svg-icons";
+import { useSession } from "@/hooks/useSession";
 
 interface CommentListProps {
   postId: string;
@@ -119,9 +120,7 @@ function renderCommentContent(str: string) {
 
 function CommentItem({
   comment,
-  userId,
   onReplySuccess,
-  onLikeDislike,
   showLikeDislike = true,
   numberPrefix = "",
   index = 0,
@@ -131,9 +130,7 @@ function CommentItem({
   mainCommentNumber,
 }: {
   comment: any;
-  userId: string;
   onReplySuccess: () => void;
-  onLikeDislike: (commentId: string, action: "like" | "dislike" | "unlike" | "undislike") => void;
   showLikeDislike?: boolean;
   numberPrefix?: string;
   index?: number;
@@ -142,11 +139,97 @@ function CommentItem({
   mainCommentId?: string;
   mainCommentNumber?: string;
 }) {
+  const { session } = useSession();
   const [showReplyBox, setShowReplyBox] = useState(false);
   const [replyToNumber, setReplyToNumber] = useState<string | undefined>(undefined);
   const [replyToSubNumber, setReplyToSubNumber] = useState<string | undefined>(undefined);
   const [showSubReplyBox, setShowSubReplyBox] = useState(false);
   const [subReplyToNumber, setSubReplyToNumber] = useState<string | undefined>(undefined);
+
+  // Like/dislike 狀態
+  const [userLiked, setUserLiked] = useState(comment.isLiked);
+  const [userDisliked, setUserDisliked] = useState(comment.isDisliked);
+  const [likeCount, setLikeCount] = useState(comment.likeCount);
+  const [dislikeCount, setDislikeCount] = useState(comment.dislikeCount);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // 完全參考 PostFooter 的 updateLikeStatus
+  const updateLikeStatus = async (action: "like" | "dislike" | "unlike" | "undislike") => {
+    if (isLoading) return;
+    setIsLoading(true);
+    try {
+      const isRemoveAction = action === "unlike" || action === "undislike";
+      const url = isRemoveAction ? "/api/Forum/unlikeOrUndislike" : "/api/Forum/likeOrDislike";
+      const response = await fetch(url, {
+        method: isRemoveAction ? "DELETE" : "POST",
+        body: JSON.stringify({
+          postId: parseInt(comment.postId),
+          userId: session.userId,
+          action: action,
+        }),
+      });
+      if (!response.ok) {
+        setIsLoading(false);
+        return;
+      }
+      const data = await response.json();
+      if (data.data && data.data.isSuccess) {
+        if (action === "like") {
+          setUserLiked(true);
+          setLikeCount((prev: number) => prev + 1);
+        } else if (action === "dislike") {
+          setUserDisliked(true);
+          setDislikeCount((prev: number) => prev + 1);
+        } else if (action === "unlike") {
+          setUserLiked(false);
+          setLikeCount((prev: number) => prev - 1);
+        } else if (action === "undislike") {
+          setUserDisliked(false);
+          setDislikeCount((prev: number) => prev - 1);
+        }
+      }
+    } catch (error) {
+      // 可加 toast
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLike = async (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (isLoading) return;
+    if (userLiked) {
+      updateLikeStatus("unlike");
+    } else if (userDisliked) {
+      setIsLoading(true);
+      try {
+        await updateLikeStatus("undislike");
+        await updateLikeStatus("like");
+      } finally {
+        setIsLoading(false);
+      }
+    } else {
+      updateLikeStatus("like");
+    }
+  };
+
+  const handleDislike = async (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (isLoading) return;
+    if (userDisliked) {
+      updateLikeStatus("undislike");
+    } else if (userLiked) {
+      setIsLoading(true);
+      try {
+        await updateLikeStatus("unlike");
+        await updateLikeStatus("dislike");
+      } finally {
+        setIsLoading(false);
+      }
+    } else {
+      updateLikeStatus("dislike");
+    }
+  };
 
   const commentNumber = numberPrefix ? `${numberPrefix}-${index + 1}` : `C${index + 1}`;
   let contentWithNumber = comment.content;
@@ -164,28 +247,6 @@ function CommentItem({
       })
     : [];
   const nextSubNumber = subComments.length > 0 ? `${commentNumber}-${subComments.length + 1}` : `${commentNumber}-1`;
-
-  // Like/dislike handler
-  const handleLike = () => {
-    if (comment.isLiked) {
-      onLikeDislike(comment.postId, "unlike");
-    } else if (comment.isDisliked) {
-      onLikeDislike(comment.postId, "undislike");
-      onLikeDislike(comment.postId, "like");
-    } else {
-      onLikeDislike(comment.postId, "like");
-    }
-  };
-  const handleDislike = () => {
-    if (comment.isDisliked) {
-      onLikeDislike(comment.postId, "undislike");
-    } else if (comment.isLiked) {
-      onLikeDislike(comment.postId, "unlike");
-      onLikeDislike(comment.postId, "dislike");
-    } else {
-      onLikeDislike(comment.postId, "dislike");
-    }
-  };
 
   const isMainComment = numberPrefix === "";
   const showSubComments =
@@ -255,7 +316,7 @@ function CommentItem({
               <div className="mt-2">
                 <CommentFormInline
                   parentId={comment.postId}
-                  userId={userId}
+                  userId={session.userId ? String(session.userId) : ""}
                   onSuccess={onReplySuccess}
                   replyToNumber={undefined}
                   nextSubNumber={nextSubNumber}
@@ -267,7 +328,7 @@ function CommentItem({
               <div className="mt-2">
                 <CommentFormInline
                   parentId={mainId}
-                  userId={userId}
+                  userId={session.userId ? String(session.userId) : ""}
                   onSuccess={() => {
                     setShowSubReplyBox(false);
                     setSubReplyToNumber(undefined);
@@ -283,14 +344,14 @@ function CommentItem({
         {showLikeDislike && (
           <div className="flex items-center gap-1">
             <div className="flex items-center bg-base-200 rounded-xl px-3 py-1 gap-2 mt-1">
-              <button className="btn btn-sm btn-ghost p-0" onClick={handleLike} title="Like">
-                <FontAwesomeIcon icon={comment.isLiked ? faThumbsUpSolid : faThumbsUp} size="lg" />
+              <button className="btn btn-sm btn-ghost p-0" onClick={handleLike} title="Like" disabled={isLoading}>
+                <FontAwesomeIcon icon={userLiked ? faThumbsUpSolid : faThumbsUp} size="lg" />
               </button>
               <span className="text-xs font-semibold">
-                {Intl.NumberFormat("en", { notation: "compact" }).format(comment.likeCount - comment.dislikeCount)}
+                {Intl.NumberFormat("en", { notation: "compact" }).format(likeCount - dislikeCount)}
               </span>
-              <button className="btn btn-sm btn-ghost p-0" onClick={handleDislike} title="Dislike">
-                <FontAwesomeIcon icon={comment.isDisliked ? faThumbsDownSolid : faThumbsDown} size="lg" />
+              <button className="btn btn-sm btn-ghost p-0" onClick={handleDislike} title="Dislike" disabled={isLoading}>
+                <FontAwesomeIcon icon={userDisliked ? faThumbsDownSolid : faThumbsDown} size="lg" />
               </button>
             </div>
             <button className="btn btn-sm btn-ghost btn-circle" title="More options">
@@ -317,9 +378,7 @@ function CommentItem({
                 <CommentItem
                   key={child.postId}
                   comment={child}
-                  userId={userId}
                   onReplySuccess={onReplySuccess}
-                  onLikeDislike={onLikeDislike}
                   showLikeDislike={showLikeDislike}
                   numberPrefix={commentNumber}
                   index={idx}
@@ -420,49 +479,6 @@ export default function CommentList({
     };
   }, [hasMore, loading]);
 
-  // Like/dislike handler
-  const handleLikeDislike = async (commentId: string, action: "like" | "dislike" | "unlike" | "undislike") => {
-    const isRemoveAction = action === "unlike" || action === "undislike";
-    const url = isRemoveAction ? "/api/Forum/unlikeOrUndislike" : "/api/Forum/likeOrDislike";
-    await fetch(url, {
-      method: isRemoveAction ? "DELETE" : "POST",
-      body: JSON.stringify({
-        postId: parseInt(commentId),
-        userId: userId,
-        action: action,
-      }),
-    });
-    setComments((prevComments) => {
-      const update = (c: any): any => {
-        if (c.postId === commentId) {
-          let likeCount = c.likeCount;
-          let dislikeCount = c.dislikeCount;
-          let isLiked = c.isLiked;
-          let isDisliked = c.isDisliked;
-          if (action === "like") {
-            likeCount++;
-            isLiked = true;
-          } else if (action === "unlike") {
-            likeCount--;
-            isLiked = false;
-          } else if (action === "dislike") {
-            dislikeCount++;
-            isDisliked = true;
-          } else if (action === "undislike") {
-            dislikeCount--;
-            isDisliked = false;
-          }
-          return { ...c, likeCount, dislikeCount, isLiked, isDisliked };
-        }
-        if (c.commentList) {
-          return { ...c, commentList: c.commentList.map(update) };
-        }
-        return c;
-      };
-      return prevComments.map(update);
-    });
-  };
-
   if (loading && comments.length === 0) return <div>Loading comments...</div>;
   if (error) return <div className="text-red-500">{error}</div>;
   if (!comments.length) return <div>No comments yet.</div>;
@@ -479,9 +495,7 @@ export default function CommentList({
           <CommentItem
             key={comment.postId}
             comment={comment}
-            userId={userId}
             onReplySuccess={handleAnyReplySuccess}
-            onLikeDislike={handleLikeDislike}
             showLikeDislike={true}
             numberPrefix=""
             index={idx}
