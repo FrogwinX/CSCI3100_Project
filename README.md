@@ -6,25 +6,10 @@
 - API Localhost Testing: http://localhost:8080/swagger-ui/index.html#/
 - API Deployment Testing: Postman
 - Source Control Visualization: Sourcetree
-- Database Local Access:
-  - Username: flowchatadmin
-  - Password: joccy8-qackyw-riVvaf
+- Database Local Access: see application.properties
 - Email Address: flowchat.noreply@gmail.com
-- Email Password: zucpu5-rirmeR-hemvyc
-- Email App Password: ytwfwydmhaskarqg
-
-
-## Account Management
-- Update Note
-  - The Register Page in request license key email is not yet set.
-  - The Reset Password Page in request authentication code email is not yet set.
-  - A Missing of scheduled job to check expired key in database. Currently, the is_available is only updated when the key is used.
-
-For each API requirement, please refer to corresponding issue.
-
-![Account Management Flow](https://github.com/FrogwinX/CSCI3100_Project/blob/backend/Work%20Flow/Account.png)
-
-![Account Management DB](https://github.com/FrogwinX/CSCI3100_Project/blob/backend/Database/ACCOUNT.png)
+- Email Password: see application.properties
+- Email App Password: see application.properties
 
 
 ## General Structure
@@ -33,5 +18,3 @@ For each API requirement, please refer to corresponding issue.
 - src/main/java/project/flowchat/backend/ : Program Source
   - Model/ stores object types that match with database attributes
   - User ResponseBody instead of a new Model Class to create each API
-
-![Project Structure](https://github.com/FrogwinX/CSCI3100_Project/blob/backend/Work%20Flow/Backend_Structure.png)
