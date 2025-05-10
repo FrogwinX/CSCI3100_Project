@@ -1,11 +1,6 @@
 "use client";
-<<<<<<< Updated upstream
 import React, { useEffect, useState, useRef } from "react";
-import { getCommentList, createComment } from "@/utils/posts";
-=======
-import React, { useEffect, useState } from "react";
 import { getCommentList, createComment, Post } from "@/utils/posts";
->>>>>>> Stashed changes
 import UserAvatar from "@/components/users/UserAvatar";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -14,12 +9,9 @@ import {
   faEllipsis,
 } from "@fortawesome/free-solid-svg-icons";
 import { faThumbsUp, faThumbsDown } from "@fortawesome/free-regular-svg-icons";
-<<<<<<< Updated upstream
 import { useSession } from "@/hooks/useSession";
-=======
 import { getMyComments } from "@/utils/profiles";
 import PostPreview from "@/components/posts/PostPreview";
->>>>>>> Stashed changes
 
 interface CommentListProps {
   postId?: string;
@@ -114,20 +106,32 @@ function stripCommentNumber(str: string) {
   return str.replace(/^C\d+(?:-\d+)?\s*/, "");
 }
 
-function renderCommentContent(str: string) {
-  let html = str.replace(
-    /\(reply to (C\d+(?:-\d+)?)\)/,
-    '<span style="color:#2563eb;font-size:0.95em;font-weight:400;">$1</span>'
-  );
-  html = html.replace(
-    /^(C\d+(?:-\d+)?)(?=\s)/,
-    '<span style="color:#2563eb;font-size:0.95em;font-weight:400;">$1</span>'
-  );
+function renderCommentContent(str: string, showNumber: boolean) {
+  let html = str;
+
+  if (!showNumber) {
+    // strip any reply-to tag and leading comment number
+    html = html.replace(/\(reply to (?:C\d+(?:-\d+)?)\)\s*/, "");
+    html = html.replace(/^C\d+(?:-\d+)?\s*/, "");
+  } else {
+    // highlight the reply-to reference
+    html = html.replace(
+      /\(reply to (C\d+(?:-\d+)?)\)/,
+      '<span style="color:#2563eb;font-size:0.95em;font-weight:400;">$1</span>'
+    );
+    // highlight the leading comment number
+    html = html.replace(
+      /^(C\d+(?:-\d+)?)(?=\s)/,
+      '<span style="color:#2563eb;font-size:0.95em;font-weight:400;">$1</span>'
+    );
+  }
+
   return html;
 }
 
 function CommentItem({
   comment,
+  userId,
   onReplySuccess,
   showLikeDislike = true,
   numberPrefix = "",
@@ -138,6 +142,7 @@ function CommentItem({
   mainCommentNumber,
 }: {
   comment: any;
+  userId: string;
   onReplySuccess: () => void;
   showLikeDislike?: boolean;
   numberPrefix?: string;
@@ -271,20 +276,18 @@ function CommentItem({
   const mainNumber = mainCommentNumber ?? commentNumber;
 
   return (
-    <div
-      id={comment.postId}
-      className={`w-full ${numberPrefix ? "ml-12 border-l-2 border-base-300 pl-6 max-w-[92%]" : "max-w-full"} pb-2`}
-    >
-      <div className="flex items-start justify-between w-full">
-        <div className="flex items-start w-full">
+    <div id={comment.postId} className={`flex ml-12 border-l-2 border-base-300 pl-6 pb-2`}>
+      <div className="flex justify-between w-full items-start">
+        <div className="flex flex-grow items-start">
           <UserAvatar src={comment.avatar} size="md" />
           <div className="ml-3 w-full">
             <div className="flex items-center gap-2 mb-1">
-              (
-              <span className="text-xs text-base-content font-mono bg-base-200 rounded px-1.5 py-0.5 mr-1 align-middle">
-                {commentNumber}
-              </span>
-              )<span className="font-semibold text-base align-middle">{comment.username}</span>
+              {numberPrefix !== "None" && (
+                <span className="text-xs text-base-content font-mono bg-base-200 rounded px-1.5 py-0.5 mr-1 align-middle">
+                  {commentNumber}
+                </span>
+              )}
+              <span className="font-semibold text-base align-middle">{comment.username}</span>
               <span className="text-xs text-base-content/70 align-middle">
                 {new Date(comment.updatedAt).toLocaleString(undefined, {
                   year: "2-digit",
@@ -296,7 +299,9 @@ function CommentItem({
               </span>
             </div>
             <div className="text-base-content break-words whitespace-pre-wrap">
-              <span dangerouslySetInnerHTML={{ __html: renderCommentContent(stripCommentNumber(comment.content)) }} />
+              <span
+                dangerouslySetInnerHTML={{ __html: renderCommentContent(stripCommentNumber(comment.content), false) }}
+              />
             </div>
             <div className="flex gap-2 mt-2">
               {/* comment reply */}
@@ -354,7 +359,7 @@ function CommentItem({
           </div>
         </div>
         {showLikeDislike && (
-          <div className="flex items-center gap-1">
+          <div className="flex flex-row items-center gap-1">
             <div className="flex items-center bg-base-200 rounded-xl px-3 py-1 gap-2 mt-1">
               <button className="btn btn-sm btn-ghost p-0" onClick={handleLike} title="Like" disabled={isLoading}>
                 <FontAwesomeIcon icon={userLiked ? faThumbsUpSolid : faThumbsUp} size="lg" />
@@ -389,6 +394,7 @@ function CommentItem({
               {subComments.map((child: any, idx: number) => (
                 <CommentItem
                   key={child.postId}
+                  userId={userId}
                   comment={child}
                   onReplySuccess={onReplySuccess}
                   showLikeDislike={showLikeDislike}
@@ -412,34 +418,20 @@ export default function CommentList({ postId, userId, onReplySuccess }: CommentL
   const [comments, setComments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-<<<<<<< Updated upstream
   const [hasMore, setHasMore] = useState(true);
   const observerTarget = useRef<HTMLDivElement>(null);
   const [excludedCommentIds, setExcludedCommentIds] = useState<Set<number>>(new Set());
-=======
   const [subCommentVisibility, setSubCommentVisibility] = useState<Record<string, boolean>>({});
->>>>>>> Stashed changes
 
   const fetchComments = async (isInitial: boolean = false) => {
     try {
       setLoading(true);
-<<<<<<< Updated upstream
-      let list = await getCommentList(postId, userId, {
-        excludingCommentIdList: isInitial ? [] : Array.from(excludedCommentIds),
-        count: 10
-=======
-
-      let list = postId ? await getCommentList(postId!, userId) : await getMyComments({ userIdTo: userId });
-      // sort by comment number (main comment)
-      list = list.slice().sort((a: any, b: any) => {
-        const aNum = parseCommentNumber(a.content);
-        const bNum = parseCommentNumber(b.content);
-        for (let i = 0; i < Math.max(aNum.length, bNum.length); i++) {
-          if ((aNum[i] || 0) !== (bNum[i] || 0)) return (aNum[i] || 0) - (bNum[i] || 0);
-        }
-        return 0;
->>>>>>> Stashed changes
-      });
+      let list = postId
+        ? await getCommentList(postId, userId, {
+            excludingCommentIdList: isInitial ? [] : Array.from(excludedCommentIds),
+            count: 10,
+          })
+        : await getMyComments({ userIdTo: userId });
 
       if (!list || list.length === 0) {
         setHasMore(false);
@@ -470,7 +462,9 @@ export default function CommentList({ postId, userId, onReplySuccess }: CommentL
           const map = new Map();
           all.forEach((c) => map.set(c.postId, c));
           // 根據 updatedAt 升序排序（如需倒序可改為 b - a）
-          return Array.from(map.values()).sort((a, b) => new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime());
+          return Array.from(map.values()).sort(
+            (a, b) => new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime()
+          );
         });
       }
       setError(null);
@@ -520,15 +514,14 @@ export default function CommentList({ postId, userId, onReplySuccess }: CommentL
     return (
       <div className="flex flex-col">
         {comments.map((post) => (
-          <div key={post.postId} className="flex flex-col gap-4">
-            <PostPreview post={post} />
+          <div key={post.postId} className="flex flex-col gap-4 w-full">
+            <PostPreview post={post} size="md" />
             {post.commentList.map((comment: Post, idx: number) => (
               <CommentItem
                 key={comment.postId}
                 comment={comment}
                 userId={userId}
                 onReplySuccess={handleAnyReplySuccess}
-                onLikeDislike={handleLikeDislike}
                 showLikeDislike={true}
                 numberPrefix="None"
                 index={idx}
@@ -553,6 +546,7 @@ export default function CommentList({ postId, userId, onReplySuccess }: CommentL
           <CommentItem
             key={comment.postId}
             comment={comment}
+            userId={userId}
             onReplySuccess={handleAnyReplySuccess}
             showLikeDislike={true}
             numberPrefix=""
