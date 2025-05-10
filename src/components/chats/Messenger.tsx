@@ -27,6 +27,7 @@ import ChatMessage from "@/components/chats/ChatMessage";
 import LoadingContact from "@/components/chats/LoadingContact";
 import UserAvatar from "@/components/users/UserAvatar";
 import { uploadImage } from "@/utils/images";
+import { getSearchUser } from "@/utils/users";
 
 export default function Messenger() {
   const { session, refreshUnreadCount } = useSession();
@@ -559,47 +560,68 @@ export default function Messenger() {
     setConversation([]);
   };
 
-  const searchUser = async (uid: string) => {
-    if (!session.userId || !session.token) return;
-
-    const userId = parseInt(uid, 10);
+  const searchUser = async (username: string) => {
+    if (!session.userId || !session.token || !username.trim()) return;
 
     try {
-      // Check if we already have a conversation with this user
-      const existingContact = contacts.find((contact) => contact.contactUserId === userId);
+      // First, search existing contacts for matches
+      const matchingContacts = contacts.filter(contact =>
+        contact.contactUsername.toLowerCase().includes(username.toLowerCase())
+      );
+      setContacts(matchingContacts);
 
-      if (existingContact) {
-        // If we already have a conversation, just select it
-        setSelectedContact(existingContact);
-        setSearchInput("");
+      // If no matches in existing contacts, search for users via API
+      const users = await getSearchUser({
+        keyword: username,
+        excludingUserIdList: [session.userId],
+        count: 10,
+      });
+
+      if (!users || users.length === 0) {
         return;
       }
 
-      // Create a new temporary contact
-      const newContact: Contact = {
-        messageId: -1, // Temporary ID
-        contactUserId: userId,
-        contactUsername: "Unknown User",
-        contactUserAvatar: null,
-        isContactUserBlocked: false,
-        latestMessage:
-          "This is a temp contact, a real contact can be created using the Get Search User Result API. Reload the page after sending a message to get a real contact for now",
-        userIdFrom: userId,
-        usernameFrom: "",
-        userIdTo: -1,
-        usernameTo: "",
-        sentAt: "",
-        readAt: "",
-        unreadMessageCount: 0,
-      };
+      //for each user in users, do:
+      users.forEach(user => {
+        // Check if we already have a contact with the user
+        const foundUserId = user.userId;
+        const existingContact = contacts.find(contact => contact.contactUserId === foundUserId);
 
-      // Update the contacts list and select the new contact
-      setContacts((prev) => [newContact, ...prev]);
-      setSelectedContact(newContact);
-      setConversation([]);
-      setSearchInput("");
+        if (existingContact) {
+          // If we have an existing conversation, select it
+          setSearchInput("");
+          setShowConversation(true);
+          return;
+        }
+
+        // Create a new temporary contact
+        const newContact: Contact = {
+          messageId: -1,
+          contactUserId: user.userId,
+          contactUsername: user.username,
+          contactUserAvatar: user.avatar,
+          isContactUserBlocked: false,
+          latestMessage: "",
+          userIdFrom: session.userId!,
+          usernameFrom: "",
+          userIdTo: -1,
+          usernameTo: "",
+          sentAt: "",
+          readAt: "",
+          unreadMessageCount: 0,
+        };
+
+        // Update the contacts list and select the new contact
+
+        setContacts(prev => [...prev, newContact]);
+        setConversation([]);
+        setSearchInput("");
+        setShowConversation(true);
+      });
+
     } catch (error) {
       console.error("Error searching for user:", error);
+      alert("Error searching for user. Please try again.");
     }
   };
 
@@ -617,9 +639,8 @@ export default function Messenger() {
       <div className="bg-base-200 min-h-full flex flex-grow w-6/8 shadow-lg">
         {/* Contact List (Left)*/}
         <div
-          className={`w-full lg:w-1/3 flex flex-col bg-base-100 shadow-md ${
-            showConversation ? "hidden md:flex" : "flex"
-          }`}
+          className={`w-full lg:w-1/3 flex flex-col bg-base-100 shadow-md ${showConversation ? "hidden md:flex" : "flex"
+            }`}
         >
           <div className="flex flex-col p-2 gap-2">
             <h1 className="text-3xl font-bold mt-6">Contacts</h1>
@@ -631,8 +652,7 @@ export default function Messenger() {
               />
               <input
                 type="text"
-                placeholder="Enter user ID to create a new chat for now"
-                // placeholder="Search Contacts"
+                placeholder="Search Contacts"
                 className="w-full h-full rounded-full text-sm pl-8 pr-3"
                 onChange={(e) => setSearchInput(e.target.value)}
                 onKeyDown={handleSearchKeyDown}
@@ -645,15 +665,14 @@ export default function Messenger() {
               [1, 2, 3, 4, 5, 6].map((item) => <LoadingContact key={item} />)
             ) : contacts.length === 0 ? (
               <p className="text-base-content/50 text-center mt-4 break-words text-wrap mx-16">
-                Start a new conversation with someone to get started
+                No contacts.
               </p>
             ) : (
               contacts.map((contact) => (
                 <li
                   key={contact.contactUserId}
-                  className={`cursor-pointer p-2 hover:bg-base-200 ${
-                    selectedContact?.contactUserId === contact.contactUserId ? "bg-base-200" : ""
-                  }`}
+                  className={`cursor-pointer p-2 hover:bg-base-200 ${selectedContact?.contactUserId === contact.contactUserId ? "bg-base-200" : ""
+                    }`}
                   onClick={() => handleContactSelect(contact)}
                 >
                   <div className="flex place-content-between items-start">
