@@ -465,7 +465,13 @@ export default function CommentList({ postId, userId, onReplySuccess }: CommentL
           return updated;
         });
       } else {
-        setComments((prevComments) => [...prevComments, ...list]);
+        setComments((prevComments) => {
+          const all = [...prevComments, ...list];
+          const map = new Map();
+          all.forEach((c) => map.set(c.postId, c));
+          // 根據 updatedAt 升序排序（如需倒序可改為 b - a）
+          return Array.from(map.values()).sort((a, b) => new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime());
+        });
       }
       setError(null);
     } catch (err) {
