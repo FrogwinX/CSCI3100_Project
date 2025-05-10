@@ -3,7 +3,8 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faXmark } from "@fortawesome/free-solid-svg-icons";
 import { faHeart, faCommentDots } from "@fortawesome/free-regular-svg-icons";
-import { Users, followUser, unfollowUser } from "@/utils/users";
+import { Users } from "@/utils/users";
+import { userInteract } from "@/utils/profiles";
 import Link from "next/link";
 import { useState } from "react";
 import UserAvatar from "@/components/users/UserAvatar";
@@ -14,25 +15,16 @@ export default function UserPreview({ user }: { user: Users }) {
   const handleFollowToggle = (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent navigation when clicking the button
     e.stopPropagation(); // Stop event propagation
-    if (user.isUserFollowed) {
-      // If the user is already followed, unfollow them
-      unfollowUser(user.userId).then((response) => {
-        if (response) {
-          setIsFollowed(!isFollowed); // Toggle the follow state
-        }
-      });
-    }
-    else {
-      followUser(user.userId).then((response) => {
-        if (response) {
-          setIsFollowed(!isFollowed); // Toggle the follow state
-        }
+
+    // Determine whether to follow or unfollow based on current state
+    const action = isFollowed ? "unfollow" : "follow";
+
+    // Call the userInteract function with the appropriate action
+    userInteract(user.userId.toString(), action).then((success) => {
+      if (success) {
+        setIsFollowed(!isFollowed);
       }
-      );
-      setIsFollowed(user.isUserFollowed);
-    }
-    // Here you would call an API to follow/unfollow the user
-    // For example: followUser(user.userId) or unfollowUser(user.userId)
+    });
   };
 
   return (
