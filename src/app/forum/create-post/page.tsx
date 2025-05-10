@@ -4,6 +4,8 @@ import { useState, useRef, useEffect } from "react";
 import { useSession } from "@/hooks/useSession";
 import { getAllTags, Tag, createPost } from "@/utils/posts";
 import { useRouter } from "next/navigation";
+import { faImage } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 export default function CreatePost() {
   // State variables
@@ -313,17 +315,8 @@ export default function CreatePost() {
           </label>
           <div className="border border-gray-300 rounded-t-lg">
             <div className="bg-gray-100 p-2 flex space-x-1 border-b border-gray-300">
-              <button type="button" className="btn btn-ghost btn-xs text-gray-600">
-                <span className="font-bold">B</span>
-              </button>
-              <button type="button" className="btn btn-ghost btn-xs text-gray-600">
-                <span className="italic">I</span>
-              </button>
-              <button type="button" className="btn btn-ghost btn-xs text-gray-600">
-                <span className="underline">U</span>
-              </button>
               <button type="button" className="btn btn-ghost btn-xs text-gray-600" onClick={handleClipClick}>
-                <span>📎</span>
+                <FontAwesomeIcon icon={faImage} />
               </button>
               <input
                 type="file"

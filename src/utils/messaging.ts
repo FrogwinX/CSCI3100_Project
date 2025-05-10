@@ -67,6 +67,14 @@ interface MessageHistoryResponse {
   };
 }
 
+interface UnreadMessageCountReponse {
+  message: string;
+  data: {
+    unreadMessageCount: number;
+    isSuccess: boolean;
+  };
+}
+
 // Connection status
 export enum ConnectionStatus {
   DISCONNECTED = "disconnected",
@@ -291,6 +299,40 @@ export async function getMessageHistory(
   } catch (error) {
     console.error("Error fetching message history:", error);
     return [];
+  }
+}
+
+export async function getUnreadMessageCount(userId: number): Promise<number> {
+  try {
+    let apiUrl = `/api/Chat/getUnreadMessageCount?userId=${userId}`;
+
+    // Fetch data from the API
+    const response = await fetch(apiUrl, {
+      method: "GET",
+    });
+
+    if (!response.ok) {
+      console.error(`API error: ${response.status} ${response.statusText}`);
+      return 0;
+    }
+
+    const data: UnreadMessageCountReponse = await response.json();
+
+    // Safer property access with detailed logging
+    if (!data) {
+      console.error("Empty response from API");
+      return 0;
+    }
+
+    if (!data.data) {
+      console.error("Response missing data property:", data);
+      return 0;
+    }
+
+    return data.data.unreadMessageCount;
+  } catch (error) {
+    console.error("Error fetching unread message count:", error);
+    return 0;
   }
 }
 

@@ -222,7 +222,7 @@ export async function getSearchPosts(
       apiUrl += `&excludingPostIdList=0`;
     }
 
-    apiUrl += `&postNum=${options.count || 10}`;
+    apiUrl += `&searchNum=${options.count || 10}`;
 
     // Fetch data from the API
     const response = await fetch(apiUrl, {
@@ -331,10 +331,11 @@ export async function createPost(title: string, content: string, tags: Tag[], im
     const requestBody = {
       userId,
       title,
-      content: content.replace(/<[^>]+>/g, ""), // Remove HTML tags from content
+      content: content.replace(/\n/g, '<br>'), 
       tag: tags.map((tag) => tag.tagName),
       attachTo: 0,
     };
+    console.log("content", content);
 
     // Create FormData for multipart/form-data request
     const formData = new FormData();
@@ -347,6 +348,8 @@ export async function createPost(title: string, content: string, tags: Tag[], im
         formData.append("imageList", image);
       });
     }
+
+    console.log(images);
 
     const apiUrl = "https://flowchatbackend.azurewebsites.net/api/Forum/createPostOrComment";
     const response = await fetch(apiUrl, {
@@ -374,6 +377,7 @@ export async function createPost(title: string, content: string, tags: Tag[], im
     // Parse response
     const data: CreatePostResponse = await response.json();
     let postId: string | null = null;
+    console.log("data", data);
     let isSuccess: boolean = false;
 
     // Handle different response formats
@@ -422,6 +426,7 @@ export async function updatePost(
   existingImages: string[]
 ): Promise<string | null> {
   try {
+    console.log(images, "images", existingImages, "existingImages");
     // Retrieve the current session
     const session = await getSession();
 
@@ -441,7 +446,7 @@ export async function updatePost(
       postId: parseInt(postId, 10), // Post ID to update
       userId, // User ID of the poster
       title, // Updated post title
-      content: content.replace(/<[^>]+>/g, ""), // Remove HTML tags from content
+      content: content.replace(/\n/g, '<br>'),
       tag: tags.map((tag) => tag.tagName), // List of tag names
       attachTo: 0, // Parent post ID (if applicable, set to 0 if not a comment)
       imageAPIList: existingImages, // List of existing image URLs to retain
@@ -457,6 +462,8 @@ export async function updatePost(
       images.forEach((image) => {
         formData.append("imageList", image);
       });
+    } else if (images.length === 0) {
+      formData.append("imageList", new Blob([], { type: "application/json" }));
     }
 
     // API endpoint for updating a post or comment
@@ -518,6 +525,57 @@ export async function updatePost(
 
     return updatedPostId;
   } catch (error) {
+    throw error;
+  }
+}
+
+// Get comment list for a post
+export async function getCommentList(postId: string, userId: string) {
+  const apiUrl = `https://flowchatbackend.azurewebsites.net/api/Forum/getCommentList?postId=${postId}&userId=${userId}`;
+  const session = await getSession();
+  const response = await fetch(apiUrl, {
+    headers: {
+      Authorization: `Bearer ${session.token}`,
+    },
+  });
+  if (!response.ok) throw new Error("Failed to fetch comments");
+  const data = await response.json();
+  return data.data.commentList || [];
+}
+
+// Create a comment for a post
+export async function createComment(postId: string, userId: string, content: string) {
+  const apiUrl = `https://flowchatbackend.azurewebsites.net/api/Forum/createPostOrComment`;
+  const session = await getSession();
+  const requestBody = {
+    userId: parseInt(userId, 10),
+    title: "", // comments have no title
+    content: content.replace(/\n/g, '<br>'),
+    tag: [],
+    attachTo: parseInt(postId, 10),
+  };
+  const formData = new FormData();
+  const requestBodyBlob = new Blob([JSON.stringify(requestBody)], { type: "application/json" });
+  formData.append("requestBody", requestBodyBlob);
+  
+  try {
+    const response = await fetch(apiUrl, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${session.token}`,
+      },
+      body: formData,
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to create comment");
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error creating comment:", error);
     throw error;
   }
 }

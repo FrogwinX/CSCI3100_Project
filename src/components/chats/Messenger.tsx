@@ -29,7 +29,7 @@ import UserAvatar from "@/components/users/UserAvatar";
 import { uploadImage } from "@/utils/images";
 
 export default function Messenger() {
-  const { session } = useSession();
+  const { session, refreshUnreadCount } = useSession();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [selectedContact, setSelectedContact] = useState<Contact>();
   const [conversation, setConversation] = useState<IncomingMessage[]>([]);
@@ -46,7 +46,6 @@ export default function Messenger() {
   const [hasMoreMessages, setHasMoreMessages] = useState(true);
   const messageLoaderRef = useRef<HTMLDivElement>(null);
   const [excludedMessageIds, setExcludedMessageIds] = useState<Set<number>>(new Set());
-  const connectRetryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [replyTo, setReplyTo] = useState<IncomingMessage | null>(null);
   const [scrollingToMessageId, setScrollingToMessageId] = useState<number | null>(null);
   const [showConversation, setShowConversation] = useState(false);
@@ -55,6 +54,20 @@ export default function Messenger() {
   const handleImageSelect: React.ChangeEventHandler<HTMLInputElement> = (e) => {
     const newFiles = Array.from(e.target.files || []);
     if (newFiles.length === 0) return; // Do nothing if no files selected
+
+    // File Size Validation
+    const currentTotalSize = selectedFiles.reduce((sum, file) => sum + file.size, 0);
+    const newFilesTotalSize = newFiles.reduce((sum, file) => sum + file.size, 0);
+
+    // Check if the total size exceeds 25 MB (26214400 bytes)
+    if (currentTotalSize + newFilesTotalSize > 26214400) {
+      alert(`Cannot upload files. Total size exceeds 25 MB.`);
+      // Clear the file input value even if validation fails
+      if (e.target) {
+        e.target.value = "";
+      }
+      return;
+    }
 
     // Append new files to the existing selection
     setSelectedFiles((prevFiles) => [...prevFiles, ...newFiles]);
@@ -96,6 +109,8 @@ export default function Messenger() {
     setSelectedContact(contact);
     setShowConversation(true); // Show conversation on mobile
     setConversation([]); // Clear previous conversation
+    setInSelection(false); // Reset selection mode
+    setSelectedMessages(new Set()); // Clear selected messages
     setIsLoadingMoreMessages(true); // Show loading indicator
     setHasMoreMessages(true); // Reset hasMore flag
     try {
@@ -169,37 +184,6 @@ export default function Messenger() {
     };
   }, [hasMoreMessages, isLoadingMoreMessages, loadMoreMessages]);
 
-  // Connect to the messaging service with retry logic
-  const connectWithRetry = useCallback(
-    async (attempt = 1): Promise<void> => {
-      // Clear any existing retry timeout
-      if (connectRetryTimeoutRef.current) {
-        clearTimeout(connectRetryTimeoutRef.current);
-        connectRetryTimeoutRef.current = null;
-      }
-
-      if (messagingService.getStatus() === ConnectionStatus.CONNECTED) {
-        console.log("Already connected.");
-        return;
-      }
-      if (attempt > 20) {
-        // Limit retries
-        console.error("WebSocket connection failed after multiple attempts.");
-        setConnectionStatus(ConnectionStatus.ERROR); // Set error state explicitly
-        return;
-      }
-
-      setConnectionStatus(ConnectionStatus.CONNECTING); // Ensure status is connecting
-
-      try {
-        await messagingService.connect(session.token!);
-      } catch (error) {
-        connectRetryTimeoutRef.current = setTimeout(() => connectWithRetry(attempt + 1), 500);
-      }
-    },
-    [session.token]
-  );
-
   const fetchContacts = useCallback(async () => {
     // Don't fetch if not connected or already loading
     if (messagingService.getStatus() !== ConnectionStatus.CONNECTED) {
@@ -215,34 +199,19 @@ export default function Messenger() {
     }
   }, [ConnectionStatus]);
 
-  // Connect to websocket
+  // Listen for status changes and update local state
   useEffect(() => {
-    if (!session.isLoggedIn || !session.token || !session.userId) {
-      // If session is lost, disconnect and clear state
-      messagingService.disconnect();
-      setContacts([]);
-      setSelectedContact(undefined);
-      setConversation([]);
-      return;
-    }
-
-    // Subscribe to status changes
+    // Subscribe to status changes to update local state
     const unsubscribeStatus = messagingService.onStatusChange(setConnectionStatus);
 
-    // Attempt initial connection if disconnected
-    if (messagingService.getStatus() === ConnectionStatus.DISCONNECTED) {
-      connectWithRetry();
-    }
+    // Update status immediately in case it changed between initial state and effect run
+    setConnectionStatus(messagingService.getStatus());
 
     // Cleanup function
     return () => {
       unsubscribeStatus();
-      // Clear any pending retry timeout on component unmount or session change
-      if (connectRetryTimeoutRef.current) {
-        clearTimeout(connectRetryTimeoutRef.current);
-      }
     };
-  }, [session.isLoggedIn, session.token, session.userId, connectWithRetry]);
+  }, []);
 
   // Subscribe to user channel and fetch contacts
   useEffect(() => {
@@ -369,6 +338,12 @@ export default function Messenger() {
 
   // Send message function
   const sendMessage = async () => {
+    // Limit message length to 500 characters
+    if (messageText.length > 500) {
+      alert(`Message is too long. Maximum length is 500 characters.`);
+      return;
+    }
+
     // Allow sending only images without text
     if (!messageText.trim() && selectedFiles.length === 0) return;
     if (!session.userId || !selectedContact) return;
@@ -473,6 +448,8 @@ export default function Messenger() {
         action: "read",
         messageIdList: messageIds,
       });
+
+      refreshUnreadCount(); // Refresh unread count after marking as read
     } catch (error) {
       console.error("Failed to mark messages as read:", error);
     }
@@ -646,20 +623,6 @@ export default function Messenger() {
         >
           <div className="flex flex-col p-2 gap-2">
             <h1 className="text-3xl font-bold mt-6">Contacts</h1>
-            <div className="my-2 flex items-center gap-2">
-              <span className="text-sm font-medium">Status:</span>
-              <span
-                className={`badge ${
-                  connectionStatus === ConnectionStatus.CONNECTED
-                    ? "badge-success"
-                    : connectionStatus === ConnectionStatus.CONNECTING
-                    ? "badge-warning"
-                    : "badge-error"
-                } badge-sm`}
-              >
-                {connectionStatus.toLowerCase()}
-              </span>
-            </div>
             {/* Search bar */}
             <div className="relative bg-base-200 rounded-full p-1">
               <FontAwesomeIcon
@@ -693,7 +656,15 @@ export default function Messenger() {
                   }`}
                   onClick={() => handleContactSelect(contact)}
                 >
-                  <UserAvatar src={contact.contactUserAvatar} username={contact.contactUsername} size="lg" />
+                  <div className="flex place-content-between items-start">
+                    <UserAvatar src={contact.contactUserAvatar} username={contact.contactUsername} size="lg" />
+                    <span className="text-xs text-base-content/50">
+                      {new Date(contact.sentAt).toLocaleString(undefined, {
+                        dateStyle: "short",
+                        timeStyle: "short",
+                      })}
+                    </span>
+                  </div>
                   <div className="flex justify-between items-center text-md">
                     <span className="truncate">
                       {contact.userIdFrom === session.userId ? "You: " : ""}
@@ -728,12 +699,7 @@ export default function Messenger() {
                   </button>
                   {/* Contact info and avatar */}
                   <Link href={`/profile/${selectedContact.contactUserId}`}>
-                    <div className="avatar items-center gap-2">
-                      <div className="bg-neutral text-neutral-content place-content-center rounded-full w-10">
-                        {/* <FontAwesomeIcon icon={faUser} /> */}
-                      </div>
-                      <span className="text-md">{selectedContact.contactUsername}</span>
-                    </div>
+                    <UserAvatar src={selectedContact.contactUserAvatar} username={selectedContact.contactUsername} />
                   </Link>
                 </div>
                 {/* Action buttons */}
@@ -776,7 +742,7 @@ export default function Messenger() {
               </div>
 
               {/* Messages */}
-              <div ref={conversationRef} className="flex flex-col-reverse flex-grow overflow-y-auto">
+              <div ref={conversationRef} className="flex flex-col-reverse flex-grow overflow-y-auto px-2">
                 {/* Map messages */}
                 {conversation.map((message) => {
                   // Find the original message if this is a reply
@@ -830,7 +796,7 @@ export default function Messenger() {
               {showScrollToBottom && (
                 <button
                   onClick={() => scrollToBottom()}
-                  className="absolute bottom-20 right-4 btn btn-circle btn-sm z-40 shadow-lg" // Positioned button
+                  className="absolute bottom-20 right-4 btn btn-circle btn-sm z-40 shadow-lg"
                 >
                   <FontAwesomeIcon icon={faAngleDown} />
                 </button>
@@ -888,6 +854,11 @@ export default function Messenger() {
                     placeholder="Type here"
                     value={messageText}
                     onChange={(e) => setMessageText(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        sendMessage();
+                      }
+                    }}
                   />
                   {/* Send Button */}
                   <button className="btn btn-primary" onClick={sendMessage}>

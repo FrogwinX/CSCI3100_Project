@@ -23,7 +23,7 @@ export async function uploadImage(file: File): Promise<{ imageId: number; imageA
     const formData = new FormData();
     formData.append("file", file);
 
-    const response = await fetch("api/Image/uploadImage", {
+    const response = await fetch("/api/Image/uploadImage", {
       method: "POST",
       body: formData,
     });
