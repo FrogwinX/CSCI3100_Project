@@ -163,8 +163,7 @@ public interface UserProfileRepository extends JpaRepository<UserProfileModel, I
                     "JOIN ACCOUNT.User_Account UA\n" +
                     "ON UP.user_id = UA.user_id\n" +
                     "WHERE UA.is_active = 1\n" +
-                    "AND (UA.username LIKE ?1\n" +
-                    "OR UA.email LIKE ?1)\n" +
+                    "AND UA.username LIKE ?1\n" +
                     "AND UP.user_id NOT IN ?2\n" +
                     "ORDER BY NEWID()")
     List<UserProfileModel> findSearchListByKeyword(String keyword, List<Integer> excludingUserIdList, Integer searchNum);

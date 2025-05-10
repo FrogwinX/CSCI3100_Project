@@ -478,7 +478,30 @@ public class ForumService {
         List<PostDTO> postPreviewModelList = new ArrayList<>();
         for (Integer postId : postIdList) {
             PostDTO postDTO = getPostContentByPostId(postId, userIdFrom);
-            postDTO.setCommentList(getCommentByPostId(postId, userIdFrom));
+            List<PostDTO> commentList = new ArrayList<>();
+            commentModelList = forumRepository.findActivePostCommentByAttachTo(postId);
+            if (!commentModelList.isEmpty()) {
+                for (PostModel commentData : commentModelList) {
+                    // comment
+                    if (commentData.getUserId().equals(userIdTo)) {
+                        commentList.add(createPostDTO(commentData, userIdTo));
+                    }
+
+                    List<PostModel> subCommentModelList = forumRepository.findActivePostCommentByAttachTo(commentData.getPostId());
+                    if (!subCommentModelList.isEmpty()) {
+                        for (PostModel subCommentData : subCommentModelList) {
+                            // sub-comment
+                            if (subCommentData.getUserId().equals(userIdTo)) {
+                                commentList.add(createPostDTO(subCommentData, userIdTo));
+                            }
+                        }
+                    }
+                }
+            }
+            else {
+                commentList = null;
+            }
+            postDTO.setCommentList(commentList);
             postPreviewModelList.add(postDTO);
         }
         return postPreviewModelList;
