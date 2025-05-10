@@ -529,8 +529,19 @@ export async function updatePost(
   }
 }
 
+function parseCommentNumber(str: string) {
+  const match = str.match(/^C(\d+)(?:-(\d+))?/);
+  if (!match) return [Infinity];
+  const main = parseInt(match[1], 10);
+  const sub = match[2] ? parseInt(match[2], 10) : 0;
+  return [main, sub];
+}
+
 // Get comment list for a post
-export async function getCommentList(postId: string, userId: string) {
+export async function getCommentList(postId: string, userId: string, options: {
+  excludingCommentIdList?: number[];
+  count?: number;
+} = {}) {
   const apiUrl = `https://flowchatbackend.azurewebsites.net/api/Forum/getCommentList?postId=${postId}&userId=${userId}`;
   const session = await getSession();
   const response = await fetch(apiUrl, {
@@ -540,7 +551,28 @@ export async function getCommentList(postId: string, userId: string) {
   });
   if (!response.ok) throw new Error("Failed to fetch comments");
   const data = await response.json();
-  return data.data.commentList || [];
+  let comments = Array.isArray(data?.data?.commentList) ? data.data.commentList : [];
+  
+  // Sort comments by comment number
+  comments = comments.slice().sort((a: any, b: any) => {
+    const aNum = parseCommentNumber(a.content);
+    const bNum = parseCommentNumber(b.content);
+    for (let i = 0; i < Math.max(aNum.length, bNum.length); i++) {
+      if ((aNum[i] || 0) !== (bNum[i] || 0)) return (aNum[i] || 0) - (bNum[i] || 0);
+    }
+    return 0;
+  });
+
+  // Apply pagination if options are provided
+  if (options.excludingCommentIdList && options.excludingCommentIdList.length > 0) {
+    comments = comments.filter((comment: any) => !options.excludingCommentIdList!.includes(Number(comment.postId)));
+  }
+  
+  if (options.count) {
+    comments = comments.slice(0, options.count);
+  }
+
+  return comments;
 }
 
 // Create a comment for a post
