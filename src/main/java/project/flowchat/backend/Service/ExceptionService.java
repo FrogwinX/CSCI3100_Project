@@ -19,6 +19,7 @@ public class ExceptionService extends Exception {
     public static final String ACCOUNT_NOT_ACTIVE = "Incorrect username, email address or password.";
     public static final String ACTIVE_ACCOUNT = "This email address has been used.";
     public static final String INCORRECT_PASSWORD = "Incorrect username, email address or password.";
+    public static final String NULL_PARAMS = "Username and email address cannot be null.";
 
     /* Forum Service Expected Exceptions*/
     public static final String INVALID_POST_CREATOR = "This post or comment is not created by you.";
