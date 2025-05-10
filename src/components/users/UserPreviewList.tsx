@@ -2,10 +2,17 @@
 
 import { useEffect, useRef, useState } from "react";
 import { getSearchUser } from "@/utils/users";
+import { getUserRelations } from "@/utils/profiles";
 import { Users } from "@/utils/users";
-import UserPreview from "./UserPreview";
+import UserPreview from "@/components/users/UserPreview";
 
-export default function UserList({ searchKeyword, }: { searchKeyword?: string }) {
+export default function UserList({
+  searchKeyword,
+  relationType = "",
+}: {
+  searchKeyword?: string;
+  relationType?: string;
+}) {
   const [users, setUsers] = useState<Users[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hasMore, setHasMore] = useState(true);
@@ -17,11 +24,32 @@ export default function UserList({ searchKeyword, }: { searchKeyword?: string })
     const fetchInitialUsers = async () => {
       setIsLoading(true);
       try {
-        console.log("call getSearchUser");
-
-        const initialUsers = await getSearchUser({
-          keyword: searchKeyword,
-        });
+        let initialUsers;
+        switch (relationType) {
+          case "following":
+            initialUsers = await getUserRelations({
+              userIdTo: searchKeyword,
+              relationship: "following",
+            });
+            break;
+          case "followers":
+            initialUsers = await getUserRelations({
+              userIdTo: searchKeyword,
+              relationship: "followers",
+            });
+            break;
+          case "blocked":
+            initialUsers = await getUserRelations({
+              userIdTo: searchKeyword,
+              relationship: "blocked",
+            });
+            break;
+          default:
+            initialUsers = await getSearchUser({
+              keyword: searchKeyword,
+            });
+            break;
+        }
 
         console.log("Initial users:", initialUsers);
 
@@ -79,11 +107,37 @@ export default function UserList({ searchKeyword, }: { searchKeyword?: string })
 
     try {
       // Fetch more users
-      const newUsers = await getSearchUser({
-        keyword: searchKeyword,
-        excludingUserIdList: Array.from(excludedUserIds),
-        count: 10,
-      });
+      let newUsers;
+      switch (relationType) {
+        case "following":
+          newUsers = await getUserRelations({
+            userIdTo: searchKeyword,
+            relationship: "following",
+            excludingUserIdList: Array.from(excludedUserIds),
+          });
+          break;
+        case "followers":
+          newUsers = await getUserRelations({
+            userIdTo: searchKeyword,
+            relationship: "followers",
+            excludingUserIdList: Array.from(excludedUserIds),
+          });
+          break;
+        case "blocked":
+          newUsers = await getUserRelations({
+            userIdTo: searchKeyword,
+            relationship: "blocked",
+            excludingUserIdList: Array.from(excludedUserIds),
+          });
+          break;
+        default:
+          newUsers = await getSearchUser({
+            keyword: searchKeyword,
+            excludingUserIdList: Array.from(excludedUserIds),
+            count: 10,
+          });
+          break;
+      }
 
       if (!newUsers || newUsers.length === 0) {
         setHasMore(false);

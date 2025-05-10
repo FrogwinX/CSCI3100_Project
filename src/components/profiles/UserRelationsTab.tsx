@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import UserList from "@/components/users/UserPreviewList";
 
 export default function UserRelationsTab({
   userId,
@@ -20,11 +21,11 @@ export default function UserRelationsTab({
   const renderContent = () => {
     switch (Section) {
       case "following":
-        return <div>Following List Content for User {userId}</div>;
+        return <UserList searchKeyword={userId} relationType="following" />;
       case "followers":
-        return <div>Followers List Content for User {userId}</div>;
+        return <UserList searchKeyword={userId} relationType="followers" />;
       case "blocked":
-        return <div>Blocked List Content for User {userId}</div>;
+        return <UserList searchKeyword={userId} relationType="blocked" />;
     }
   };
 
