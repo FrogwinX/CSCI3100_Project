@@ -1,6 +1,11 @@
 "use client";
+<<<<<<< Updated upstream
 import React, { useEffect, useState, useRef } from "react";
 import { getCommentList, createComment } from "@/utils/posts";
+=======
+import React, { useEffect, useState } from "react";
+import { getCommentList, createComment, Post } from "@/utils/posts";
+>>>>>>> Stashed changes
 import UserAvatar from "@/components/users/UserAvatar";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -9,14 +14,17 @@ import {
   faEllipsis,
 } from "@fortawesome/free-solid-svg-icons";
 import { faThumbsUp, faThumbsDown } from "@fortawesome/free-regular-svg-icons";
+<<<<<<< Updated upstream
 import { useSession } from "@/hooks/useSession";
+=======
+import { getMyComments } from "@/utils/profiles";
+import PostPreview from "@/components/posts/PostPreview";
+>>>>>>> Stashed changes
 
 interface CommentListProps {
-  postId: string;
+  postId?: string;
   userId: string;
-  subCommentVisibility: Record<string, boolean>;
-  setSubCommentVisibility: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
-  onReplySuccess: () => void;
+  onReplySuccess?: () => void;
 }
 
 function CommentFormInline({
@@ -263,17 +271,21 @@ function CommentItem({
   const mainNumber = mainCommentNumber ?? commentNumber;
 
   return (
-    <div className={`w-full ${numberPrefix ? "ml-12 border-l-2 border-base-300 pl-6 max-w-[92%]" : "max-w-full"} pb-2`}>
+    <div
+      id={comment.postId}
+      className={`w-full ${numberPrefix ? "ml-12 border-l-2 border-base-300 pl-6 max-w-[92%]" : "max-w-full"} pb-2`}
+    >
       <div className="flex items-start justify-between w-full">
         <div className="flex items-start w-full">
           <UserAvatar src={comment.avatar} size="md" />
           <div className="ml-3 w-full">
             <div className="flex items-center gap-2 mb-1">
+              (
               <span className="text-xs text-base-content font-mono bg-base-200 rounded px-1.5 py-0.5 mr-1 align-middle">
                 {commentNumber}
               </span>
-              <span className="font-semibold text-base align-middle">{comment.username}</span>
-              <span className="text-xs text-gray-400 align-middle">
+              )<span className="font-semibold text-base align-middle">{comment.username}</span>
+              <span className="text-xs text-base-content/70 align-middle">
                 {new Date(comment.updatedAt).toLocaleString(undefined, {
                   year: "2-digit",
                   month: "numeric",
@@ -396,26 +408,37 @@ function CommentItem({
   );
 }
 
-export default function CommentList({
-  postId,
-  userId,
-  subCommentVisibility,
-  setSubCommentVisibility,
-  onReplySuccess,
-}: CommentListProps) {
+export default function CommentList({ postId, userId, onReplySuccess }: CommentListProps) {
   const [comments, setComments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+<<<<<<< Updated upstream
   const [hasMore, setHasMore] = useState(true);
   const observerTarget = useRef<HTMLDivElement>(null);
   const [excludedCommentIds, setExcludedCommentIds] = useState<Set<number>>(new Set());
+=======
+  const [subCommentVisibility, setSubCommentVisibility] = useState<Record<string, boolean>>({});
+>>>>>>> Stashed changes
 
   const fetchComments = async (isInitial: boolean = false) => {
     try {
       setLoading(true);
+<<<<<<< Updated upstream
       let list = await getCommentList(postId, userId, {
         excludingCommentIdList: isInitial ? [] : Array.from(excludedCommentIds),
         count: 10
+=======
+
+      let list = postId ? await getCommentList(postId!, userId) : await getMyComments({ userIdTo: userId });
+      // sort by comment number (main comment)
+      list = list.slice().sort((a: any, b: any) => {
+        const aNum = parseCommentNumber(a.content);
+        const bNum = parseCommentNumber(b.content);
+        for (let i = 0; i < Math.max(aNum.length, bNum.length); i++) {
+          if ((aNum[i] || 0) !== (bNum[i] || 0)) return (aNum[i] || 0) - (bNum[i] || 0);
+        }
+        return 0;
+>>>>>>> Stashed changes
       });
 
       if (!list || list.length === 0) {
@@ -486,6 +509,35 @@ export default function CommentList({
   const handleAnyReplySuccess = () => {
     fetchComments(true);
   };
+
+  if (!postId) {
+    return (
+      <div className="flex flex-col">
+        {comments.map((post) => (
+          <div key={post.postId} className="flex flex-col gap-4">
+            <PostPreview post={post} />
+            {post.commentList.map((comment: Post, idx: number) => (
+              <CommentItem
+                key={comment.postId}
+                comment={comment}
+                userId={userId}
+                onReplySuccess={handleAnyReplySuccess}
+                onLikeDislike={handleLikeDislike}
+                showLikeDislike={true}
+                numberPrefix="None"
+                index={idx}
+                subCommentVisibility={subCommentVisibility}
+                setSubCommentVisibility={setSubCommentVisibility}
+                mainCommentId={comment.postId}
+                mainCommentNumber={comment.content.match(/^(C\d+(?:-\d+)?)/)?.[0] || `M${idx + 1}`}
+              />
+            ))}
+            <div className="divider my-0"></div>
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-2">

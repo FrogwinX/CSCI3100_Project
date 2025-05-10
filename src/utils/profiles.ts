@@ -2,7 +2,7 @@
 
 import { getSession } from "@/utils/sessions";
 import { Users } from "@/utils/users";
-import { match } from "assert";
+import { Post } from "@/utils/posts";
 
 export interface Profile {
   userId: string;
@@ -46,6 +46,14 @@ interface GetRelationListResponse {
   };
 }
 
+interface GetMyCommentsReponse {
+  message: string;
+  data: {
+    isSuccess: boolean;
+    postPreviewList: Post[];
+  };
+}
+
 export async function getProfileContent(userIdTo: string): Promise<Profile | null> {
   try {
     const session = await getSession();
@@ -85,18 +93,17 @@ export async function updateProfile(username: string, description: string, avata
     const session = await getSession();
     let apiUrl = `https://flowchatbackend.azurewebsites.net/api/Profile/updatePersonalProfile`;
 
-    const requestBody = (username === session.username ?
-      {
-        userId: session.userId,
-        description: description,
-      }
-      :
-      {
-        userId: session.userId,
-        username: username,
-        description: description,
-      }
-    );
+    const requestBody =
+      username === session.username
+        ? {
+            userId: session.userId,
+            description: description,
+          }
+        : {
+            userId: session.userId,
+            username: username,
+            description: description,
+          };
 
     const formData = new FormData();
     const requestBodyBlob = new Blob([JSON.stringify(requestBody)], { type: "application/json" });
@@ -131,7 +138,6 @@ export async function updateProfile(username: string, description: string, avata
     newSession.avatar = data.data.avatar;
     newSession.email = session.email;
     await newSession.save();
-
   } catch (error) {
     console.error("Error in updating user profile:", error);
   }
@@ -240,5 +246,70 @@ export async function getUserRelations(options: {
   } catch (error) {
     console.error("Error fetching posts:", error);
     return null;
+  }
+}
+
+export async function getMyComments(
+  options: {
+    userIdTo: string;
+    excludingCommentIdList?: number[];
+    count?: number;
+  } = { userIdTo: "" }
+): Promise<Post[] | null> {
+  try {
+    const session = await getSession();
+    // Build the API URL based on the filter
+    let apiUrl = "https://flowchatbackend.azurewebsites.net/api/Profile/getMyCommentPreviewList?";
+
+    // Add query parameters
+    apiUrl += `userIdFrom=${session.userId}&userIdTo=${options.userIdTo}`;
+
+    if (options.excludingCommentIdList) {
+      while (options.excludingCommentIdList.length > 0) {
+        //add all excludingPostIds to the URL
+        apiUrl += `&excludingCommentIdList=${options.excludingCommentIdList.shift()}`;
+      }
+    } else {
+      //default value = 0
+      apiUrl += `&excludingCommentIdList=0`;
+    }
+
+    apiUrl += `&commentNum=${options.count || 10}`;
+
+    // Fetch data from the API
+    const response = await fetch(apiUrl, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${session.token}`,
+      },
+    });
+
+    const data: GetMyCommentsReponse = await response.json();
+    console.log("API Response:", data.data.postPreviewList);
+    // Map API response to frontend Post interface
+    const posts: Post[] = data.data.postPreviewList.map((post) => ({
+      postId: post.postId,
+      userId: post.userId,
+      username: post.username,
+      avatar: post.avatar,
+      isUserBlocked: post.isUserBlocked,
+      title: post.title,
+      content: post.content,
+      imageAPIList: post.imageAPIList,
+      tagNameList: post.tagNameList,
+      likeCount: post.likeCount,
+      isLiked: post.isLiked,
+      dislikeCount: post.dislikeCount,
+      isDisliked: post.isDisliked,
+      commentCount: post.commentCount,
+      updatedAt: post.updatedAt,
+      commentList: post.commentList,
+    }));
+
+    console.log("Posts:", posts);
+    return posts;
+  } catch (error) {
+    console.error("Error fetching posts:", error);
+    return [];
   }
 }

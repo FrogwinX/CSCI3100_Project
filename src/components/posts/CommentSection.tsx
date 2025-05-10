@@ -10,7 +10,7 @@ interface Props {
 
 export default function CommentSection({ postId, userId }: Props) {
   const [replyTo, setReplyTo] = useState(null);
-  const [subCommentVisibility, setSubCommentVisibility] = useState<Record<string, boolean>>({});
+
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const handleAnyReplySuccess = useCallback(() => {
@@ -27,14 +27,7 @@ export default function CommentSection({ postId, userId }: Props) {
         onCancelReply={() => setReplyTo(null)}
         onCommentSuccess={handleAnyReplySuccess}
       />
-      <CommentList
-        postId={postId}
-        userId={userId}
-        subCommentVisibility={subCommentVisibility}
-        setSubCommentVisibility={setSubCommentVisibility}
-        onReplySuccess={handleAnyReplySuccess}
-        key={refreshTrigger}
-      />
+      <CommentList postId={postId} userId={userId} onReplySuccess={handleAnyReplySuccess} key={refreshTrigger} />
     </div>
   );
 }
