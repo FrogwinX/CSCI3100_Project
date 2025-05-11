@@ -261,16 +261,12 @@ function CommentItem({
 
   const subComments = Array.isArray(comment.commentList)
     ? comment.commentList.slice().sort((a: any, b: any) => {
-        const aNum = parseCommentNumber(a.content);
-        const bNum = parseCommentNumber(b.content);
-        for (let i = 0; i < Math.max(aNum.length, bNum.length); i++) {
-          if ((aNum[i] || 0) !== (bNum[i] || 0)) return (aNum[i] || 0) - (bNum[i] || 0);
-        }
-        return 0;
+        // Sort sub-comments by their post ID to maintain consistent order
+        return Number(a.postId) - Number(b.postId);
       })
     : [];
 
-  // Calculate next sub-comment number
+  // Calculate next sub-comment number based on the highest existing sub-comment number
   let maxSub = 0;
   subComments.forEach((c: any) => {
     const num = parseCommentNumber(c.content);
@@ -461,19 +457,18 @@ export default function CommentList({ postId, userId, onReplySuccess }: CommentL
       });
 
       if (isInitial) {
-        // 先補全主評論的標號
-        const completedList = list.map((c: any, idx: number) => {
+        // Sort main comments by post ID to maintain consistent order
+        const sortedList = list.slice().sort((a: any, b: any) => Number(a.postId) - Number(b.postId));
+        
+        // Add comment numbers based on sorted order
+        const completedList = sortedList.map((c: any, idx: number) => {
           if (!/^C\d+/.test(c.content)) {
             return { ...c, content: `C${idx + 1} ${c.content}` };
           }
           return c;
         });
-        setComments(completedList.slice().sort((a: any, b: any) => {
-          // 只根據主標號排序，取不到標號給極大值
-          const aNum = parseCommentNumber(a.content)[0] ?? 99999;
-          const bNum = parseCommentNumber(b.content)[0] ?? 99999;
-          return aNum - bNum;
-        }));
+        
+        setComments(completedList);
         setSubCommentVisibility((prev) => {
           const updated = { ...prev };
           list.forEach((c: any) => {
@@ -487,20 +482,20 @@ export default function CommentList({ postId, userId, onReplySuccess }: CommentL
         setComments((prevComments) => {
           const all = [...prevComments, ...list];
           const map = new Map();
-          all.forEach((c, idx) => {
-            // 補全主評論標號
+          
+          // Sort all comments by post ID
+          const sortedAll = all.slice().sort((a: any, b: any) => Number(a.postId) - Number(b.postId));
+          
+          // Add comment numbers based on sorted order
+          sortedAll.forEach((c, idx) => {
             if (!/^C\d+/.test(c.content)) {
               map.set(c.postId, { ...c, content: `C${idx + 1} ${c.content}` });
             } else {
               map.set(c.postId, c);
             }
           });
-          // 只根據主標號排序，取不到標號給極大值
-          return Array.from(map.values()).sort((a: any, b: any) => {
-            const aNum = parseCommentNumber(a.content)[0] ?? 99999;
-            const bNum = parseCommentNumber(b.content)[0] ?? 99999;
-            return aNum - bNum;
-          });
+          
+          return Array.from(map.values());
         });
       }
       setError(null);
