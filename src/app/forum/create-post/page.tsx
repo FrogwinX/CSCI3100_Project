@@ -85,9 +85,9 @@ export default function CreatePost() {
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
-      // Validate file type (only PNG and JPEG allowed)
-      if (!file.type.match("image/(png|jpeg)")) {
-        setSubmitError("Only PNG and JPEG formats are supported");
+      // Validate file type (PNG, JPEG, GIF allowed)
+      if (!file.type.match("image/(png|jpeg|gif)")) {
+        setSubmitError("Only PNG, JPEG, and GIF formats are supported");
         continue;
       }
       // Validate file size (max 5MB)
@@ -466,7 +466,7 @@ export default function CreatePost() {
               </button>
               <input
                 type="file"
-                accept="image/png,image/jpeg"
+                accept="image/png,image/jpeg,image/gif"
                 ref={fileInputRef}
                 onChange={handleImageUpload}
                 className="hidden"

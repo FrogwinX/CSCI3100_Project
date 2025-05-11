@@ -4,7 +4,28 @@ import PostHeader from "@/components/posts/PostHeader";
 import LoadingImage from "./LoadingImage";
 import { Post } from "@/utils/posts";
 
+
+// Helper function to process content for preview
+function processPreviewContent(content: string): string {
+  let processedContent = content;
+
+  // Remove [div] and [image:...] tags completely
+  processedContent = processedContent.replace(/\[div\]/g, "");
+  processedContent = processedContent.replace(/\[\/div\]/g, "");
+  processedContent = processedContent.replace(/\[image:[^\]]+\]/g, ""); // Remove image tags
+
+  // Convert formatting tags to HTML
+  processedContent = processedContent.replace(/\[b\](.*?)\[\/b\]/g, "<b>$1</b>");
+  processedContent = processedContent.replace(/\[i\](.*?)\[\/i\]/g, "<i>$1</i>");
+  processedContent = processedContent.replace(/\[u\](.*?)\[\/u\]/g, "<u>$1</u>");
+  processedContent = processedContent.replace(/\[br\]/g, "<br>");
+
+  return processedContent;
+}
+
 export default function PostPreview({ post, size = "md", removePostFromPostlist }: { post: Post; size?: "sm" | "md"; removePostFromPostlist: (postId: string) => void }) {
+  const processdContent = processPreviewContent(post.content);
+
   return (
     <PostLink href={`/forum/post/${post.postId}`} className="block" isBlocked={post.isUserBlocked}>
       <div className="card hover:bg-base-200/40 px-2">
@@ -25,7 +46,7 @@ export default function PostPreview({ post, size = "md", removePostFromPostlist 
               <h3 className="card-title text-lg font-bold line-clamp-2 break-words">{post.title}</h3>
               <div
                 className="text-base-content text-md my-2 line-clamp-3 md:line-clamp-6 break-words"
-                dangerouslySetInnerHTML={{ __html: post.content }}
+                dangerouslySetInnerHTML={{ __html: processdContent }}
               />
             </div>
             {/* Image on the right side, conditionally rendered */}
