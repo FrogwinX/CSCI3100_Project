@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState, FormEvent } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBars, faMagnifyingGlass, faXmark, faUser, faCog } from "@fortawesome/free-solid-svg-icons";
-import { faComments, faPaperPlane, faBell, faEnvelope } from "@fortawesome/free-regular-svg-icons";
+import { faComments, faPaperPlane, faEnvelope } from "@fortawesome/free-regular-svg-icons";
 import { faGithub } from "@fortawesome/free-brands-svg-icons";
 import Image from "next/image";
 import { logout } from "@/utils/authentication";

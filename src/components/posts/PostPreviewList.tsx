@@ -136,6 +136,7 @@ export default function PostList({
     try {
       let newPosts;
       //switch between getPosts and getSearchPosts based on keyword
+
       if (!keyword) {
         newPosts = await getPosts({
           filter,
@@ -149,6 +150,7 @@ export default function PostList({
           count: 10,
         });
       }
+
       // No posts are returned from the API
       if (!newPosts || newPosts.length === 0) {
         setHasMore(false);

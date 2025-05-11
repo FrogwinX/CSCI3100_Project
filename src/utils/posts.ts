@@ -119,10 +119,10 @@ export async function getPosts(
     apiUrl += `userId=${session.userId}`; // Add userId to the URL
 
     if (options.excludingPostIdList) {
-      while (options.excludingPostIdList.length > 0) {
-        //add all excludingPostIds to the URL
-        apiUrl += `&excludingPostIdList=${options.excludingPostIdList.shift()}`;
-      }
+      const idList = [...options.excludingPostIdList]; // Create a copy to prevent mutation
+      idList.forEach((id) => {
+        apiUrl += `&excludingPostIdList=${id}`;
+      });
     } else {
       //default value = 0
       apiUrl += `&excludingPostIdList=0`;
@@ -314,7 +314,7 @@ export async function createPost(title: string, content: string, tags: Tag[], im
     const requestBody = {
       userId,
       title,
-      content: content.replace(/\n/g, '<br>'), 
+      content: content.replace(/\n/g, "<br>"),
       tag: tags.map((tag) => tag.tagName),
       attachTo: 0,
     };
@@ -429,7 +429,7 @@ export async function updatePost(
       postId: parseInt(postId, 10), // Post ID to update
       userId, // User ID of the poster
       title, // Updated post title
-      content: content.replace(/\n/g, '<br>'),
+      content: content.replace(/\n/g, "<br>"),
       tag: tags.map((tag) => tag.tagName), // List of tag names
       attachTo: 0, // Parent post ID (if applicable, set to 0 if not a comment)
       imageAPIList: existingImages, // List of existing image URLs to retain
@@ -521,10 +521,14 @@ function parseCommentNumber(str: string) {
 }
 
 // Get comment list for a post
-export async function getCommentList(postId: string, userId: string, options: {
-  excludingCommentIdList?: number[];
-  count?: number;
-} = {}) {
+export async function getCommentList(
+  postId: string,
+  userId: string,
+  options: {
+    excludingCommentIdList?: number[];
+    count?: number;
+  } = {}
+) {
   const apiUrl = `https://flowchatbackend.azurewebsites.net/api/Forum/getCommentList?postId=${postId}&userId=${userId}`;
   const session = await getSession();
   const response = await fetch(apiUrl, {
@@ -535,7 +539,7 @@ export async function getCommentList(postId: string, userId: string, options: {
   if (!response.ok) throw new Error("Failed to fetch comments");
   const data = await response.json();
   let comments = Array.isArray(data?.data?.commentList) ? data.data.commentList : [];
-  
+
   // Sort comments by comment number
   comments = comments.slice().sort((a: any, b: any) => {
     const aNum = parseCommentNumber(a.content);
@@ -550,7 +554,7 @@ export async function getCommentList(postId: string, userId: string, options: {
   if (options.excludingCommentIdList && options.excludingCommentIdList.length > 0) {
     comments = comments.filter((comment: any) => !options.excludingCommentIdList!.includes(Number(comment.postId)));
   }
-  
+
   if (options.count) {
     comments = comments.slice(0, options.count);
   }
@@ -565,14 +569,14 @@ export async function createComment(postId: string, userId: string, content: str
   const requestBody = {
     userId: parseInt(userId, 10),
     title: "", // comments have no title
-    content: content.replace(/\n/g, '<br>'),
+    content: content.replace(/\n/g, "<br>"),
     tag: [],
     attachTo: parseInt(postId, 10),
   };
   const formData = new FormData();
   const requestBodyBlob = new Blob([JSON.stringify(requestBody)], { type: "application/json" });
   formData.append("requestBody", requestBodyBlob);
-  
+
   try {
     const response = await fetch(apiUrl, {
       method: "POST",
@@ -581,12 +585,12 @@ export async function createComment(postId: string, userId: string, content: str
       },
       body: formData,
     });
-    
+
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.message || "Failed to create comment");
     }
-    
+
     const data = await response.json();
     return data;
   } catch (error) {
