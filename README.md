@@ -24,38 +24,42 @@ a focus on discussion engagements, FlowChat fosters a vibrant online community.
 
 [DOC - Design Implementation](https://www.overleaf.com/project/67bebf0bc2b8fb0923374359)
 
+[DOC - Testing](https://www.overleaf.com/1232136331bjvhscfkrgkj#3e7ac5)
+
+[DOC - Release Notes and User Manual](https://www.overleaf.com/9883229229yggbmrvxknbt#38c2a4)
+
 
 ## Current Phase Requirement
 > [!IMPORTANT]
-> 23 Mar | #4 Discussion Forum
+> 12 May | Project Demo
 
 
 ## Development Schedule
 | Task | Date | Development |
 |:----:| :---: | --- |
-| [v]  | 10 Feb ~ 16 Feb | #0 Project Initialization |
+| [v]  | 10 Feb ~ 16 Feb | #0 System Architecture |
 | [v]  | 17 Feb ~ 23 Feb | #1 Account Management |
 | [v]  | 24 Feb ~ 02 Mar | #1 Account Management |
 | [v]  | 03 Mar ~ 09 Mar | #4 Discussion Forum |
-| [ ]  | 10 Mar ~ 16 Mar | #4 Discussion Forum |
-| [ ]  | 17 Mar ~ 23 Mar | #4 Discussion Forum |
-| [ ]  | 24 Mar ~ 30 Mar | #5 Direct Message |
-| [ ]  | 31 Mar ~ 06 Apr | #5 Direct Message |
-| [ ]  | 07 Apr ~ 13 Apr | #2 Administrative Management, #3 Personal Profile |
-| [ ]  | 14 Apr ~ 20 Apr | #2 Administrative Management, #3 Personal Profile |
-| [ ]  | 21 Apr ~ 01 May | Integration Testing |
+| [v]  | 10 Mar ~ 16 Mar | #4 Discussion Forum |
+| [v]  | 17 Mar ~ 23 Mar | #4 Discussion Forum |
+| [v]  | 24 Mar ~ 30 Mar | #5 Direct Message |
+| [v]  | 31 Mar ~ 06 Apr | #5 Direct Message |
+| [v]  | 07 Apr ~ 13 Apr | #3 Personal Profile |
+| [v]  | 14 Apr ~ 20 Apr | #3 Personal Profile |
+| [v]  | 21 Apr ~ 11 May | Integration Testing |
 
 
 ## Task Schedule
 | Task | Date | Phase Deliverables | Weightings |
 | :---: | :---: | --- | :---: |
 | [v] | 10 Feb | Requirements Specification (1st Version) | 10% |
-| [v] | 7 Mar | Design and Implementation (1st Version) | 15% |
-| [ ] | 18 Apr | Requirements Specification (Final Version) | 5% |
-| [ ] | 18 Apr | Design and Implementation (Final Version) | 10% |
-| [ ] | 2 May | Project Demo | 45% |
-| [ ] | 9 May | Testing Document | 10% |
-| [ ] | 9 May | Release Notes and User Manual | 5% |
+| [v] | 07 Mar | Design and Implementation (1st Version) | 15% |
+| [v] | 09 May | Requirements Specification (Final Version) | 5% |
+| [v] | 09 May | Design and Implementation (Final Version) | 10% |
+| [v] | 09 May | Testing Document | 10% |
+| [v] | 09 May | Release Notes and User Manual | 5% |
+| [ ] | 12 May | Project Demo | 45% |
 
 
 ## Grading
@@ -75,6 +79,7 @@ This project accounts for **30%** of the course grade, including:
 ## Log History
 | Date | Comments | Revised By |
 | :---: | --- | --- |
+| 11 May | Schedule updated and testing, user manual doc links updated  | Edwin |
 | 11 Mar | Schedule and tool links updated | Edwin |
 | 16 Feb | API Specification added | Edwin |
 | 09 Feb | Development Schedule added | Edwin |
