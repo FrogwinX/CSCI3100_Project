@@ -276,7 +276,7 @@ function CommentItem({
   const mainNumber = mainCommentNumber ?? commentNumber;
 
   return (
-    <div id={comment.postId} className={`flex ml-12 border-l-2 border-base-300 pl-6 pb-2`}>
+    <div id={comment.postId} className={`flex flex-col border-l-2 border-base-300 pl-6 pb-2 w-full`}>
       <div className="flex justify-between w-full items-start">
         <div className="flex flex-grow items-start">
           <UserAvatar src={comment.avatar} size="md" />
@@ -379,10 +379,10 @@ function CommentItem({
       </div>
       {/* sub comment (reply) */}
       {subComments.length > 0 && (
-        <>
+        <div className="w-full">
           {isMainComment && (
             <button
-              className="block text-gray-400 text-sm my-2 mx-2 hover:underline hover:text-gray-600"
+              className="block text-gray-400 text-sm my-2 hover:underline hover:text-gray-600 w-full text-left"
               style={{ fontFamily: "monospace", letterSpacing: 1 }}
               onClick={toggleSubComments}
             >
@@ -390,7 +390,7 @@ function CommentItem({
             </button>
           )}
           {showSubComments && (
-            <div className="mt-2">
+            <div className="mt-2 w-full">
               {subComments.map((child: any, idx: number) => (
                 <CommentItem
                   key={child.postId}
@@ -408,7 +408,7 @@ function CommentItem({
               ))}
             </div>
           )}
-        </>
+        </div>
       )}
     </div>
   );
