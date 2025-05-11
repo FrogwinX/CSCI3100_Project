@@ -120,7 +120,7 @@ export class MessagingService {
       this.updateStatus(ConnectionStatus.CONNECTING);
 
       try {
-        const socket = new SockJS(`http://localhost:8080/chat`, null, {
+        const socket = new SockJS("https://flowchatbackend.azurewebsites.net/chat", null, {
           // Specify preferred transports to avoid unnecessary fallback attempts
           transports: ["xhr-streaming", "websocket", "xhr-polling"],
         });
@@ -133,6 +133,7 @@ export class MessagingService {
         });
 
         this.client.onConnect = () => {
+          console.log("Connected to WebSocket server");
           this.updateStatus(ConnectionStatus.CONNECTED);
           resolve();
         };
