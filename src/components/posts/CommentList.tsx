@@ -311,7 +311,7 @@ function CommentItem({
             </div>
             <div className="text-base-content break-words whitespace-pre-wrap">
               <span
-                dangerouslySetInnerHTML={{ __html: renderCommentContent(contentWithNumber, true, commentNumber) }}
+                dangerouslySetInnerHTML={{ __html: renderCommentContent(contentWithNumber, false, commentNumber) }}
               />
             </div>
             <div className="flex gap-2 mt-2">
