@@ -7,7 +7,7 @@ import { Users } from "@/utils/users";
 import UserPreview from "@/components/users/UserPreview";
 
 export default function UserList({
-  searchKeyword,
+  searchKeyword = "",
   relationType = "",
 }: {
   searchKeyword?: string;

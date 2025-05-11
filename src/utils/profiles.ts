@@ -208,6 +208,8 @@ export async function getUserRelations(options: {
 
     // Add query parameters
     apiUrl += `userId=${session.userId}`; // Add userId to the URL
+    apiUrl += `&userIdTo=${options.userIdTo}`; // Add userIdTo to the URL
+
     if (options.excludingUserIdList) {
       while (options.excludingUserIdList.length > 0) {
         apiUrl += `&excludingUserIdList=${options.excludingUserIdList.shift()}`;

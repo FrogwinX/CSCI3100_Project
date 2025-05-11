@@ -28,7 +28,7 @@ export default function UserPreview({ user }: { user: Users }) {
   };
 
   return (
-    <Link href={`/profile/${user.username}`} className="flex w-full">
+    <Link href={`/profile/${user.userId}`} className="flex w-full">
       <div className="card hover:bg-base-200/40 px-2 w-full">
         <div className="card-body p-4 gap-2 w-full ">
           <div className="flex justify-between items-center">
