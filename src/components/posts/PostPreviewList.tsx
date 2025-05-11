@@ -81,6 +81,7 @@ export default function PostList({
         }
 
         const filteredPosts = filterPostsByTags(initialPosts);
+        setCurrentPostsFetched(filteredPosts);
 
         // Update excludedPostIds with the initial posts
         const newExcludedIds = new Set<number>();
@@ -107,11 +108,10 @@ export default function PostList({
   // Effect to handle auto-loading more posts if filtered results are empty
   useEffect(() => {
     // If no posts after filtering, but there might be more, try loading more
-    if (!isLoading && currentPostsFetched.length === 0 && hasMore && fetchAttempts < MAX_ATTEMPTS) {
-      setFetchAttempts((prev) => prev + 1);
+    if (!isLoading && posts.length === 0 && currentPostsFetched.length === 0 && hasMore) {
       loadMorePosts();
     }
-  }, [currentPostsFetched, hasMore, fetchAttempts]);
+  }, [posts, hasMore, currentPostsFetched]);
 
   // Infinite scrolling setup
   useEffect(() => {
@@ -193,6 +193,7 @@ export default function PostList({
       console.log("excluded:", excludedPostIds)
 
       setCurrentPostsFetched(filteredPosts);
+
       setPosts((prevPosts) => [...prevPosts, ...filteredPosts]);
 
       // If got posts but none passed the filter
