@@ -2,6 +2,8 @@
 
 import { getSession } from "@/utils/sessions";
 
+const API_BASE_URL = process.env.API_BASE_URL;
+
 export interface Post {
   postId: string;
   userId: string;
@@ -61,7 +63,7 @@ interface CreatePostResponse {
 export async function getAllTags(): Promise<Tag[]> {
   try {
     const session = await getSession();
-    const apiUrl = `https://flowchatbackend.azurewebsites.net/api/Forum/getAllTag`;
+    const apiUrl = `${API_BASE_URL}/api/Forum/getAllTag`;
 
     // Fetch data from the API
     const response = await fetch(apiUrl, {
@@ -103,7 +105,7 @@ export async function getPosts(
   try {
     const session = await getSession();
     // Build the API URL based on the filter
-    let apiUrl = "https://flowchatbackend.azurewebsites.net/api/Forum/";
+    let apiUrl = `${API_BASE_URL}/api/Forum/`;
     switch (options.filter) {
       case "latest":
         apiUrl += `getLatestPostPreviewList?`;
@@ -115,7 +117,7 @@ export async function getPosts(
         apiUrl += "getFollowingPostPreviewList?";
         break;
       case "created":
-        apiUrl = "https://flowchatbackend.azurewebsites.net/api/Profile/getMyPostPreviewList?";
+        apiUrl = `${API_BASE_URL}/api/Profile/getMyPostPreviewList?`;
         break;
     }
 
@@ -124,16 +126,15 @@ export async function getPosts(
       case "created":
         apiUrl += `userIdFrom=${session.userId}`;
         if (options.authorUserId === "0") {
-          apiUrl += `&userIdTo=${session.userId}`
+          apiUrl += `&userIdTo=${session.userId}`;
         } else {
-          apiUrl += `&userIdTo=${options.authorUserId}`
+          apiUrl += `&userIdTo=${options.authorUserId}`;
         }
         break;
       default:
         apiUrl += `userId=${session.userId}`; // Add userId to the URL
         break;
     }
-    
 
     if (options.excludingPostIdList) {
       const idList = [...options.excludingPostIdList]; // Create a copy to prevent mutation
@@ -202,7 +203,7 @@ export async function getSearchPosts(
   try {
     const session = await getSession();
 
-    let apiUrl = `https://flowchatbackend.azurewebsites.net/api/Forum/searchPost?`;
+    let apiUrl = `${API_BASE_URL}/api/Forum/searchPost?`;
 
     // Add query parameters
     apiUrl += `userId=${session.userId}`; // Add userId to the URL
@@ -270,7 +271,7 @@ export async function getPostById(postId: string): Promise<Post | null> {
   try {
     const session = await getSession();
 
-    const apiUrl = `https://flowchatbackend.azurewebsites.net/api/Forum/getPostContent?userId=${session.userId}&postId=${postId}`;
+    const apiUrl = `${API_BASE_URL}/api/Forum/getPostContent?userId=${session.userId}&postId=${postId}`;
 
     // Fetch data from the API
     const response = await fetch(apiUrl, {
@@ -351,7 +352,7 @@ export async function createPost(title: string, content: string, tags: Tag[], im
 
     console.log(images);
 
-    const apiUrl = "https://flowchatbackend.azurewebsites.net/api/Forum/createPostOrComment";
+    const apiUrl = `${API_BASE_URL}/api/Forum/createPostOrComment`;
     const response = await fetch(apiUrl, {
       method: "POST",
       headers: {
@@ -467,7 +468,7 @@ export async function updatePost(
     }
 
     // API endpoint for updating a post or comment
-    const apiUrl = "https://flowchatbackend.azurewebsites.net/api/Forum/updatePostOrComment";
+    const apiUrl = `${API_BASE_URL}/api/Forum/updatePostOrComment`;
     const response = await fetch(apiUrl, {
       method: "PUT", // Use PUT method for updating
       headers: {
@@ -546,7 +547,7 @@ export async function getCommentList(
     count?: number;
   } = {}
 ) {
-  const apiUrl = `https://flowchatbackend.azurewebsites.net/api/Forum/getCommentList?postId=${postId}&userId=${userId}`;
+  const apiUrl = `${API_BASE_URL}/api/Forum/getCommentList?postId=${postId}&userId=${userId}`;
   const session = await getSession();
   const response = await fetch(apiUrl, {
     headers: {
@@ -581,7 +582,7 @@ export async function getCommentList(
 
 // Create a comment for a post
 export async function createComment(postId: string, userId: string, content: string) {
-  const apiUrl = `https://flowchatbackend.azurewebsites.net/api/Forum/createPostOrComment`;
+  const apiUrl = `${API_BASE_URL}/api/Forum/createPostOrComment`;
   const session = await getSession();
   const requestBody = {
     userId: parseInt(userId, 10),

@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 type Params = Promise<{ action: string[] }>;
 
 // Backend API URL
-const API_BASE_URL = "https://flowchatbackend.azurewebsites.net/api";
+const API_BASE_URL = process.env.API_BASE_URL;
 
 // Helper function to get token and user ID from session
 async function getAuthInfo(): Promise<{ token: string; userId: number | null }> {
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest, props: { params: Params }) {
     // Handle FormData for image upload
     const formData = await request.formData();
 
-    response = await fetch(`${API_BASE_URL}/${actionPath}`, {
+    response = await fetch(`${API_BASE_URL}/api/${actionPath}`, {
       method: "POST",
       headers: {
         Authorization: token,
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest, props: { params: Params }) {
     try {
       const body = await request.json();
 
-      response = await fetch(`${API_BASE_URL}/${actionPath}`, {
+      response = await fetch(`${API_BASE_URL}/api/${actionPath}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -96,7 +96,7 @@ export async function DELETE(request: NextRequest, props: { params: Params }) {
   const body = await request.json();
   const { token } = await getAuthInfo();
 
-  const response = await fetch(`${API_BASE_URL}/${actionPath}`, {
+  const response = await fetch(`${API_BASE_URL}/api/${actionPath}`, {
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",
@@ -116,7 +116,7 @@ export async function GET(request: NextRequest, props: { params: Params }) {
   const searchParams = url.search;
   const { token, userId } = await getAuthInfo();
 
-  const response = await fetch(`${API_BASE_URL}/${actionPath}${searchParams}&userId=${userId}`, {
+  const response = await fetch(`${API_BASE_URL}/api/${actionPath}${searchParams}&userId=${userId}`, {
     method: "GET",
     headers: {
       Authorization: token,

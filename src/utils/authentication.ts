@@ -54,7 +54,8 @@ interface ResetPasswordData {
 // Helper function for API calls to reduce repetition
 async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<ApiResponse<T>> {
   try {
-    const response = await fetch(`https://flowchatbackend.azurewebsites.net/api/${endpoint}`, options);
+    const API_BASE_URL = process.env.API_BASE_URL;
+    const response = await fetch(`${API_BASE_URL}/api/${endpoint}`, options);
     const result: ApiResponse<T> = await response.json();
     return result;
   } catch (error) {
@@ -217,7 +218,7 @@ export async function deleteAccount(formData: FormData) {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${session.token}`
+        Authorization: `Bearer ${session.token}`,
       },
       body: JSON.stringify({ email, username, password }),
     });
@@ -265,7 +266,7 @@ export async function resetPasswordByOldPassword(formData: FormData) {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${session.token}`
+        Authorization: `Bearer ${session.token}`,
       },
       body: JSON.stringify({ email, oldPassword, newPassword }),
     });
@@ -278,4 +279,3 @@ export async function resetPasswordByOldPassword(formData: FormData) {
     };
   }
 }
-
