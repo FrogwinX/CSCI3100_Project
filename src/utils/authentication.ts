@@ -55,7 +55,7 @@ interface ResetPasswordData {
 async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<ApiResponse<T>> {
   try {
     const API_BASE_URL = process.env.API_BASE_URL;
-    const response = await fetch(`${API_BASE_URL}/api/${endpoint}`, options);
+    const response = await fetch(`${API_BASE_URL}/api${endpoint}`, options);
     const result: ApiResponse<T> = await response.json();
     return result;
   } catch (error) {
@@ -79,6 +79,8 @@ export async function login(formData: FormData) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, email, password }),
     });
+
+    console.log("Login result:", result);
 
     // Successful login
     if (result.data.isPasswordCorrect && result.data.isAccountActive && result.data.user) {
