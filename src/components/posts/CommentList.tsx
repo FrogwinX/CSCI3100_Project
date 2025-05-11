@@ -110,14 +110,12 @@ function renderCommentContent(str: string, showNumber: boolean, selfNumber?: str
   let html = str;
 
   if (!showNumber) {
-    // 只去掉開頭的自己標號
     if (selfNumber) {
       const regex = new RegExp(`^${selfNumber}\\s*`);
       html = html.replace(regex, "");
     } else {
       html = html.replace(/^C\d+(?:-\d+)?\s*/, "");
     }
-    // 將 (reply to Cx-y) 只顯示 Cx-y 並加樣式
     html = html.replace(/\(reply to (C\d+(?:-\d+)?)\)\s*/, '<span style="color:#2563eb;font-size:0.95em;font-weight:400;">$1</span> ');
   } else {
     // highlight the reply-to reference
@@ -165,14 +163,12 @@ function CommentItem({
   const [showSubReplyBox, setShowSubReplyBox] = useState(false);
   const [subReplyToNumber, setSubReplyToNumber] = useState<string | undefined>(undefined);
 
-  // Like/dislike 狀態
   const [userLiked, setUserLiked] = useState(comment.isLiked);
   const [userDisliked, setUserDisliked] = useState(comment.isDisliked);
   const [likeCount, setLikeCount] = useState(comment.likeCount);
   const [dislikeCount, setDislikeCount] = useState(comment.dislikeCount);
   const [isLoading, setIsLoading] = useState(false);
 
-  // 完全參考 PostFooter 的 updateLikeStatus
   const updateLikeStatus = async (action: "like" | "dislike" | "unlike" | "undislike") => {
     if (isLoading) return;
     setIsLoading(true);
@@ -208,7 +204,6 @@ function CommentItem({
         }
       }
     } catch (error) {
-      // 可加 toast
     } finally {
       setIsLoading(false);
     }
@@ -276,9 +271,12 @@ function CommentItem({
     : [];
 
   // Calculate next sub-comment number
-  const nextSubNumber = subComments.length > 0 
-    ? `${commentNumber}-${subComments.length + 1}` 
-    : `${commentNumber}-1`;
+  let maxSub = 0;
+  subComments.forEach((c: any) => {
+    const num = parseCommentNumber(c.content);
+    if (num[1] > maxSub) maxSub = num[1];
+  });
+  const nextSubNumber = `${commentNumber}-${maxSub + 1}`;
 
   const isMainComment = numberPrefix === "";
   const showSubComments =
@@ -317,7 +315,7 @@ function CommentItem({
             </div>
             <div className="text-base-content break-words whitespace-pre-wrap">
               <span
-                dangerouslySetInnerHTML={{ __html: renderCommentContent(contentWithNumber, false, commentNumber) }}
+                dangerouslySetInnerHTML={{ __html: renderCommentContent(contentWithNumber, true, commentNumber) }}
               />
             </div>
             <div className="flex gap-2 mt-2">
@@ -463,7 +461,19 @@ export default function CommentList({ postId, userId, onReplySuccess }: CommentL
       });
 
       if (isInitial) {
-        setComments(list);
+        // 先補全主評論的標號
+        const completedList = list.map((c: any, idx: number) => {
+          if (!/^C\d+/.test(c.content)) {
+            return { ...c, content: `C${idx + 1} ${c.content}` };
+          }
+          return c;
+        });
+        setComments(completedList.slice().sort((a: any, b: any) => {
+          // 只根據主標號排序，取不到標號給極大值
+          const aNum = parseCommentNumber(a.content)[0] ?? 99999;
+          const bNum = parseCommentNumber(b.content)[0] ?? 99999;
+          return aNum - bNum;
+        }));
         setSubCommentVisibility((prev) => {
           const updated = { ...prev };
           list.forEach((c: any) => {
@@ -477,11 +487,20 @@ export default function CommentList({ postId, userId, onReplySuccess }: CommentL
         setComments((prevComments) => {
           const all = [...prevComments, ...list];
           const map = new Map();
-          all.forEach((c) => map.set(c.postId, c));
-          // 根據 updatedAt 升序排序（如需倒序可改為 b - a）
-          return Array.from(map.values()).sort(
-            (a, b) => new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime()
-          );
+          all.forEach((c, idx) => {
+            // 補全主評論標號
+            if (!/^C\d+/.test(c.content)) {
+              map.set(c.postId, { ...c, content: `C${idx + 1} ${c.content}` });
+            } else {
+              map.set(c.postId, c);
+            }
+          });
+          // 只根據主標號排序，取不到標號給極大值
+          return Array.from(map.values()).sort((a: any, b: any) => {
+            const aNum = parseCommentNumber(a.content)[0] ?? 99999;
+            const bNum = parseCommentNumber(b.content)[0] ?? 99999;
+            return aNum - bNum;
+          });
         });
       }
       setError(null);
