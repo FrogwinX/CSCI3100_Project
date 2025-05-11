@@ -14,6 +14,8 @@ interface LoginData {
   user: {
     roles: string;
     id: number;
+    avatar: string | null;
+    email: string;
     token: string;
     username: string;
   } | null;
@@ -52,7 +54,8 @@ interface ResetPasswordData {
 // Helper function for API calls to reduce repetition
 async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<ApiResponse<T>> {
   try {
-    const response = await fetch(`https://flowchatbackend.azurewebsites.net/api/${endpoint}`, options);
+    const API_BASE_URL = process.env.API_BASE_URL;
+    const response = await fetch(`${API_BASE_URL}/api${endpoint}`, options);
     const result: ApiResponse<T> = await response.json();
     return result;
   } catch (error) {
@@ -77,6 +80,8 @@ export async function login(formData: FormData) {
       body: JSON.stringify({ username, email, password }),
     });
 
+    console.log("Login result:", result);
+
     // Successful login
     if (result.data.isPasswordCorrect && result.data.isAccountActive && result.data.user) {
       const session = await getSession();
@@ -87,6 +92,8 @@ export async function login(formData: FormData) {
       session.roles = result.data.user.roles;
       session.isLoggedIn = true;
       session.token = result.data.user.token;
+      session.avatar = result.data.user.avatar;
+      session.email = result.data.user.email;
       await session.save();
     }
 
@@ -208,15 +215,15 @@ export async function deleteAccount(formData: FormData) {
   const password = formData.get("password") as string;
 
   try {
+    const session = await getSession();
     const result = await apiFetch<DeleteAccountData>("Account/deleteAccount", {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.token}`,
+      },
       body: JSON.stringify({ email, username, password }),
     });
-
-    if (result.data.isSuccess) {
-      logout();
-    }
 
     return result;
   } catch {
@@ -238,6 +245,32 @@ export async function resetPasswordByEmail(formData: FormData) {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password, authenticationCode }),
+    });
+
+    return result;
+  } catch {
+    return {
+      message: "Failed to reset password",
+      data: { username: null, isSuccess: false },
+    };
+  }
+}
+
+// Reset password by old password server action
+export async function resetPasswordByOldPassword(formData: FormData) {
+  const email = formData.get("email") as string;
+  const oldPassword = formData.get("oldPassword") as string;
+  const newPassword = formData.get("newPassword") as string;
+
+  try {
+    const session = await getSession();
+    const result = await apiFetch<ResetPasswordData>("Account/resetPasswordByOldPassword", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.token}`,
+      },
+      body: JSON.stringify({ email, oldPassword, newPassword }),
     });
 
     return result;

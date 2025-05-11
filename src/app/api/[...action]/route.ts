@@ -3,63 +3,125 @@ import { NextRequest, NextResponse } from "next/server";
 
 type Params = Promise<{ action: string[] }>;
 
+// Backend API URL
+const API_BASE_URL = process.env.API_BASE_URL;
+
+// Helper function to get token and user ID from session
+async function getAuthInfo(): Promise<{ token: string; userId: number | null }> {
+  const session = await getSession();
+  const token = session.token ? `Bearer ${session.token}` : "";
+  const userId = session.userId ?? null;
+  return { token, userId };
+}
+
+// Helper function to handle API responses
+async function handleApiResponse(response: Response) {
+  if (!response.ok) {
+    // Forward the error status and potentially the body from the backend
+    const errorBody = await response.text();
+    console.error(`Backend API Error (${response.status}): ${errorBody}`);
+    return new NextResponse(errorBody || response.statusText, { status: response.status });
+  }
+
+  const contentType = response.headers.get("content-type");
+
+  // Handle image responses
+  if (contentType && contentType.includes("image")) {
+    const imageData = await response.arrayBuffer();
+    return new NextResponse(imageData, {
+      headers: {
+        "Content-Type": contentType,
+        "Cache-Control": "public, max-age=31536000, immutable", // Example cache header
+      },
+    });
+  }
+
+  // Handle JSON responses (default)
+  try {
+    const data = await response.json();
+    return NextResponse.json(data);
+  } catch (error) {
+    // Handle cases where response is not JSON but status is OK (e.g., empty body)
+    console.error("Error parsing JSON response, but status was OK:", error);
+    return new NextResponse(null, { status: response.status }); // Return OK with empty body
+  }
+}
+
+// Handle POST requests
 export async function POST(request: NextRequest, props: { params: Params }) {
   const params = await props.params;
   const actionPath = params.action.join("/");
-  const body = await request.json();
+  const { token } = await getAuthInfo();
 
-  const response = await fetch(`https://flowchatbackend.azurewebsites.net/api/${actionPath}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: request.headers.get("Authorization") || "",
-    },
-    body: JSON.stringify(body),
-  });
+  let response: Response;
 
-  const data = await response.json();
-  console.log(data);
-  return NextResponse.json(data);
+  // Check if it's the image upload endpoint
+  if (actionPath === "Image/uploadImage") {
+    // Handle FormData for image upload
+    const formData = await request.formData();
+
+    response = await fetch(`${API_BASE_URL}/api/${actionPath}`, {
+      method: "POST",
+      headers: {
+        Authorization: token,
+      },
+      body: formData,
+    });
+  } else {
+    // Handle JSON body for other POST requests
+    try {
+      const body = await request.json();
+
+      response = await fetch(`${API_BASE_URL}/api/${actionPath}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token,
+        },
+        body: JSON.stringify(body),
+      });
+    } catch (error) {
+      // Handle cases where request is not image upload but body isn't valid JSON
+      console.error("Error parsing JSON body for non-image POST request:", error);
+      return new NextResponse("Invalid JSON body", { status: 400 });
+    }
+  }
+
+  return handleApiResponse(response);
 }
 
 export async function DELETE(request: NextRequest, props: { params: Params }) {
   const params = await props.params;
   const actionPath = params.action.join("/");
   const body = await request.json();
+  const { token } = await getAuthInfo();
 
-  const response = await fetch(`https://flowchatbackend.azurewebsites.net/api/${actionPath}`, {
+  const response = await fetch(`${API_BASE_URL}/api/${actionPath}`, {
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",
-      Authorization: request.headers.get("Authorization") || "",
+      Authorization: token,
     },
     body: JSON.stringify(body),
   });
 
-  const data = await response.json();
-  return NextResponse.json(data);
+  return handleApiResponse(response);
 }
 
-// For image api calls
-export async function GET(request: NextRequest) {
-  const session = await getSession();
+// Handle GET requests
+export async function GET(request: NextRequest, props: { params: Params }) {
+  const params = await props.params;
+  const actionPath = params.action.join("/");
   const url = new URL(request.url);
+  const searchParams = url.search;
+  const { token, userId } = await getAuthInfo();
 
-  const response = await fetch(`https://flowchatbackend.azurewebsites.net${url.pathname}${url.search}`, {
+  const response = await fetch(`${API_BASE_URL}/api/${actionPath}${searchParams}&userId=${userId}`, {
     method: "GET",
     headers: {
-      Authorization: `Bearer ${session.token}`,
+      Authorization: token,
     },
   });
 
-  const contentType = response.headers.get("content-type");
-  if (contentType && contentType.includes("image")) {
-    const imageData = await response.arrayBuffer();
-    return new NextResponse(imageData, {
-      headers: {
-        "Content-Type": contentType,
-        "Cache-Control": "public, max-age=31536000, immutable",
-      },
-    });
-  }
+  return handleApiResponse(response);
 }

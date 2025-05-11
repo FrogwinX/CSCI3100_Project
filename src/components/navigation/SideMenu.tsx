@@ -11,7 +11,6 @@ export default function SideMenu() {
   const { selectedTags: searchTags, setSelectedTags: setSearchTags, isPostsLoading } = useTagContext();
   const [AllTags, setAllTags] = useState<Tag[]>([]);
   const [recommendedTags, setRecommendedTags] = useState<Tag[]>([]);
-  // Add debounced loading state to prevent flickering
   const [debouncedLoading, setDebouncedLoading] = useState(isPostsLoading);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -34,7 +33,6 @@ export default function SideMenu() {
       }, 500);
     }
 
-    // Clean up
     return () => {
       if (timerRef.current) {
         clearTimeout(timerRef.current);

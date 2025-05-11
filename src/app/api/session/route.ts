@@ -12,6 +12,8 @@ export async function GET() {
       roles: session.roles,
       isLoggedIn: session.isLoggedIn,
       token: session.token,
+      avatar: session.avatar,
+      email: session.email,
     });
   } catch (error) {
     console.error("Error fetching session:", error);

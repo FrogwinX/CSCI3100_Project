@@ -1,0 +1,44 @@
+"use client";
+
+import { Profile } from "@/utils/profiles";
+import { useState } from "react";
+import PostList from "@/components/posts/PostPreviewList";
+import CommentList from "@/components/posts/CommentList";
+
+export default function PostCommentTab({ profile, userIdTo }: { profile: Profile; userIdTo: string }) {
+  const [activeTab, setActiveTab] = useState(0);
+  const tabs = [
+    `My Posts (${Intl.NumberFormat("en", { notation: "compact" }).format(profile.postCount)})`,
+    `My Comments (${Intl.NumberFormat("en", { notation: "compact" }).format(profile.commentCount)})`,
+  ];
+
+  return (
+    <div className="w-full">
+      <div className="flex justify-center gap-30 border-b border-gray-300">
+        {tabs.map((tab, index) => (
+          <div
+            key={index}
+            className={`cursor-pointer py-2 text-xl text-center ${
+              activeTab === index ? "text-base-content border-b-2 border-black" : "text-base-content/50"
+            }`}
+            onClick={() => setActiveTab(index)}
+          >
+            {tab}
+          </div>
+        ))}
+      </div>
+      <div className="mt-4">
+        {activeTab === 0 && (
+          <div>
+            <PostList filter="created" authorUserId={userIdTo} />
+          </div>
+        )}
+        {activeTab === 1 && (
+          <div>
+            <CommentList userId={userIdTo} />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

@@ -2,9 +2,14 @@
 
 import { getSession } from "@/utils/sessions";
 
+const API_BASE_URL = process.env.API_BASE_URL;
+
 export interface Post {
   postId: string;
+  userId: string;
   username: string;
+  avatar: string | null;
+  isUserBlocked: boolean;
   title: string;
   content: string;
   imageAPIList: string[] | null;
@@ -55,10 +60,17 @@ interface CreatePostResponse {
   };
 }
 
+interface DeletePostReponse {
+  message: string;
+  data: {
+    isSuccess: boolean;
+  };
+}
+
 export async function getAllTags(): Promise<Tag[]> {
   try {
     const session = await getSession();
-    const apiUrl = `https://flowchatbackend.azurewebsites.net/api/Forum/getAllTag`;
+    const apiUrl = `${API_BASE_URL}/api/Forum/getAllTag`;
 
     // Fetch data from the API
     const response = await fetch(apiUrl, {
@@ -91,15 +103,16 @@ export async function getAllTags(): Promise<Tag[]> {
 // &postNum=5
 export async function getPosts(
   options: {
-    filter?: "latest" | "recommended" | "following";
+    filter?: "latest" | "recommended" | "following" | "created";
     excludingPostIdList?: number[];
     count?: number;
+    authorUserId?: string;
   } = {}
 ): Promise<Post[] | null> {
   try {
     const session = await getSession();
     // Build the API URL based on the filter
-    let apiUrl = "https://flowchatbackend.azurewebsites.net/api/Forum/";
+    let apiUrl = `${API_BASE_URL}/api/Forum/`;
     switch (options.filter) {
       case "latest":
         apiUrl += `getLatestPostPreviewList?`;
@@ -110,16 +123,31 @@ export async function getPosts(
       case "following":
         apiUrl += "getFollowingPostPreviewList?";
         break;
+      case "created":
+        apiUrl = `${API_BASE_URL}/api/Profile/getMyPostPreviewList?`;
+        break;
     }
 
     // Add query parameters
-    apiUrl += `userId=${session.userId}`; // Add userId to the URL
+    switch (options.filter) {
+      case "created":
+        apiUrl += `userIdFrom=${session.userId}`;
+        if (options.authorUserId === "0") {
+          apiUrl += `&userIdTo=${session.userId}`;
+        } else {
+          apiUrl += `&userIdTo=${options.authorUserId}`;
+        }
+        break;
+      default:
+        apiUrl += `userId=${session.userId}`; // Add userId to the URL
+        break;
+    }
 
     if (options.excludingPostIdList) {
-      while (options.excludingPostIdList.length > 0) {
-        //add all excludingPostIds to the URL
-        apiUrl += `&excludingPostIdList=${options.excludingPostIdList.shift()}`;
-      }
+      const idList = [...options.excludingPostIdList]; // Create a copy to prevent mutation
+      idList.forEach((id) => {
+        apiUrl += `&excludingPostIdList=${id}`;
+      });
     } else {
       //default value = 0
       apiUrl += `&excludingPostIdList=0`;
@@ -139,7 +167,10 @@ export async function getPosts(
     // Map API response to frontend Post interface
     const posts: Post[] = data.data.postPreviewList.map((post) => ({
       postId: post.postId,
+      userId: post.userId,
       username: post.username,
+      avatar: post.avatar,
+      isUserBlocked: post.isUserBlocked,
       title: post.title,
       content: post.content,
       imageAPIList: post.imageAPIList,
@@ -179,7 +210,7 @@ export async function getSearchPosts(
   try {
     const session = await getSession();
 
-    let apiUrl = `https://flowchatbackend.azurewebsites.net/api/Forum/searchPost?`;
+    let apiUrl = `${API_BASE_URL}/api/Forum/searchPost?`;
 
     // Add query parameters
     apiUrl += `userId=${session.userId}`; // Add userId to the URL
@@ -199,7 +230,7 @@ export async function getSearchPosts(
       apiUrl += `&excludingPostIdList=0`;
     }
 
-    apiUrl += `&postNum=${options.count || 10}`;
+    apiUrl += `&searchNum=${options.count || 10}`;
 
     // Fetch data from the API
     const response = await fetch(apiUrl, {
@@ -219,7 +250,10 @@ export async function getSearchPosts(
     // Map API response to frontend Post interface
     const posts: Post[] = data.data.postPreviewList.map((post) => ({
       postId: post.postId,
+      userId: post.userId,
       username: post.username,
+      avatar: post.avatar,
+      isUserBlocked: post.isUserBlocked,
       title: post.title,
       content: post.content,
       imageAPIList: post.imageAPIList,
@@ -244,7 +278,7 @@ export async function getPostById(postId: string): Promise<Post | null> {
   try {
     const session = await getSession();
 
-    const apiUrl = `https://flowchatbackend.azurewebsites.net/api/Forum/getPostContent?userId=${session.userId}&postId=${postId}`;
+    const apiUrl = `${API_BASE_URL}/api/Forum/getPostContent?userId=${session.userId}&postId=${postId}`;
 
     // Fetch data from the API
     const response = await fetch(apiUrl, {
@@ -259,7 +293,10 @@ export async function getPostById(postId: string): Promise<Post | null> {
       const post = data.data.post;
       return {
         postId: post.postId,
+        userId: post.userId,
         username: post.username,
+        avatar: post.avatar,
+        isUserBlocked: post.isUserBlocked,
         title: post.title,
         content: post.content,
         imageAPIList: post.imageAPIList,
@@ -302,10 +339,12 @@ export async function createPost(title: string, content: string, tags: Tag[], im
     const requestBody = {
       userId,
       title,
-      content: content.replace(/<[^>]+>/g, ""), // Remove HTML tags from content
+      content: content.replace(/\n/g, "<br>"),
       tag: tags.map((tag) => tag.tagName),
       attachTo: 0,
     };
+    console.log("[CreatePost] requestBody:", requestBody);
+    console.log("[CreatePost] images:", images);
 
     // Create FormData for multipart/form-data request
     const formData = new FormData();
@@ -319,7 +358,9 @@ export async function createPost(title: string, content: string, tags: Tag[], im
       });
     }
 
-    const apiUrl = "https://flowchatbackend.azurewebsites.net/api/Forum/createPostOrComment";
+    console.log(images);
+
+    const apiUrl = `${API_BASE_URL}/api/Forum/createPostOrComment`;
     const response = await fetch(apiUrl, {
       method: "POST",
       headers: {
@@ -345,6 +386,7 @@ export async function createPost(title: string, content: string, tags: Tag[], im
     // Parse response
     const data: CreatePostResponse = await response.json();
     let postId: string | null = null;
+    console.log("data", data);
     let isSuccess: boolean = false;
 
     // Handle different response formats
@@ -358,12 +400,31 @@ export async function createPost(title: string, content: string, tags: Tag[], im
       // New format: data.data is an object like { isSuccess: true }
       isSuccess = (data.data as { isSuccess: boolean }).isSuccess;
       if (isSuccess) {
-        // Backend did not return postId, fetch the latest post
-        const latestPosts = await getPosts({ filter: "latest", count: 1 });
+        // Backend did not return postId, fetch the latest posts and match
+        const latestPosts = await getPosts({ filter: "latest", count: 10 });
         if (!latestPosts || latestPosts.length === 0) {
           throw new Error("Unable to fetch the latest post for navigation");
         }
-        postId = latestPosts[0].postId;
+        const contentToMatch = requestBody.content;
+        const imagesToMatch = images.map((img) => img.name);
+        const matched = latestPosts.find((post) => {
+          const regex = /\[image:[^\]]+\]/g;
+          const tagsInContent = (post.content.match(regex) || []).map((s) => s.replace("[image:", "").replace("]", ""));
+          const tagsToMatch = (contentToMatch.match(regex) || []).map((s) => s.replace("[image:", "").replace("]", ""));
+          const apiList = (post.imageAPIList || []).map((url) => url.split("/").pop() || url);
+          return (
+            JSON.stringify(tagsInContent) === JSON.stringify(tagsToMatch) &&
+            JSON.stringify(apiList) === JSON.stringify(imagesToMatch)
+          );
+        });
+        if (matched) {
+          postId = matched.postId;
+          console.log("[CreatePost] Matched post:", matched);
+          console.log("[CreatePost] API imageAPIList:", matched.imageAPIList);
+        } else {
+          postId = latestPosts[0].postId;
+          console.log("[CreatePost] Fallback to latest post:", latestPosts[0]);
+        }
       }
     } else {
       throw new Error("Unexpected response format from backend");
@@ -393,6 +454,7 @@ export async function updatePost(
   existingImages: string[]
 ): Promise<string | null> {
   try {
+    console.log(images, "images", existingImages, "existingImages");
     // Retrieve the current session
     const session = await getSession();
 
@@ -412,7 +474,7 @@ export async function updatePost(
       postId: parseInt(postId, 10), // Post ID to update
       userId, // User ID of the poster
       title, // Updated post title
-      content: content.replace(/<[^>]+>/g, ""), // Remove HTML tags from content
+      content: content.replace(/\n/g, "<br>"),
       tag: tags.map((tag) => tag.tagName), // List of tag names
       attachTo: 0, // Parent post ID (if applicable, set to 0 if not a comment)
       imageAPIList: existingImages, // List of existing image URLs to retain
@@ -428,10 +490,12 @@ export async function updatePost(
       images.forEach((image) => {
         formData.append("imageList", image);
       });
+    } else if (images.length === 0) {
+      formData.append("imageList", new Blob([], { type: "application/json" }));
     }
 
     // API endpoint for updating a post or comment
-    const apiUrl = "https://flowchatbackend.azurewebsites.net/api/Forum/updatePostOrComment";
+    const apiUrl = `${API_BASE_URL}/api/Forum/updatePostOrComment`;
     const response = await fetch(apiUrl, {
       method: "PUT", // Use PUT method for updating
       headers: {
@@ -489,6 +553,134 @@ export async function updatePost(
 
     return updatedPostId;
   } catch (error) {
+    throw error;
+  }
+}
+
+function parseCommentNumber(str: string) {
+  const match = str.match(/^C(\d+)(?:-(\d+))?/);
+  if (!match) return [Infinity];
+  const main = parseInt(match[1], 10);
+  const sub = match[2] ? parseInt(match[2], 10) : 0;
+  return [main, sub];
+}
+
+// Get comment list for a post
+export async function getCommentList(
+  postId: string,
+  userId: string,
+  options: {
+    excludingCommentIdList?: number[];
+    count?: number;
+  } = {}
+) {
+  const apiUrl = `${API_BASE_URL}/api/Forum/getCommentList?postId=${postId}&userId=${userId}`;
+  const session = await getSession();
+  const response = await fetch(apiUrl, {
+    headers: {
+      Authorization: `Bearer ${session.token}`,
+    },
+  });
+  if (!response.ok) throw new Error("Failed to fetch comments");
+  const data = await response.json();
+  let comments = Array.isArray(data?.data?.commentList) ? data.data.commentList : [];
+
+  // Sort comments by comment number
+  comments = comments.slice().sort((a: Post, b: Post) => {
+    const aNum = parseCommentNumber(a.content);
+    const bNum = parseCommentNumber(b.content);
+
+    // First compare main comment numbers
+    if (aNum[0] !== bNum[0]) {
+      return aNum[0] - bNum[0];
+    }
+
+    // If main numbers are equal, compare sub-comment numbers
+    if (aNum[1] !== bNum[1]) {
+      return aNum[1] - bNum[1];
+    }
+
+    // If both numbers are equal, sort by timestamp
+    return new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
+  });
+
+  // Apply pagination if options are provided
+  if (options.excludingCommentIdList && options.excludingCommentIdList.length > 0) {
+    comments = comments.filter((comment: Post) => !options.excludingCommentIdList!.includes(Number(comment.postId)));
+  }
+
+  if (options.count) {
+    comments = comments.slice(0, options.count);
+  }
+
+  return comments;
+}
+
+// Create a comment for a post
+export async function createComment(postId: string, userId: string, content: string) {
+  const apiUrl = `${API_BASE_URL}/api/Forum/createPostOrComment`;
+  const session = await getSession();
+  const requestBody = {
+    userId: parseInt(userId, 10),
+    title: "", // comments have no title
+    content: content.replace(/\n/g, "<br>"),
+    tag: [],
+    attachTo: parseInt(postId, 10),
+  };
+  const formData = new FormData();
+  const requestBodyBlob = new Blob([JSON.stringify(requestBody)], { type: "application/json" });
+  formData.append("requestBody", requestBodyBlob);
+
+  try {
+    const response = await fetch(apiUrl, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${session.token}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to create comment");
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error creating comment:", error);
+    throw error;
+  }
+}
+
+export async function deletePostOrComment(postId: string) {
+  const apiUrl = `${API_BASE_URL}/api/Forum/deletePostOrComment`;
+  const session = await getSession();
+
+  try {
+    const response = await fetch(apiUrl, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${session.token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        userId: session.userId,
+        postId: parseInt(postId, 10),
+      }),
+    });
+
+    const data: DeletePostReponse = await response.json();
+
+    console.log("response", data.message);
+
+    if (data.data.isSuccess) {
+      console.error("Failed to delete post:", data.message);
+    }
+
+    return;
+  } catch (error) {
+    console.error("Error creating comment:", error);
     throw error;
   }
 }

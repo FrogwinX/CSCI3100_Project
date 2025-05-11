@@ -1,31 +1,104 @@
 "use client";
 
 import {
-  faEllipsis,
-  faFlag,
-  faCheckSquare as faCheckedSquare,
+  faFileImage,
   faTrashAlt,
   faMagnifyingGlass,
+  faImages,
+  faMinus,
+  faXmark,
+  faArrowLeft,
+  faAngleDown,
 } from "@fortawesome/free-solid-svg-icons";
 import { faCheckSquare } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Link from "next/link";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "@/hooks/useSession";
-import { ConnectionStatus, IncomingMessage, messagingService, Contact } from "@/utils/messaging";
+import {
+  ConnectionStatus,
+  IncomingMessage,
+  messagingService,
+  Contact,
+  getContactsList,
+  getMessageHistory,
+} from "@/utils/messaging";
 import ChatMessage from "@/components/chats/ChatMessage";
 import LoadingContact from "@/components/chats/LoadingContact";
+import UserAvatar from "@/components/users/UserAvatar";
+import { uploadImage } from "@/utils/images";
+import { getSearchUser } from "@/utils/users";
 
-export default function Messenger({ initialContacts }: { initialContacts: Contact[] }) {
-  const { session } = useSession();
+export default function Messenger() {
+  const { session, refreshUnreadCount } = useSession();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [selectedContact, setSelectedContact] = useState<Contact>();
-  const [messages, setMessages] = useState<IncomingMessage[]>([]);
+  const [conversation, setConversation] = useState<IncomingMessage[]>([]);
   const [messageText, setMessageText] = useState("");
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>(messagingService.getStatus());
   const [inSelection, setInSelection] = useState(false);
   const [selectedMessages, setSelectedMessages] = useState<Set<number>>(new Set());
   const [searchInput, setSearchInput] = useState("");
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [filePreviews, setFilePreviews] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const conversationRef = useRef<HTMLDivElement>(null);
+  const [isLoadingMoreMessages, setIsLoadingMoreMessages] = useState(false);
+  const [hasMoreMessages, setHasMoreMessages] = useState(true);
+  const messageLoaderRef = useRef<HTMLDivElement>(null);
+  const [excludedMessageIds, setExcludedMessageIds] = useState<Set<number>>(new Set());
+  const [replyTo, setReplyTo] = useState<IncomingMessage | null>(null);
+  const [scrollingToMessageId, setScrollingToMessageId] = useState<number | null>(null);
+  const [showConversation, setShowConversation] = useState(false);
+  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
+
+  const handleImageSelect: React.ChangeEventHandler<HTMLInputElement> = (e) => {
+    const newFiles = Array.from(e.target.files || []);
+    if (newFiles.length === 0) return; // Do nothing if no files selected
+
+    // File Size Validation
+    const currentTotalSize = selectedFiles.reduce((sum, file) => sum + file.size, 0);
+    const newFilesTotalSize = newFiles.reduce((sum, file) => sum + file.size, 0);
+
+    // Check if the total size exceeds 25 MB (26214400 bytes)
+    if (currentTotalSize + newFilesTotalSize > 26214400) {
+      alert(`Cannot upload files. Total size exceeds 25 MB.`);
+      // Clear the file input value even if validation fails
+      if (e.target) {
+        e.target.value = "";
+      }
+      return;
+    }
+
+    // Append new files to the existing selection
+    setSelectedFiles((prevFiles) => [...prevFiles, ...newFiles]);
+
+    // Create object URLs only for the newly added files and append them
+    const newPreviews = newFiles.map((f) => URL.createObjectURL(f));
+    setFilePreviews((prevPreviews) => [...prevPreviews, ...newPreviews]);
+
+    // Clear the file input value to allow selecting the same file again if needed
+    if (e.target) {
+      e.target.value = "";
+    }
+  };
+
+  const removeImagePreview = (indexToRemove: number) => {
+    setSelectedFiles((prevFiles) => prevFiles.filter((_, index) => index !== indexToRemove));
+    setFilePreviews((prevPreviews) => {
+      const newPreviews = prevPreviews.filter((_, index) => index !== indexToRemove);
+      // Revoke the object URL for the removed preview to free memory
+      URL.revokeObjectURL(prevPreviews[indexToRemove]);
+      return newPreviews;
+    });
+  };
+
+  // Cleanup object URLs on component unmount
+  useEffect(() => {
+    return () => {
+      filePreviews.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [filePreviews]);
 
   // Keep a ref of the selected contact such that it can be used in the message subscription callback
   const selectedContactRef = useRef<Contact | undefined>(undefined);
@@ -33,163 +106,321 @@ export default function Messenger({ initialContacts }: { initialContacts: Contac
     selectedContactRef.current = selectedContact;
   }, [selectedContact]);
 
-  const getContactUserId = (contact: Contact) => {
-    if (contact.usernameFrom === contact.contactUsername) {
-      return contact.userIdFrom;
-    } else if (contact.usernameTo === contact.contactUsername) {
-      return contact.userIdTo;
-    }
+  const handleContactSelect = async (contact: Contact) => {
+    setSelectedContact(contact);
+    setShowConversation(true); // Show conversation on mobile
+    setConversation([]); // Clear previous conversation
+    setInSelection(false); // Reset selection mode
+    setSelectedMessages(new Set()); // Clear selected messages
+    setIsLoadingMoreMessages(true); // Show loading indicator
+    setHasMoreMessages(true); // Reset hasMore flag
+    try {
+      const messageHistory = await getMessageHistory(contact.contactUserId, 15);
+      setConversation(messageHistory);
 
-    if (contact.messageId === -1) {
-      // Temporary contact, use the userIdFrom for the temp contact
-      return contact.userIdFrom;
+      // Add fetched message IDs to excludedMessageIds
+      const newExcludedIds = new Set<number>();
+      messageHistory.forEach((message) => newExcludedIds.add(Number(message.messageId)));
+      setExcludedMessageIds(newExcludedIds);
+    } catch (error) {
+      console.error("Error fetching message history:", error);
+      setHasMoreMessages(false); // Assume no more messages on error
+    } finally {
+      setIsLoadingMoreMessages(false);
     }
-    return -1;
   };
 
-  // Connect to WebSocket when component mounts
-  useEffect(() => {
-    if (!session.isLoggedIn || !session.token) return;
+  // Function to load older messages
+  const loadMoreMessages = useCallback(async () => {
+    if (isLoadingMoreMessages || !hasMoreMessages || !selectedContact || conversation.length === 0) return;
 
-    const unsubscribeStatus = messagingService.onStatusChange(setConnectionStatus);
-    let retryCount = 0;
-    let retryTimeout: NodeJS.Timeout;
+    setIsLoadingMoreMessages(true);
+    try {
+      // Fetch older messages
+      const olderMessages = await getMessageHistory(selectedContact.contactUserId, 15, Array.from(excludedMessageIds));
 
-    const connectWithRetry = async () => {
-      if (messagingService.getStatus() === ConnectionStatus.CONNECTED) return;
+      // Update excludedMessageIds with new messages
+      setExcludedMessageIds((prevExcludedIds) => {
+        const newExcludedIds = new Set(prevExcludedIds);
+        olderMessages.forEach((message) => newExcludedIds.add(Number(message.messageId)));
+        return newExcludedIds;
+      });
 
-      try {
-        await messagingService.connect(session.token!);
-      } catch {
-        if (retryCount < 3) {
-          console.log(`Retrying connection (${retryCount + 1}/3)...`);
-          retryCount++;
-          retryTimeout = setTimeout(connectWithRetry, 1000);
-        } else {
-          console.log("Max retries reached");
-        }
+      if (olderMessages.length > 0) {
+        setConversation((prev) => [...prev, ...olderMessages]); // Append older messages
+      } else {
+        setHasMoreMessages(false); // No more messages to load
       }
-    };
+    } catch (error) {
+      console.error("Failed to load more messages:", error);
+      setHasMoreMessages(false); // Stop trying on error
+    } finally {
+      setIsLoadingMoreMessages(false);
+    }
+  }, [isLoadingMoreMessages, hasMoreMessages, selectedContact, conversation]);
 
-    connectWithRetry();
+  // Infinite scrolling setup for messages
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMoreMessages && !isLoadingMoreMessages) {
+          loadMoreMessages();
+        }
+      },
+      {
+        root: conversationRef.current, // Observe within the scrollable container
+        threshold: 0.1,
+      }
+    );
+
+    const currentLoaderRef = messageLoaderRef.current;
+    if (currentLoaderRef) {
+      observer.observe(currentLoaderRef);
+    }
 
     return () => {
-      unsubscribeStatus();
-      clearTimeout(retryTimeout);
+      if (currentLoaderRef) {
+        observer.unobserve(currentLoaderRef);
+      }
     };
-  }, [session]);
+  }, [hasMoreMessages, isLoadingMoreMessages, loadMoreMessages]);
 
-  // Subscribe to user own channel
-  useEffect(() => {
-    if (!session.userId || connectionStatus !== ConnectionStatus.CONNECTED) return;
-
-    // Clear messages
-    setMessages([]);
-
+  const fetchContacts = useCallback(async () => {
+    // Don't fetch if not connected or already loading
+    if (messagingService.getStatus() !== ConnectionStatus.CONNECTED) {
+      console.log("Skipping fetchContacts:", { status: messagingService.getStatus() });
+      return;
+    }
     try {
+      const fetchedContacts = await getContactsList(20);
+      setContacts(fetchedContacts.filter((contact) => !contact.isContactUserBlocked));
+    } catch (error) {
+      console.error("Error fetching contacts:", error);
+      setContacts([]); // Clear contacts on error
+    }
+  }, [ConnectionStatus]);
+
+  // Listen for status changes and update local state
+  useEffect(() => {
+    // Subscribe to status changes to update local state
+    const unsubscribeStatus = messagingService.onStatusChange(setConnectionStatus);
+
+    // Update status immediately in case it changed between initial state and effect run
+    setConnectionStatus(messagingService.getStatus());
+
+    // Cleanup function
+    return () => {
+      unsubscribeStatus();
+    };
+  }, []);
+
+  // Subscribe to user channel and fetch contacts
+  useEffect(() => {
+    if (connectionStatus === ConnectionStatus.CONNECTED && session.userId) {
+      // Subscribe to user channel
       messagingService.subscribe(`${session.userId}`, (message) => {
         const messageDetail = message.messageDetail;
         const currentContact = selectedContactRef.current;
         console.log("Received message:", message);
+        // Update contacts list
+        fetchContacts();
         if (currentContact) {
           switch (message.action) {
             case "send":
-              if (
-                messageDetail.userIdFrom === getContactUserId(currentContact) ||
-                messageDetail.userIdTo === getContactUserId(currentContact)
-              ) {
-                // Check if this is a message we sent
-                if (messageDetail.userIdFrom === session.userId) {
-                  // Replace the temporary version with the server version which have the messageId)
-                  setMessages((prev) =>
-                    prev.map((m) =>
-                      m.userIdFrom === session.userId && m.content === messageDetail.content && m.messageId === -1
-                        ? messageDetail
-                        : m
-                    )
-                  );
-                } else {
-                  // For messages from other users, just add them
-                  setMessages((prev) => [...prev, messageDetail]);
-
-                  // Mark new message as read immediately if this conversation is active
-                  if (selectedContact) {
-                    readMessages([messageDetail]);
-                  }
-                }
+              // Message from self (replace temp)
+              if (messageDetail.userIdFrom === session.userId) {
+                setConversation((prev) =>
+                  prev.map((m) =>
+                    m.messageId === -1 && m.content === messageDetail.content // More specific check
+                      ? messageDetail
+                      : m
+                  )
+                );
+              }
+              // Message from selected contact
+              else if (messageDetail.userIdFrom === currentContact.contactUserId) {
+                setConversation((prev) => [messageDetail, ...prev]); // Prepend for flex-reverse
+                readMessages([messageDetail]); // Mark as read
+              }
+              // Message from *another* contact - update contact list state
+              else {
+                console.log("Message from another contact, fetching updated contacts list...");
+                fetchContacts(); // Fetch contacts if message is from someone else
               }
               break;
             case "read":
-              // Update the read status of messages
-              setMessages((prev) =>
+              setConversation((prev) =>
                 prev.map((m) =>
-                  message.readOrDeleteMessageIdList?.includes(m.messageId)
-                    ? { ...m, readAt: new Date().toISOString() }
-                    : m
+                  message.readOrDeleteMessageIdList?.includes(m.messageId) ? { ...m, readAt: message.time } : m
                 )
               );
               break;
             case "delete":
-              // Remove deleted messages from the UI
-              setMessages((prev) => prev.filter((m) => !message.readOrDeleteMessageIdList?.includes(m.messageId)));
+              setConversation((prev) =>
+                prev.map((m) =>
+                  message.readOrDeleteMessageIdList?.includes(m.messageId) ? { ...m, isActive: false } : m
+                )
+              );
               break;
           }
+        } else {
+          // Message received, but no contact selected. Update contacts list.
+          fetchContacts();
         }
       });
 
-      setContacts(initialContacts);
-    } catch (error) {
-      console.error("Failed to subscribe to channel:", error);
-    }
+      // Fetch initial contacts after successful connection and subscription setup
+      fetchContacts();
 
-    return () => {
-      if (session.userId) {
+      // Cleanup for this effect: Unsubscribe when status is no longer CONNECTED or userId changes
+      return () => {
         messagingService.unsubscribe(`/channel/${session.userId}`);
-      }
-    };
-  }, [session, connectionStatus]);
+      };
+    }
+  }, [connectionStatus, session.userId, fetchContacts]);
 
   // Mark messages as read when contact is selected or when new messages arrive
   useEffect(() => {
-    if (selectedContact && messages.length > 0 && connectionStatus === ConnectionStatus.CONNECTED) {
-      readMessages(messages);
+    if (selectedContact && conversation.length > 0 && connectionStatus === ConnectionStatus.CONNECTED) {
+      readMessages(conversation);
     }
-  }, [selectedContact, messages]);
+  }, [selectedContact, conversation]);
+
+  const scrollToBottom = (behavior: ScrollBehavior = "smooth") => {
+    if (conversationRef.current) {
+      // Scroll the container itself to the bottom
+      conversationRef.current.scrollTo({
+        top: conversationRef.current.scrollHeight,
+        behavior: behavior,
+      });
+    }
+  };
+
+  const handleScroll = useCallback(() => {
+    const currentDiv = conversationRef.current;
+    if (currentDiv) {
+      const { scrollTop } = currentDiv;
+
+      const threshold = -100; // Pixels from bottom
+
+      if (scrollTop < threshold) {
+        setShowScrollToBottom(true);
+      } else {
+        setShowScrollToBottom(false);
+      }
+    }
+  }, [setShowScrollToBottom]);
+
+  // Handle scroll events for showing/hiding the button
+  useEffect(() => {
+    const conversationDiv = conversationRef.current;
+
+    // Only add listener if the div exists
+    if (conversationDiv) {
+      conversationDiv.addEventListener("scroll", handleScroll, { passive: true });
+
+      // Initial check right after attaching
+      handleScroll();
+
+      // Cleanup function specific to this effect run
+      return () => {
+        conversationDiv.removeEventListener("scroll", handleScroll);
+        // Reset button state when contact changes or unmounts
+        setShowScrollToBottom(false);
+      };
+    } else {
+      // No cleanup needed if listener wasn't attached
+      return () => {
+        // Reset button state if effect re-runs and div is no longer there
+        setShowScrollToBottom(false);
+      };
+    }
+  }, [selectedContact]);
 
   // Send message function
-  const sendMessage = () => {
-    if (!messageText.trim() || !session.userId || !selectedContact) return;
+  const sendMessage = async () => {
+    // Limit message length to 500 characters
+    if (messageText.length > 500) {
+      alert(`Message is too long. Maximum length is 500 characters.`);
+      return;
+    }
+
+    // Allow sending only images without text
+    if (!messageText.trim() && selectedFiles.length === 0) return;
+    if (!session.userId || !selectedContact) return;
+
+    let uploadedImageIds: number[] = [];
+    const tempImageUrls: string[] = [...filePreviews];
+
+    // Upload images if selected
+    if (selectedFiles.length > 0) {
+      try {
+        // Show loading state for images
+        const uploadPromises = selectedFiles.map((file) => uploadImage(file));
+        const uploadResults = await Promise.all(uploadPromises);
+
+        // Filter out failed uploads and get IDs
+        uploadedImageIds = uploadResults.filter((result) => result.imageId !== 0).map((result) => result.imageId);
+
+        if (uploadedImageIds.length !== selectedFiles.length) {
+          console.warn("Some images failed to upload.");
+          // Handle failed uploads (e.g., show error message)
+          // For now, we'll just send the successfully uploaded ones
+        }
+      } catch (error) {
+        console.error("Error during image upload process:", error);
+        // Handle upload errors (e.g., show error message to user)
+        return; // Stop message sending if uploads fail critically
+      }
+    }
+
+    // No message text and no successfully uploaded images
+    if (!messageText.trim() && uploadedImageIds.length === 0) {
+      console.log("No text or successfully uploaded images to send.");
+      // Clear potentially failed previews if only images were selected and all failed
+      if (selectedFiles.length > 0) {
+        setSelectedFiles([]);
+        setFilePreviews([]);
+      }
+      return;
+    }
 
     try {
       // Create a temporary message object for immediate display
       const tempMessage: IncomingMessage = {
         messageId: -1, // Temporary ID
         userIdFrom: session.userId,
-        userIdTo: getContactUserId(selectedContact),
+        userIdTo: selectedContact.contactUserId,
         content: messageText,
-        attachTo: 0,
+        isActive: true,
+        attachTo: replyTo ? replyTo.messageId : 0,
         sentAt: new Date().toISOString(),
         readAt: null,
-        imageAPIList: null,
+        imageAPIList: tempImageUrls.length > 0 ? tempImageUrls : null,
       };
 
-      console.log("Sending message:", tempMessage);
-
       // Add to UI immediately
-      setMessages((prev) => [...prev, tempMessage]);
+      setConversation((prev) => [tempMessage, ...prev]);
+      // Scroll to the bottom of the conversation
+      scrollToBottom("smooth");
 
       // Send to server
       messagingService.sendMessage(`${session.userId}`, {
         userIdFrom: session.userId,
-        userIdTo: getContactUserId(selectedContact),
+        userIdTo: selectedContact.contactUserId,
         content: messageText,
-        attachTo: 0,
-        imageIdList: [],
+        attachTo: replyTo ? replyTo.messageId : 0,
+        imageIdList: uploadedImageIds.length > 0 ? uploadedImageIds : [],
         action: "send",
         messageIdList: [],
       });
 
       setMessageText("");
+      setSelectedFiles([]);
+      setFilePreviews([]);
+      setReplyTo(null);
+      // Revoke object URLs for previews that were just sent
+      tempImageUrls.forEach((url) => URL.revokeObjectURL(url));
     } catch (error) {
       console.error("Failed to send message:", error);
     }
@@ -200,7 +431,7 @@ export default function Messenger({ initialContacts }: { initialContacts: Contac
 
     // Filter unread messages received from the other user
     const unreadMessages = messages.filter(
-      (msg) => !msg.readAt && msg.userIdFrom === getContactUserId(selectedContact) && msg.userIdTo === session.userId
+      (msg) => !msg.readAt && msg.userIdFrom === selectedContact.contactUserId && msg.userIdTo === session.userId
     );
 
     if (unreadMessages.length === 0) return;
@@ -211,34 +442,36 @@ export default function Messenger({ initialContacts }: { initialContacts: Contac
     try {
       messagingService.sendMessage(`${session.userId}`, {
         userIdFrom: session.userId,
-        userIdTo: getContactUserId(selectedContact),
+        userIdTo: selectedContact.contactUserId,
         content: null,
         attachTo: null,
         imageIdList: null,
         action: "read",
         messageIdList: messageIds,
       });
+
+      refreshUnreadCount(); // Refresh unread count after marking as read
     } catch (error) {
       console.error("Failed to mark messages as read:", error);
     }
   };
 
-  const deleteMessages = () => {
-    if (selectedMessages.size === 0 || !session.userId || !selectedContact) return;
+  const deleteMessages = (messageId?: number) => {
+    if (!session.userId || !selectedContact) return;
+
+    // If messageId is provided (from using delete dropdown option), delete that specific message
+    const messageIds = messageId ? [messageId] : Array.from(selectedMessages);
 
     try {
       messagingService.sendMessage(`${session.userId}`, {
         userIdFrom: session.userId,
-        userIdTo: getContactUserId(selectedContact),
+        userIdTo: selectedContact.contactUserId,
         content: null,
         attachTo: null,
         imageIdList: null,
         action: "delete",
-        messageIdList: Array.from(selectedMessages),
+        messageIdList: messageIds,
       });
-
-      // Update UI immediately for better user experience
-      setMessages((prev) => prev.filter((msg) => !selectedMessages.has(msg.messageId)));
 
       // Exit selection mode
       setInSelection(false);
@@ -262,57 +495,133 @@ export default function Messenger({ initialContacts }: { initialContacts: Contac
     });
   };
 
-  // Exit selection mode
-  const handleSelectionButton = () => {
+  const handleSelectionButton = (messageId?: number) => {
     setInSelection(!inSelection);
-    setSelectedMessages(new Set());
-  };
 
-  // Handle pressing Enter in the input field
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      sendMessage();
+    if (messageId) {
+      // If a message ID is provided, select that message
+      setSelectedMessages(new Set([messageId]));
+    } else {
+      // If no message ID is provided, clear the selection
+      setSelectedMessages(new Set());
     }
   };
 
-  const searchUser = async (uid: string) => {
-    if (!session.userId || !session.token) return;
+  const handleScrollToMessage = (messageId: number) => {
+    const element = document.getElementById(`${messageId}`);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "center" });
+      // Highlight
+      element.classList.add("bg-info/20", "transition-colors", "duration-1000");
+      setTimeout(() => {
+        element.classList.remove("bg-info/20", "transition-colors", "duration-1000");
+      }, 1000);
+    } else {
+      // If not found, set the target ID to trigger the useEffect loader
+      setScrollingToMessageId(messageId);
+    }
+  };
 
-    const userId = parseInt(uid, 10);
+  // handle loading and scrolling when target is set
+  useEffect(() => {
+    // Only run if we have a target ID and are not currently loading messages
+    if (scrollingToMessageId === null || isLoadingMoreMessages) {
+      return;
+    }
+
+    const targetElement = document.getElementById(`${scrollingToMessageId}`);
+
+    if (targetElement) {
+      targetElement.scrollIntoView({ behavior: "smooth", block: "center" });
+      // Highlight the message
+      targetElement.classList.add("bg-primary/20", "transition-colors", "duration-1000");
+      setTimeout(() => {
+        targetElement.classList.remove("bg-primary/20", "transition-colors", "duration-1000");
+      }, 1000);
+
+      // Reset the target ID
+      setScrollingToMessageId(null);
+    } else {
+      // Message still not found, check if more messages can be loaded
+      if (hasMoreMessages) {
+        // Trigger loading more messages
+        loadMoreMessages();
+      } else {
+        // No more messages to load, and the target wasn't found
+        setScrollingToMessageId(null); // Reset the target ID
+      }
+    }
+  }, [scrollingToMessageId, isLoadingMoreMessages, conversation, hasMoreMessages, loadMoreMessages]);
+
+  // Function to go back to contact list on mobile
+  const handleBackButton = () => {
+    setShowConversation(false);
+    setSelectedContact(undefined);
+    setConversation([]);
+  };
+
+  const searchUser = async (username: string) => {
+    if (!session.userId || !session.token || !username.trim()) return;
 
     try {
-      // Check if we already have a conversation with this user
-      const existingContact = initialContacts.find((contact) => getContactUserId(contact) === userId);
+      // First, search existing contacts for matches
+      const matchingContacts = contacts.filter(contact =>
+        contact.contactUsername.toLowerCase().includes(username.toLowerCase())
+      );
+      setContacts(matchingContacts);
 
-      if (existingContact) {
-        // If we already have a conversation, just select it
-        setSelectedContact(existingContact);
-        setSearchInput("");
+      // If no matches in existing contacts, search for users via API
+      const users = await getSearchUser({
+        keyword: username,
+        excludingUserIdList: [session.userId],
+        count: 10,
+      });
+
+      if (!users || users.length === 0) {
         return;
       }
 
-      // Create a new temporary contact
-      const newContact: Contact = {
-        messageId: -1, // Temporary ID
-        contactUsername: "Unknown User",
-        latestMessage:
-          "This is a temp contact, a real contact can be created using the Get Search User Result API. Reload the page after sending a message to get a real contact for now",
-        userIdFrom: userId,
-        usernameFrom: "",
-        userIdTo: -1,
-        usernameTo: "",
-        sentAt: "",
-        readAt: "",
-        unreadMessageCount: 0,
-      };
+      //for each user in users, do:
+      users.forEach(user => {
+        // Check if we already have a contact with the user
+        const foundUserId = user.userId;
+        const existingContact = contacts.find(contact => contact.contactUserId === foundUserId);
 
-      // Update the contacts list and select the new contact
-      setContacts((prev) => [newContact, ...prev]);
-      setSelectedContact(newContact);
-      setMessages([]);
-      setSearchInput("");
+        if (existingContact) {
+          // If we have an existing conversation, select it
+          setSearchInput("");
+          setShowConversation(true);
+          return;
+        }
+
+        // Create a new temporary contact
+        const newContact: Contact = {
+          messageId: -1,
+          contactUserId: user.userId,
+          contactUsername: user.username,
+          contactUserAvatar: user.avatar,
+          isContactUserBlocked: false,
+          latestMessage: "",
+          userIdFrom: session.userId!,
+          usernameFrom: "",
+          userIdTo: -1,
+          usernameTo: "",
+          sentAt: "",
+          readAt: "",
+          unreadMessageCount: 0,
+        };
+
+        // Update the contacts list and select the new contact
+
+        setContacts(prev => [...prev, newContact]);
+        setConversation([]);
+        setSearchInput("");
+        setShowConversation(true);
+      });
+
     } catch (error) {
       console.error("Error searching for user:", error);
+      alert("Error searching for user. Please try again.");
     }
   };
 
@@ -329,9 +638,12 @@ export default function Messenger({ initialContacts }: { initialContacts: Contac
       {/* Middle column - Direct message content */}
       <div className="bg-base-200 min-h-full flex flex-grow w-6/8 shadow-lg">
         {/* Contact List (Left)*/}
-        <div className="w-1/3 flex flex-col bg-base-100 shadow-md">
+        <div
+          className={`w-full lg:w-1/3 flex flex-col bg-base-100 shadow-md ${showConversation ? "hidden md:flex" : "flex"
+            }`}
+        >
           <div className="flex flex-col p-2 gap-2">
-            <h1 className="text-2xl font-bold mt-6">Contacts</h1>
+            <h1 className="text-3xl font-bold mt-6">Contacts</h1>
             {/* Search bar */}
             <div className="relative bg-base-200 rounded-full p-1">
               <FontAwesomeIcon
@@ -340,8 +652,7 @@ export default function Messenger({ initialContacts }: { initialContacts: Contac
               />
               <input
                 type="text"
-                placeholder="Enter user ID to create a new chat for now"
-                // placeholder="Search Contacts"
+                placeholder="Search Contacts"
                 className="w-full h-full rounded-full text-sm pl-8 pr-3"
                 onChange={(e) => setSearchInput(e.target.value)}
                 onKeyDown={handleSearchKeyDown}
@@ -354,107 +665,225 @@ export default function Messenger({ initialContacts }: { initialContacts: Contac
               [1, 2, 3, 4, 5, 6].map((item) => <LoadingContact key={item} />)
             ) : contacts.length === 0 ? (
               <p className="text-base-content/50 text-center mt-4 break-words text-wrap mx-16">
-                Start a new conversation with someone to get started
+                No contacts.
               </p>
             ) : (
               contacts.map((contact) => (
                 <li
-                  key={getContactUserId(contact)}
-                  className={`list-row cursor-pointer hover:bg-base-200 ${
-                    selectedContact && getContactUserId(selectedContact) === getContactUserId(contact)
-                      ? "bg-base-200"
-                      : ""
-                  }`}
-                  onClick={() => setSelectedContact(contact)}
+                  key={contact.contactUserId}
+                  className={`cursor-pointer p-2 hover:bg-base-200 ${selectedContact?.contactUserId === contact.contactUserId ? "bg-base-200" : ""
+                    }`}
+                  onClick={() => handleContactSelect(contact)}
                 >
-                  <div className="bg-neutral text-neutral-content place-content-center rounded-full w-10 h-10">
-                    {/* <FontAwesomeIcon icon={faUser} /> */}
+                  <div className="flex place-content-between items-start">
+                    <UserAvatar src={contact.contactUserAvatar} username={contact.contactUsername} size="lg" />
+                    <span className="text-xs text-base-content/50">
+                      {new Date(contact.sentAt).toLocaleString(undefined, {
+                        dateStyle: "short",
+                        timeStyle: "short",
+                      })}
+                    </span>
                   </div>
-                  <div>
-                    <div>{contact.contactUsername}</div>
+                  <div className="flex justify-between items-center text-md">
+                    <span className="truncate">
+                      {contact.userIdFrom === session.userId ? "You: " : ""}
+
+                      {contact.latestMessage ? (
+                        contact.latestMessage
+                      ) : (
+                        <span className="italic opacity-80">
+                          <FontAwesomeIcon icon={faFileImage} /> Image
+                        </span>
+                      )}
+                    </span>
+                    {contact.unreadMessageCount > 0 && (
+                      <span className="badge badge-info badge-sm text-info-content">{contact.unreadMessageCount}</span>
+                    )}
                   </div>
-                  <p className="list-col-wrap text-xs">{contact.latestMessage}</p>
                 </li>
               ))
             )}
           </ul>
         </div>
         {/* Conversation (Right) */}
-        <div className="w-2/3 flex flex-col">
+        <div className={`w-full lg:w-2/3 flex flex-col ${showConversation ? "flex" : "hidden md:flex"}`}>
           {selectedContact ? (
-            <div className="overflow-y-auto flex flex-col flex-grow">
+            <div className="relative overflow-y-auto flex flex-col flex-grow">
+              {/* Header with contact info and action buttons */}
               <div className="flex h-14 justify-between items-center bg-base-100 shadow-md p-2">
-                <Link href={`/profile/${getContactUserId(selectedContact)}`}>
-                  <div className="avatar items-center gap-2">
-                    <div className="bg-neutral text-neutral-content place-content-center rounded-full w-10">
-                      {/* <FontAwesomeIcon icon={faUser} /> */}
-                    </div>
-                    <span className="text-md">{selectedContact.contactUsername}</span>
-                  </div>
-                </Link>
-                <div className="flex gap-1 place-items-center">
-                  {inSelection && (
-                    <div className="badge badge-outline badge-primary">Selected {selectedMessages.size} messages</div>
-                  )}
-
-                  {/* Options menu */}
-                  <div className="dropdown dropdown-end">
-                    <div tabIndex={0} role="button" className={`btn btn-ghost btn-circle btn-md`}>
-                      <FontAwesomeIcon icon={faEllipsis} size="xl" />
-                    </div>
-                    <ul tabIndex={0} className="dropdown-content menu bg-base-100 rounded-box z-10 shadow-lg w-26">
-                      {/* Selection mode toggle */}
-                      <li>
-                        <a onClick={handleSelectionButton}>
-                          <FontAwesomeIcon icon={inSelection ? faCheckedSquare : faCheckSquare} />
-                          <span>{inSelection ? "Cancel" : "Select"}</span>
-                        </a>
-                      </li>
-
-                      {/* Delete option - only visible when in selection mode and messages selected */}
-                      {inSelection && selectedMessages.size > 0 && (
-                        <li>
-                          <a onClick={deleteMessages}>
-                            <FontAwesomeIcon icon={faTrashAlt} />
-                            <span>Delete</span>
-                          </a>
-                        </li>
+                <div className="flex items-center gap-1">
+                  {/* Back Button */}
+                  <button className="btn btn-ghost btn-circle btn-sm" onClick={handleBackButton}>
+                    <FontAwesomeIcon icon={faArrowLeft} size="xl" />
+                  </button>
+                  {/* Contact info and avatar */}
+                  <Link href={`/profile/${selectedContact.contactUserId}`}>
+                    <UserAvatar src={selectedContact.contactUserAvatar} username={selectedContact.contactUsername} />
+                  </Link>
+                </div>
+                {/* Action buttons */}
+                <div className="flex gap-2 items-center">
+                  {inSelection ? (
+                    <>
+                      {/* Show count and delete/cancel buttons when in selection mode */}
+                      <span className="text-sm font-medium mr-2">{selectedMessages.size} selected</span>
+                      {selectedMessages.size > 0 && (
+                        <button
+                          className="btn btn-soft btn-error btn-sm"
+                          onClick={() => deleteMessages()}
+                          aria-label="Delete selected messages"
+                        >
+                          <FontAwesomeIcon icon={faTrashAlt} />
+                          Delete
+                        </button>
                       )}
-
-                      {/* Report option */}
-                      <li>
-                        <a>
-                          <FontAwesomeIcon icon={faFlag} />
-                          <span>Report</span>
-                        </a>
-                      </li>
-                    </ul>
-                  </div>
+                      <button
+                        className="btn btn-sm"
+                        onClick={() => handleSelectionButton()}
+                        aria-label="Cancel selection"
+                      >
+                        Cancel
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      {/* Enter selection mode */}
+                      <button
+                        className="btn btn-sm btn-ghost"
+                        onClick={() => handleSelectionButton()}
+                        aria-label="Select messages"
+                      >
+                        <FontAwesomeIcon icon={faCheckSquare} size="xl" />
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
 
               {/* Messages */}
-              <div className="flex-grow">
-                {messages.map((message) => (
-                  <ChatMessage
-                    key={message.messageId}
-                    isOwner={message.userIdFrom === session.userId}
-                    message={message}
-                    isSelected={selectedMessages.has(message.messageId)}
-                    onMessageClick={toggleSelection}
-                  />
-                ))}
+              <div ref={conversationRef} className="flex flex-col-reverse flex-grow overflow-y-auto px-2">
+                {/* Map messages */}
+                {conversation.map((message) => {
+                  // Find the original message if this is a reply
+                  let originalMessage: IncomingMessage | undefined = undefined;
+                  if (message.attachTo && message.attachTo !== 0) {
+                    originalMessage = conversation.find((m) => m.messageId === message.attachTo) ?? {
+                      messageId: message.attachTo,
+                      userIdFrom: 0,
+                      userIdTo: 0,
+                      content: "[Tap to load and jump to original message]",
+                      isActive: true,
+                      attachTo: 0,
+                      sentAt: new Date().toISOString(),
+                      readAt: null,
+                      imageAPIList: null,
+                    };
+                  }
+
+                  return (
+                    <ChatMessage
+                      key={message.messageId}
+                      myUserId={session.userId!}
+                      message={message}
+                      isSelected={selectedMessages.has(message.messageId)}
+                      onMessageClick={toggleSelection}
+                      handleSelectOption={handleSelectionButton}
+                      handleDeleteOption={deleteMessages}
+                      isInSelectionMode={inSelection}
+                      handleReplyOption={(messageId) =>
+                        setReplyTo(conversation.find((msg) => msg.messageId === messageId) || null)
+                      }
+                      handleScrollToMessage={handleScrollToMessage}
+                      replyTo={originalMessage}
+                      contactUsername={selectedContact.contactUsername}
+                    />
+                  );
+                })}
+                {/* Observer target and loading state for older messages */}
+                <div ref={messageLoaderRef} className="py-2 text-center">
+                  {isLoadingMoreMessages ? (
+                    <span className="loading loading-spinner loading-md"></span>
+                  ) : !hasMoreMessages && conversation.length > 0 ? (
+                    <p className="text-xs text-base-content/50">This is the begining of the conversation</p>
+                  ) : (
+                    <div className="h-1"></div> // Placeholder for observer
+                  )}
+                </div>
               </div>
-              {/* Please create a custom input field component with image input */}
-              <div className="flex p-2 gap-2">
-                <input
-                  type="text"
-                  className="input input-bordered w-full"
-                  placeholder="Type here"
-                  value={messageText}
-                  onChange={(e) => setMessageText(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                />
+
+              {/* Scroll to Bottom Button */}
+              {showScrollToBottom && (
+                <button
+                  onClick={() => scrollToBottom()}
+                  className="absolute bottom-20 right-4 btn btn-circle btn-sm z-40 shadow-lg"
+                >
+                  <FontAwesomeIcon icon={faAngleDown} />
+                </button>
+              )}
+
+              {/* Input Area */}
+              <div className="flex flex-col p-2 bg-base-100 border border-base-300">
+                {/* Reply Indicator */}
+                {replyTo && (
+                  <div className="flex justify-between items-center p-2 mb-2 rounded-md bg-base-200 border-l-4 border-primary">
+                    <div className="text-xs overflow-hidden">
+                      <p className="font-semibold flex items-center gap-1">
+                        {replyTo.userIdFrom === session.userId ? "You" : selectedContact.contactUsername}
+                      </p>
+                      <p className="truncate opacity-70">
+                        {replyTo.content || (replyTo.imageAPIList ? "[Image]" : "[Original message]")}
+                      </p>
+                    </div>
+                    {/* Remove button */}
+                    <button onClick={() => setReplyTo(null)} className="btn btn-xs btn-circle bg-base-100">
+                      <FontAwesomeIcon icon={faXmark} />
+                    </button>
+                  </div>
+                )}
+                {/* Image Previews */}
+                {filePreviews.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-2 p-2">
+                    {filePreviews.map((previewUrl, index) => (
+                      <div key={index} className="indicator">
+                        <img src={previewUrl} alt={`Preview ${index}`} className="h-16 w-16 object-cover rounded" />
+                        <div className="indicator-item">
+                          <button onClick={() => removeImagePreview(index)} className="btn btn-circle btn-soft btn-xs">
+                            <FontAwesomeIcon icon={faMinus} size="lg" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {/* Text Input and Buttons */}
+                <div className="flex gap-2 items-center">
+                  {/* Hidden File Input */}
+                  <input ref={fileInputRef} type="file" accept="image/*" multiple hidden onChange={handleImageSelect} />
+                  {/* Image Upload Button */}
+                  <button
+                    className="btn btn-ghost btn-circle"
+                    onClick={() => fileInputRef.current?.click()} // Trigger hidden input
+                    aria-label="Attach image"
+                  >
+                    <FontAwesomeIcon icon={faImages} size="lg" />
+                  </button>
+                  <input
+                    type="text"
+                    className="input input-ghost flex-grow"
+                    placeholder="Type here"
+                    value={messageText}
+                    onChange={(e) => setMessageText(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        sendMessage();
+                      }
+                    }}
+                  />
+                  {/* Send Button */}
+                  <button className="btn btn-primary" onClick={sendMessage}>
+                    Send
+                  </button>
+                </div>
               </div>
             </div>
           ) : (
@@ -475,6 +904,7 @@ export default function Messenger({ initialContacts }: { initialContacts: Contac
           )}
         </div>
       </div>
+
       {/* Right column */}
       <div className="hidden lg:block w-1/8"></div>
     </div>

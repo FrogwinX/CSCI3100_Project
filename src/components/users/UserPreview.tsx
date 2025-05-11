@@ -1,0 +1,106 @@
+"use client";
+
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faXmark, faBan } from "@fortawesome/free-solid-svg-icons";
+import { faHeart, faCommentDots } from "@fortawesome/free-regular-svg-icons";
+import { Users } from "@/utils/users";
+import { userInteract } from "@/utils/profiles";
+import Link from "next/link";
+import { useState } from "react";
+import UserAvatar from "@/components/users/UserAvatar";
+
+export default function UserPreview({ user }: { user: Users }) {
+  const [isFollowed, setIsFollowed] = useState(user.isUserFollowed);
+  const [isBlocked, setIsBlocked] = useState(user.isUserBlocked);
+
+  const handleFollowToggle = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent navigation when clicking the button
+    e.stopPropagation(); // Stop event propagation
+
+    // Determine whether to follow or unfollow based on current state
+    const action = isFollowed ? "unfollow" : "follow";
+
+    // Call the userInteract function with the appropriate action
+    userInteract(user.userId.toString(), action).then((success) => {
+      if (success) {
+        setIsFollowed(!isFollowed);
+      }
+    });
+  };
+
+  const handleBlockToggle = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent navigation when clicking the button
+    e.stopPropagation(); // Stop event propagation
+
+    // Determine whether to block or unblock based on current state
+    const action = isBlocked ? "unblock" : "block";
+
+    // Call the userInteract function with the appropriate action
+    userInteract(user.userId.toString(), action).then((success) => {
+      if (success) {
+        setIsBlocked(!isBlocked);
+      }
+    });
+  };
+
+
+  return (
+    <Link href={`/profile/${user.userId}`} className="flex w-full">
+      <div className="card hover:bg-base-200/40 px-2 w-full">
+        <div className="card-body p-4 gap-2 w-full ">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-4">
+              {/* User avatar */}
+              <UserAvatar src={user.avatar} size="lg" />
+              {/* Username */}
+              <div>
+                <h3 className="text-lg font-bold">{user.username}</h3>
+                <p className="line-clamp-1 text-base-content/70">{user.description}</p>
+              </div>
+            </div>
+
+            {/* Follow/Unfollow Button */}
+            <div className="flex gap-2">
+              {isBlocked ? (
+                <button
+                  onClick={handleBlockToggle}
+                  className="btn btn-blocks btn-sm btn-primary" //color
+                >
+                  <FontAwesomeIcon icon={faXmark} size="2xl" />
+                  Unblock
+                </button>
+              ) : (
+                <button onClick={handleBlockToggle} className="btn btn-sm btn-error bg-red-400 text-error-content border-none">
+                  <FontAwesomeIcon icon={faBan} size="xl" />
+                  Block
+                </button>
+              )}
+
+
+              {isFollowed ? (
+                <button
+                  onClick={handleFollowToggle}
+                  className="btn btn-sm btn-error bg-red-400 text-error-content border-none" //color
+                >
+                  <FontAwesomeIcon icon={faXmark} size="2xl" />
+                  Unfollow
+                </button>
+              ) : (
+                <button onClick={handleFollowToggle} className="btn btn-blocks btn-sm btn-primary">
+                  <FontAwesomeIcon icon={faHeart} size="xl" />
+                  Follow
+                </button>
+              )}
+              <button className="btn btn-sm btn-content">
+                <FontAwesomeIcon icon={faCommentDots} size="xl" />
+                Message
+              </button>
+            </div>
+
+            {/* button that jumps to the direct message of the target user */}
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}

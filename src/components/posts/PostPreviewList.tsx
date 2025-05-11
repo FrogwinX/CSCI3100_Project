@@ -10,18 +10,19 @@ import LoadingPostPreview from "@/components/posts/LoadingPostPreview";
 export default function PostList({
   filter,
   keyword,
+  authorUserId,
 }: {
-  filter?: "latest" | "recommended" | "following" | undefined;
+  filter?: "latest" | "recommended" | "following" | "created" | undefined;
   keyword?: string | undefined;
+  authorUserId?: string;
 }) {
   const { selectedTags: tags, setPostsLoading } = useTagContext();
   const [posts, setPosts] = useState<Post[]>([]);
+  const [currentPostsFetched, setCurrentPostsFetched] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hasMore, setHasMore] = useState(true);
   const observerTarget = useRef<HTMLDivElement>(null);
   const [excludedPostIds, setExcludedPostIds] = useState<Set<number>>(new Set());
-  const [fetchAttempts, setFetchAttempts] = useState(0);
-  const MAX_ATTEMPTS = 10; // Limit fetch attempts to prevent infinite loops
 
   // Synchronize local loading state with the global tag context loading state
   useEffect(() => {
@@ -44,20 +45,31 @@ export default function PostList({
     });
   };
 
+  const removePostFromPostlist = (postId: string) => {
+    console.log("Removing post with ID:", postId);
+    setPosts((prevPosts) => prevPosts.filter((post) => post.postId !== postId));
+  }
+
   useEffect(() => {
     setIsLoading(true);
     // Reset states when tags change
     setPosts([]);
     setExcludedPostIds(new Set());
     setHasMore(true);
-    setFetchAttempts(0);
 
     const fetchInitialPosts = async () => {
       try {
         let initialPosts;
         //switch between getPosts and getSearchPosts based on keyword
         if (!keyword) {
-          initialPosts = await getPosts({ filter });
+          switch (filter) {
+            case "created":
+              initialPosts = await getPosts({ filter, authorUserId });
+              break;
+            default:
+              initialPosts = await getPosts({ filter });
+              break;
+          }
         } else {
           initialPosts = await getSearchPosts({ keyword });
         }
@@ -71,6 +83,7 @@ export default function PostList({
         }
 
         const filteredPosts = filterPostsByTags(initialPosts);
+        setCurrentPostsFetched(filteredPosts);
 
         // Update excludedPostIds with the initial posts
         const newExcludedIds = new Set<number>();
@@ -97,11 +110,10 @@ export default function PostList({
   // Effect to handle auto-loading more posts if filtered results are empty
   useEffect(() => {
     // If no posts after filtering, but there might be more, try loading more
-    if (!isLoading && posts.length === 0 && hasMore && fetchAttempts < MAX_ATTEMPTS) {
-      setFetchAttempts((prev) => prev + 1);
+    if (!isLoading && (posts.length === 0 || currentPostsFetched.length === 0) && hasMore) {
       loadMorePosts();
     }
-  }, [posts, hasMore, fetchAttempts]);
+  }, [posts, hasMore, currentPostsFetched]);
 
   // Infinite scrolling setup
   useEffect(() => {
@@ -136,12 +148,25 @@ export default function PostList({
     try {
       let newPosts;
       //switch between getPosts and getSearchPosts based on keyword
+
       if (!keyword) {
-        newPosts = await getPosts({
-          filter,
-          excludingPostIdList: Array.from(excludedPostIds),
-          count: 10,
-        });
+        switch (filter) {
+          case "created":
+            newPosts = await getPosts({
+              filter,
+              excludingPostIdList: Array.from(excludedPostIds),
+              count: 10,
+              authorUserId: authorUserId,
+            });
+            break;
+          default:
+            newPosts = await getPosts({
+              filter,
+              excludingPostIdList: Array.from(excludedPostIds),
+              count: 10,
+            });
+            break;
+        }
       } else {
         newPosts = await getSearchPosts({
           keyword,
@@ -149,6 +174,7 @@ export default function PostList({
           count: 10,
         });
       }
+
       // No posts are returned from the API
       if (!newPosts || newPosts.length === 0) {
         setHasMore(false);
@@ -164,8 +190,11 @@ export default function PostList({
         return newExcludedIds;
       });
 
-      console.log("New Posts:", newPosts);
-      console.log("Filtered Posts:", filteredPosts);
+
+      console.log("Load more Posts:", newPosts);
+      console.log("excluded:", excludedPostIds)
+
+      setCurrentPostsFetched(filteredPosts);
 
       setPosts((prevPosts) => [...prevPosts, ...filteredPosts]);
 
@@ -187,7 +216,7 @@ export default function PostList({
           {/* Map through posts and add dividers between them */}
           {posts.map((post) => (
             <div key={post.postId} className="w-full">
-              <PostPreview post={post} />
+              <PostPreview post={post} removePostFromPostlist={removePostFromPostlist} />
               {/* Add divider after each post except the last one */}
               <div className="divider my-0"></div>
             </div>

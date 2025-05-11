@@ -1,24 +1,32 @@
 "use client";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEllipsis, faPenToSquare, faFlag, faUser } from "@fortawesome/free-solid-svg-icons";
+import { faEllipsis, faPenToSquare } from "@fortawesome/free-solid-svg-icons";
 import { faTrashAlt } from "@fortawesome/free-regular-svg-icons";
 import { MouseEvent } from "react";
 import { useRouter } from "next/navigation";
 import moment from "moment";
 import Link from "next/link";
 import { useSession } from "@/hooks/useSession";
+import UserAvatar from "@/components/users/UserAvatar";
+import { deletePostOrComment } from "@/utils/posts";
 
 export default function PostHeader({
   postId,
+  postUserId,
   postUsername,
   postUpdatedAt,
+  postUserAvatar,
   size = "sm",
+  removePostFromPostlist = () => {},
 }: {
   postId: string;
+  postUserId: string;
   postUsername: string;
   postUpdatedAt: string;
+  postUserAvatar: string | null;
   size?: "sm" | "md";
+  removePostFromPostlist?: (postId: string) => void;
 }) {
   const router = useRouter();
   const { session } = useSession();
@@ -33,17 +41,12 @@ export default function PostHeader({
 
   const handleDelete = async (e: MouseEvent) => {
     e.stopPropagation();
-    alert("Delete to be implemented");
+    deletePostOrComment(postId);
+    if (removePostFromPostlist) {
+      removePostFromPostlist(postId);
+    }
   };
 
-  const handleReport = (e: MouseEvent) => {
-    e.stopPropagation();
-    alert("Report to be implemented");
-  };
-
-  const avatarSize = size === "md" ? "w-10" : "w-8";
-  const iconSize = size === "md" ? "lg" : "1x";
-  const usernameSize = size === "md" ? "text-md" : "text-sm";
   const textSize = size === "md" ? "text-sm" : "text-xs";
 
   return (
@@ -51,13 +54,8 @@ export default function PostHeader({
       {/** Avatar, username, time */}
       <div className="flex">
         {/** Avatar and username */}
-        <Link href={`/profile/${postUsername}`}>
-          <div className="avatar avatar-placeholder items-center gap-1">
-            <div className={`bg-neutral text-neutral-content ${avatarSize} rounded-full`}>
-              <FontAwesomeIcon icon={faUser} size={iconSize} />
-            </div>
-            <span className={`${usernameSize}`}>{postUsername}</span>
-          </div>
+        <Link href={`/profile/${postUserId}`}>
+          <UserAvatar src={postUserAvatar} username={postUsername} size={size} />
         </Link>
         {/** Time */}
         <div className="flex items-center mx-0.5 gap-0.5">
@@ -65,15 +63,16 @@ export default function PostHeader({
           <span className={`${textSize} font-light`}>{moment(postUpdatedAt).fromNow()}</span>
         </div>
       </div>
-      <div className="flex gap-1">
-        {/* Options menu */}
-        <div className="dropdown dropdown-end">
-          <div tabIndex={0} role="button" className={`btn btn-ghost btn-circle btn-${size}`}>
-            <FontAwesomeIcon icon={faEllipsis} size="xl" />
-          </div>
-          <ul tabIndex={0} className="dropdown-content menu bg-base-100 rounded-box z-10 shadow-lg w-26">
-            {/* Show edit/delete only if user is author */}
-            {isAuthor && (
+      {isAuthor && (
+        <div className="flex gap-1">
+          {/* Options menu */}
+          <div className="dropdown dropdown-end">
+            <div tabIndex={0} role="button" className={`btn btn-ghost btn-circle btn-${size}`}>
+              <FontAwesomeIcon icon={faEllipsis} size="xl" />
+            </div>
+            <ul tabIndex={0} className="dropdown-content menu bg-base-100 rounded-box z-10 shadow-lg w-26">
+              {/* Show edit/delete only if user is author */}
+
               <>
                 <li className="w-full">
                   <a onClick={handleEdit}>
@@ -88,20 +87,10 @@ export default function PostHeader({
                   </a>
                 </li>
               </>
-            )}
-
-            {/* Show report only if user is NOT author */}
-            {!isAuthor && (
-              <li>
-                <a onClick={handleReport}>
-                  <FontAwesomeIcon icon={faFlag} />
-                  <span>Report</span>
-                </a>
-              </li>
-            )}
-          </ul>
+            </ul>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

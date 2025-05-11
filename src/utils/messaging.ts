@@ -1,6 +1,7 @@
+"use client";
+
 import SockJS from "sockjs-client";
 import { Client, Message } from "@stomp/stompjs";
-import { getSession } from "@/utils/sessions";
 
 // Message types
 export interface OutgoingMessage {
@@ -27,7 +28,8 @@ export interface IncomingMessage {
   userIdFrom: number;
   userIdTo: number;
   content: string;
-  attachTo: number | null;
+  isActive: boolean;
+  attachTo: number;
   sentAt: string;
   readAt: string | null;
   imageAPIList: string[] | null;
@@ -35,7 +37,10 @@ export interface IncomingMessage {
 
 export interface Contact {
   messageId: number;
+  contactUserId: number;
   contactUsername: string;
+  contactUserAvatar: string | null;
+  isContactUserBlocked: boolean;
   latestMessage: string;
   userIdFrom: number;
   usernameFrom: string;
@@ -50,6 +55,22 @@ interface ContactListResponse {
   message: string;
   data: {
     contactList: Contact[];
+    isSuccess: boolean;
+  };
+}
+
+interface MessageHistoryResponse {
+  message: string;
+  data: {
+    messageHistoryList: IncomingMessage[];
+    isSuccess: boolean;
+  };
+}
+
+interface UnreadMessageCountReponse {
+  message: string;
+  data: {
+    unreadMessageCount: number;
     isSuccess: boolean;
   };
 }
@@ -99,7 +120,7 @@ export class MessagingService {
       this.updateStatus(ConnectionStatus.CONNECTING);
 
       try {
-        const socket = new SockJS("https://flowchatbackend.azurewebsites.net/chat", null, {
+        const socket = new SockJS("http://localhost:8080/chat", null, {
           // Specify preferred transports to avoid unnecessary fallback attempts
           transports: ["xhr-streaming", "websocket", "xhr-polling"],
         });
@@ -109,12 +130,10 @@ export class MessagingService {
           connectHeaders: {
             Authorization: `Bearer ${token}`,
           },
-          reconnectDelay: 3000,
-          heartbeatIncoming: 30000,
-          heartbeatOutgoing: 30000,
         });
 
         this.client.onConnect = () => {
+          console.log("Connected to WebSocket server");
           this.updateStatus(ConnectionStatus.CONNECTED);
           resolve();
         };
@@ -201,18 +220,13 @@ export class MessagingService {
 
 export async function getContactsList(count: number): Promise<Contact[]> {
   try {
-    const session = await getSession();
-
-    let apiUrl = `https://flowchatbackend.azurewebsites.net/api/Chat/getContactList?userId=${session.userId}&contactNum=${count}`;
+    let apiUrl = `/api/Chat/getContactList?contactNum=${count}`;
 
     apiUrl += `&excludingUserIdList=0`;
 
     // Fetch data from the API
     const response = await fetch(apiUrl, {
       method: "GET",
-      headers: {
-        Authorization: `Bearer ${session.token}`,
-      },
     });
 
     if (!response.ok) {
@@ -237,6 +251,89 @@ export async function getContactsList(count: number): Promise<Contact[]> {
   } catch (error) {
     console.error("Error fetching contact list:", error);
     return [];
+  }
+}
+
+export async function getMessageHistory(
+  contactUserId: number,
+  count: number,
+  excludingMessageIdList?: number[]
+): Promise<IncomingMessage[]> {
+  try {
+    let apiUrl = `/api/Chat/getMessageHistoryList?contactUserId=${contactUserId}&messageNum=${count || 15}`;
+
+    // Filter out fetched messages
+    if (excludingMessageIdList) {
+      while (excludingMessageIdList.length > 0) {
+        //add all excludingMessageId to the URL
+        apiUrl += `&excludingMessageIdList=${excludingMessageIdList.shift()}`;
+      }
+    } else {
+      //default value = 0
+      apiUrl += `&excludingMessageIdList=0`;
+    }
+
+    // Fetch data from the API
+    const response = await fetch(apiUrl, {
+      method: "GET",
+    });
+
+    if (!response.ok) {
+      console.error(`API error: ${response.status} ${response.statusText}`);
+      return [];
+    }
+
+    const data: MessageHistoryResponse = await response.json();
+
+    // Safer property access with detailed logging
+    if (!data) {
+      console.error("Empty response from API");
+      return [];
+    }
+
+    if (!data.data) {
+      console.error("Response missing data property:", data);
+      return [];
+    }
+
+    return data.data.messageHistoryList;
+  } catch (error) {
+    console.error("Error fetching message history:", error);
+    return [];
+  }
+}
+
+export async function getUnreadMessageCount(userId: number): Promise<number> {
+  try {
+    const apiUrl = `/api/Chat/getUnreadMessageCount?userId=${userId}`;
+
+    // Fetch data from the API
+    const response = await fetch(apiUrl, {
+      method: "GET",
+    });
+
+    if (!response.ok) {
+      console.error(`API error: ${response.status} ${response.statusText}`);
+      return 0;
+    }
+
+    const data: UnreadMessageCountReponse = await response.json();
+
+    // Safer property access with detailed logging
+    if (!data) {
+      console.error("Empty response from API");
+      return 0;
+    }
+
+    if (!data.data) {
+      console.error("Response missing data property:", data);
+      return 0;
+    }
+
+    return data.data.unreadMessageCount;
+  } catch (error) {
+    console.error("Error fetching unread message count:", error);
+    return 0;
   }
 }
 

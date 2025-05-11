@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useSession } from "@/hooks/useSession";
 import { getAllTags, Tag, getPostById, updatePost } from "@/utils/posts";
 import { useRouter } from "next/navigation";
-import { getProxyImageUrl } from "@/utils/images";
+import { getProxyImageUrl, uploadImage } from "@/utils/images";
 import { Post } from "@/utils/posts";
 
 // EditPost component for editing an existing post
@@ -45,7 +45,7 @@ export default function EditPost({ params: paramsPromise }: { params: Promise<{ 
         setTagFetchError("Please log in to load tags");
         return;
       }
-
+      console.log(images);
       try {
         // Fetch all available tags
         const allTags = await getAllTags();
@@ -116,7 +116,7 @@ export default function EditPost({ params: paramsPromise }: { params: Promise<{ 
                   <div class="image-container">
                     <div class="skeleton w-full h-48"></div>
                     <img src="${proxyImageUrl}" alt="Existing Image" style="max-width: 100%; height: auto; display: none;" data-image-id="${imageUrl}" />
-                    <p class="text-red-500" style="display: none;">Failed to load image: Server error</p>
+                    <p class="text-red-500" style="display: none;"></p>
                   </div>
                 `;
                 placeholder.replaceWith(imgWrapper);
@@ -152,6 +152,19 @@ export default function EditPost({ params: paramsPromise }: { params: Promise<{ 
 
           const cleanText = div.textContent || "";
           setTextLength(getTextLength(cleanText));
+
+          const imageIndexes = (cleanText.match(/\[image:(?:image-)?(\d+)\.jpg\]/g) || [])
+            .map(tag => Number(tag.match(/\[image:(?:image-)?(\d+)\.jpg\]/)?.[1] ?? 0));
+          console.log("x values in [image:x]:", imageIndexes);
+          // Check if continuous
+          const isContinuous = imageIndexes.every((val, idx) => val === idx + 1);
+          console.log("Are x values continuous and starting from 1:", isContinuous);
+
+          const brTags = cleanText.match(/\[br\]/g) || [];
+          console.log("Number of [br] tags:", brTags.length);
+
+          const htmlTags = cleanText.match(/<[^>]+>/g) || [];
+          console.log("Remaining html tags:", htmlTags);
         } else {
           setTagFetchError("Post not found");
         }
@@ -187,8 +200,8 @@ export default function EditPost({ params: paramsPromise }: { params: Promise<{ 
   };
 
   // Handle image upload
-  const handleImageUpload = () => {
-    const file = fileInputRef.current?.files?.[0];
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (file) {
       // Validate file type (only PNG and JPEG allowed)
       if (!file.type.match("image/(png|jpeg)")) {
@@ -203,25 +216,40 @@ export default function EditPost({ params: paramsPromise }: { params: Promise<{ 
         return;
       }
 
-      // Rename file using a unique format
-      const extension = file.name.split(".").pop();
-      const newFileName = `new-image-${images.length + existingImages.length + 1}.${extension}`;
-      const renamedFile = new File([file], newFileName, { type: file.type });
+      try {
+        // Upload the image and get the imageAPI
+        const { imageAPI } = await uploadImage(file);
+        if (!imageAPI) {
+          setSubmitError("Failed to upload image");
+          return;
+        }
 
-      // Add the image to the images state
-      setImages((prevImages) => [...prevImages, renamedFile]);
+        // Add the image to the images state
+        setImages((prevImages) => [...prevImages, file]);
 
-      // Display the image in the editor using a temporary URL and insert a placeholder
-      const imgSrc = URL.createObjectURL(file);
-      const imgElement = document.createElement("img");
-      imgElement.src = imgSrc;
-      imgElement.alt = "Uploaded Image";
-      imgElement.dataset.imageId = newFileName;
-      imgElement.style.maxWidth = "100%";
-      imgElement.style.height = "auto";
-      if (contentRef.current) {
-        contentRef.current.appendChild(imgElement);
-        contentRef.current.appendChild(document.createElement("br"));
+        // 在光標處插入 [image:xxx]
+        if (contentRef.current) {
+          const selection = window.getSelection();
+          if (selection && selection.rangeCount > 0) {
+            const range = selection.getRangeAt(0);
+            const placeholder = `[image:${imageAPI}]`;
+            range.deleteContents();
+            range.insertNode(document.createTextNode(placeholder));
+            // 移動光標到placeholder之後
+            range.collapse(false);
+            selection.removeAllRanges();
+            selection.addRange(range);
+            // 觸發內容變更
+            handleContentChange();
+          } else {
+            // 沒有光標時直接加到最後
+            contentRef.current.appendChild(document.createTextNode(`[image:${imageAPI}]`));
+            handleContentChange();
+          }
+        }
+      } catch (error) {
+        console.error("Error uploading image:", error);
+        setSubmitError("Failed to upload image");
       }
     }
   };
@@ -242,6 +270,41 @@ export default function EditPost({ params: paramsPromise }: { params: Promise<{ 
     if (contentRef.current) {
       const div = document.createElement("div");
       div.innerHTML = contentRef.current.innerHTML;
+
+      // Log original HTML content
+      console.log('Original HTML content:', div.innerHTML);
+
+      // Replace custom tags with HTML tags
+      let content = div.innerHTML;
+      content = content.replace(/\[b\](.*?)\[\/b\]/g, '<b>$1</b>');
+      content = content.replace(/\[i\](.*?)\[\/i\]/g, '<i>$1</i>');
+      content = content.replace(/\[u\](.*?)\[\/u\]/g, '<u>$1</u>');
+      content = content.replace(/<br\s*\/?>/g, '[br]');
+      // 彻底去除所有<div>和</div>
+      content = content.replace(/<div\s*\/?>/g, '');
+      content = content.replace(/<\/div>/g, '');
+
+      // Log processed content
+      console.log('Processed content:', content);
+
+      // Log custom tags found
+      const boldTags = (content.match(/\[b\](.*?)\[\/b\]/g) || []).length;
+      const italicTags = (content.match(/\[i\](.*?)\[\/i\]/g) || []).length;
+      const underlineTags = (content.match(/\[u\](.*?)\[\/u\]/g) || []).length;
+      const brTags = (content.match(/\[br\]/g) || []).length;
+      const divTags = (content.match(/\[div\](.*?)\[\/div\]/g) || []).length;
+      const imageTags = (content.match(/\[image:[^\]]+\]/g) || []).length;
+
+      console.log('Custom tags found:', {
+        bold: boldTags,
+        italic: italicTags,
+        underline: underlineTags,
+        br: brTags,
+        div: divTags,
+        image: imageTags
+      });
+
+      // Handle images
       const images = div.querySelectorAll("img");
       const remainingImageIds: string[] = [];
 
@@ -357,6 +420,7 @@ export default function EditPost({ params: paramsPromise }: { params: Promise<{ 
     }
 
     try {
+      console.log("images", images, "existingImages", existingImages);
       await updatePost(postId, title, content, tags, images, existingImages);
       router.push(`/forum/post/${postId}`);
     } catch (error: unknown) {
@@ -376,6 +440,42 @@ export default function EditPost({ params: paramsPromise }: { params: Promise<{ 
     }
   };
 
+  // Add these functions before the return statement
+  const insertTag = (type: 'bold' | 'italic' | 'underline') => {
+    if (!contentRef.current) return;
+
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return;
+
+    const range = selection.getRangeAt(0);
+    const selectedText = range.toString();
+
+    let tagStart = '';
+    let tagEnd = '';
+
+    switch (type) {
+      case 'bold':
+        tagStart = '[b]';
+        tagEnd = '[/b]';
+        break;
+      case 'italic':
+        tagStart = '[i]';
+        tagEnd = '[/i]';
+        break;
+      case 'underline':
+        tagStart = '[u]';
+        tagEnd = '[/u]';
+        break;
+    }
+
+    const newText = tagStart + selectedText + tagEnd;
+    range.deleteContents();
+    range.insertNode(document.createTextNode(newText));
+
+    // Trigger content change
+    handleContentChange();
+  };
+
   return (
     <div className="w-full px-4 pt-4 pb-6 min-h-screen">
       <h1 className="text-4xl font-bold mb-6">Edit Post</h1>
@@ -387,10 +487,10 @@ export default function EditPost({ params: paramsPromise }: { params: Promise<{ 
             onChange={(e) => setTitle(e.target.value)}
             maxLength={100}
             placeholder="Title"
-            className="input input-bordered w-full rounded-lg"
+            className="input input-bordered w-full rounded-lg border-base-300 focus:border-primary focus:ring-2 focus:ring-primary/20"
           />
           <div className="flex justify-end">
-            <span className="text-sm text-gray-500 mt-1">{title.length}/100</span>
+            <span className="text-sm text-base-content/70 mt-1">{title.length}/100</span>
           </div>
         </div>
         <div className="form-control">
@@ -406,16 +506,16 @@ export default function EditPost({ params: paramsPromise }: { params: Promise<{ 
                   </span>
                 ))
               ) : (
-                <span className="text-sm text-gray-500">No tags selected</span>
+                <span className="text-sm text-base-content/70">No tags selected</span>
               )}
             </div>
           </div>
           {isTagMenuOpen && (
-            <div className="mt-2 p-4 bg-gray-100 rounded-lg shadow max-h-60 overflow-y-auto">
+            <div className="mt-2 p-4 bg-base-200 rounded-lg shadow max-h-60 overflow-y-auto">
               {loading ? (
                 <p>Loading tags...</p>
               ) : tagFetchError ? (
-                <p className="text-red-500">{tagFetchError}</p>
+                <p className="text-error">{tagFetchError}</p>
               ) : session?.isLoggedIn ? (
                 allTags.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
@@ -424,9 +524,8 @@ export default function EditPost({ params: paramsPromise }: { params: Promise<{ 
                         key={tag.tagId}
                         type="button"
                         onClick={() => toggleTag(tag)}
-                        className={`btn btn-sm ${
-                          tags.some((t) => t.tagId === tag.tagId) ? "btn-primary" : "btn-accent"
-                        }`}
+                        className={`btn btn-sm ${tags.some((t) => t.tagId === tag.tagId) ? "btn-primary" : "btn-accent"
+                          }`}
                       >
                         {tag.tagName}
                       </button>
@@ -443,20 +542,20 @@ export default function EditPost({ params: paramsPromise }: { params: Promise<{ 
         </div>
         <div className="form-control">
           <label className="label">
-            <span className="label-text">Post Content</span>
+            <span className="label-text text-base-content">Post Content</span>
           </label>
-          <div className="border border-gray-300 rounded-t-lg">
-            <div className="bg-gray-100 p-2 flex space-x-1 border-b border-gray-300">
-              <button type="button" className="btn btn-ghost btn-xs text-gray-600">
+          <div className="border border-base-300 rounded-t-lg">
+            <div className="bg-base-200 p-2 flex space-x-1 border-b border-base-300">
+              <button type="button" className="btn btn-ghost btn-xs text-base-content/70" onClick={() => insertTag('bold')}>
                 <span className="font-bold">B</span>
               </button>
-              <button type="button" className="btn btn-ghost btn-xs text-gray-600">
+              <button type="button" className="btn btn-ghost btn-xs text-base-content/70" onClick={() => insertTag('italic')}>
                 <span className="italic">I</span>
               </button>
-              <button type="button" className="btn btn-ghost btn-xs text-gray-600">
+              <button type="button" className="btn btn-ghost btn-xs text-base-content/70" onClick={() => insertTag('underline')}>
                 <span className="underline">U</span>
               </button>
-              <button type="button" className="btn btn-ghost btn-xs text-gray-600" onClick={handleClipClick}>
+              <button type="button" className="btn btn-ghost btn-xs text-base-content/70" onClick={handleClipClick}>
                 <span>📎</span>
               </button>
               <input
@@ -471,16 +570,16 @@ export default function EditPost({ params: paramsPromise }: { params: Promise<{ 
               ref={contentRef}
               contentEditable
               onInput={handleContentChange}
-              className="w-full p-2 border border-gray-300 rounded-b-lg focus:outline-none"
+              className="w-full p-2 border border-base-300 rounded-b-lg focus:outline-none"
               style={{ minHeight: "10rem", overflowY: "auto" }}
             />
           </div>
           <div className="flex justify-end">
-            <span className="text-sm text-gray-500 mt-1">{textLength}/1000</span>
+            <span className="text-sm text-base-content/70 mt-1">{textLength}/1000</span>
           </div>
         </div>
-        {submitError && <p className="text-red-500">{submitError}</p>}
-        <button type="submit" className="btn bg-[#A3DFFA] text-[#1A3C34] hover:bg-[#8CCFF7] float-right rounded-lg">
+        {submitError && <p className="text-error">{submitError}</p>}
+        <button type="submit" className="btn btn-primary float-right rounded-lg">
           Save
         </button>
       </form>
