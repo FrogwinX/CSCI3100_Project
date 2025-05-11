@@ -1,14 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import PostList from "@/components/posts/PostPreviewList";
 import UserList from "@/components/users/UserPreviewList";
 
-export default function SearchResultsPage() {
+// Create a separate component that uses useSearchParams
+function SearchResults() {
   const [activeTab, setActiveTab] = useState<"posts" | "users">("posts");
   const searchParams = useSearchParams();
   const searchInput = searchParams.get('q') || '';
+
   return (
     <div className="flex flex-col">
       {/* Tab switcher */}
@@ -29,6 +31,15 @@ export default function SearchResultsPage() {
           <UserList searchKeyword={searchInput} />
         )
       }
-    </div >
+    </div>
+  );
+}
+
+// Main component wrapped with Suspense
+export default function SearchResultsPage() {
+  return (
+    <Suspense fallback={<div className="flex justify-center p-8">Loading search results...</div>}>
+      <SearchResults />
+    </Suspense>
   );
 }
