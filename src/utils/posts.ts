@@ -562,10 +562,19 @@ export async function getCommentList(
   comments = comments.slice().sort((a: any, b: any) => {
     const aNum = parseCommentNumber(a.content);
     const bNum = parseCommentNumber(b.content);
-    for (let i = 0; i < Math.max(aNum.length, bNum.length); i++) {
-      if ((aNum[i] || 0) !== (bNum[i] || 0)) return (aNum[i] || 0) - (bNum[i] || 0);
+    
+    // First compare main comment numbers
+    if (aNum[0] !== bNum[0]) {
+      return aNum[0] - bNum[0];
     }
-    return 0;
+    
+    // If main numbers are equal, compare sub-comment numbers
+    if (aNum[1] !== bNum[1]) {
+      return aNum[1] - bNum[1];
+    }
+    
+    // If both numbers are equal, sort by timestamp
+    return new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
   });
 
   // Apply pagination if options are provided

@@ -106,13 +106,19 @@ function stripCommentNumber(str: string) {
   return str.replace(/^C\d+(?:-\d+)?\s*/, "");
 }
 
-function renderCommentContent(str: string, showNumber: boolean) {
+function renderCommentContent(str: string, showNumber: boolean, selfNumber?: string) {
   let html = str;
 
   if (!showNumber) {
-    // strip any reply-to tag and leading comment number
-    html = html.replace(/\(reply to (?:C\d+(?:-\d+)?)\)\s*/, "");
-    html = html.replace(/^C\d+(?:-\d+)?\s*/, "");
+    // 只去掉開頭的自己標號
+    if (selfNumber) {
+      const regex = new RegExp(`^${selfNumber}\\s*`);
+      html = html.replace(regex, "");
+    } else {
+      html = html.replace(/^C\d+(?:-\d+)?\s*/, "");
+    }
+    // 將 (reply to Cx-y) 只顯示 Cx-y 並加樣式
+    html = html.replace(/\(reply to (C\d+(?:-\d+)?)\)\s*/, '<span style="color:#2563eb;font-size:0.95em;font-weight:400;">$1</span> ');
   } else {
     // highlight the reply-to reference
     html = html.replace(
@@ -244,11 +250,20 @@ function CommentItem({
     }
   };
 
-  const commentNumber = numberPrefix ? `${numberPrefix}-${index + 1}` : `C${index + 1}`;
+  // Extract comment number from content or generate new one
+  const extractCommentNumber = (content: string) => {
+    const match = content.match(/^C\d+(?:-\d+)?/);
+    return match ? match[0] : null;
+  };
+
+  const commentNumber = extractCommentNumber(comment.content) || (numberPrefix ? `${numberPrefix}-${index + 1}` : `C${index + 1}`);
+  
+  // Update content with comment number if not present
   let contentWithNumber = comment.content;
-  if (!contentWithNumber.startsWith("C")) {
+  if (!extractCommentNumber(contentWithNumber)) {
     contentWithNumber = `${commentNumber} ${contentWithNumber}`;
   }
+
   const subComments = Array.isArray(comment.commentList)
     ? comment.commentList.slice().sort((a: any, b: any) => {
         const aNum = parseCommentNumber(a.content);
@@ -259,7 +274,11 @@ function CommentItem({
         return 0;
       })
     : [];
-  const nextSubNumber = subComments.length > 0 ? `${commentNumber}-${subComments.length + 1}` : `${commentNumber}-1`;
+
+  // Calculate next sub-comment number
+  const nextSubNumber = subComments.length > 0 
+    ? `${commentNumber}-${subComments.length + 1}` 
+    : `${commentNumber}-1`;
 
   const isMainComment = numberPrefix === "";
   const showSubComments =
@@ -282,11 +301,9 @@ function CommentItem({
           <UserAvatar src={comment.avatar} size="md" />
           <div className="ml-3 w-full">
             <div className="flex items-center gap-2 mb-1">
-              {numberPrefix !== "None" && (
-                <span className="text-xs text-base-content font-mono bg-base-200 rounded px-1.5 py-0.5 mr-1 align-middle">
-                  {commentNumber}
-                </span>
-              )}
+              <span className="text-xs text-base-content font-mono bg-base-200 rounded px-1.5 py-0.5 mr-1 align-middle">
+                {commentNumber}
+              </span>
               <span className="font-semibold text-base align-middle">{comment.username}</span>
               <span className="text-xs text-base-content/70 align-middle">
                 {new Date(comment.updatedAt).toLocaleString(undefined, {
@@ -300,7 +317,7 @@ function CommentItem({
             </div>
             <div className="text-base-content break-words whitespace-pre-wrap">
               <span
-                dangerouslySetInnerHTML={{ __html: renderCommentContent(stripCommentNumber(comment.content), false) }}
+                dangerouslySetInnerHTML={{ __html: renderCommentContent(contentWithNumber, false, commentNumber) }}
               />
             </div>
             <div className="flex gap-2 mt-2">

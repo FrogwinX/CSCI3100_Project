@@ -24,21 +24,27 @@ export default function CommentForm({ postId, userId, replyTo, onCancelReply, on
     setLoading(true);
     setError(null);
     try {
-      const response = await createComment(
-        replyTo?.postId ? replyTo.postId : postId,
-        userId,
-        content
-      );
+      let finalContent = content;
+      
+      // If this is a reply, add the reply-to reference
+      if (replyTo) {
+        const replyToNumber = replyTo.content.match(/^C\d+(?:-\d+)?/)?.[0];
+        if (replyToNumber) {
+          finalContent = `(reply to ${replyToNumber}) ${finalContent}`;
+        }
+      }
+      
+      const response = await createComment(postId, userId, finalContent);
       if (response) {
         setContent("");
         if (onCommentSuccess) {
           onCommentSuccess();
         }
       } else {
-        throw new Error("Failed to post comment");
+        throw new Error("Failed to create comment");
       }
     } catch (err) {
-      console.error("Error posting comment:", err);
+      console.error("Error creating comment:", err);
       setError("Failed to post comment");
     } finally {
       setLoading(false);
