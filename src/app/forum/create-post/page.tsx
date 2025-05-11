@@ -259,10 +259,10 @@ export default function CreatePost() {
             onChange={(e) => setTitle(e.target.value)}
             maxLength={100}
             placeholder="Title"
-            className="input input-bordered w-full rounded-lg"
+            className="input input-bordered w-full rounded-lg border-base-300 focus:border-primary focus:ring-2 focus:ring-primary/20"
           />
           <div className="flex justify-end">
-            <span className="text-sm text-gray-500 mt-1">{title.length}/100</span>
+            <span className="text-sm text-base-content/70 mt-1">{title.length}/100</span>
           </div>
         </div>
         <div className="form-control">
@@ -279,11 +279,11 @@ export default function CreatePost() {
             </div>
           </div>
           {isTagMenuOpen && (
-            <div className="mt-2 p-4 bg-gray-100 rounded-lg shadow max-h-60 overflow-y-auto">
+            <div className="mt-2 p-4 bg-base-200 rounded-lg shadow max-h-60 overflow-y-auto">
               {loading ? (
                 <p>Loading tags...</p>
               ) : tagFetchError ? (
-                <p className="text-red-500">{tagFetchError}</p>
+                <p className="text-error">{tagFetchError}</p>
               ) : session?.isLoggedIn ? (
                 allTags.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
@@ -311,11 +311,11 @@ export default function CreatePost() {
         </div>
         <div className="form-control">
           <label className="label">
-            <span className="label-text">Post Content</span>
+            <span className="label-text text-base-content">Post Content</span>
           </label>
-          <div className="border border-gray-300 rounded-t-lg">
-            <div className="bg-gray-100 p-2 flex space-x-1 border-b border-gray-300">
-              <button type="button" className="btn btn-ghost btn-xs text-gray-600" onClick={handleClipClick}>
+          <div className="border border-base-300 rounded-t-lg">
+            <div className="bg-base-200 p-2 flex space-x-1 border-b border-base-300">
+              <button type="button" className="btn btn-ghost btn-xs text-base-content/70" onClick={handleClipClick}>
                 <FontAwesomeIcon icon={faImage} />
               </button>
               <input
@@ -330,16 +330,16 @@ export default function CreatePost() {
               ref={contentRef}
               contentEditable
               onInput={handleContentChange}
-              className="w-full p-2 border border-gray-300 rounded-b-lg focus:outline-none"
+              className="w-full p-2 border border-base-300 rounded-b-lg focus:outline-none"
               style={{ minHeight: "10rem", overflowY: "auto" }}
             />
           </div>
           <div className="flex justify-end">
-            <span className="text-sm text-gray-500 mt-1">{textLength}/1000</span>
+            <span className="text-sm text-base-content/70 mt-1">{textLength}/1000</span>
           </div>
         </div>
-        {submitError && <p className="text-red-500">{submitError}</p>}
-        <button type="submit" className="btn bg-[#A3DFFA] text-[#1A3C34] hover:bg-[#8CCFF7] float-right rounded-lg">
+        {submitError && <p className="text-error">{submitError}</p>}
+        <button type="submit" className="btn btn-primary float-right rounded-lg">
           Post
         </button>
       </form>

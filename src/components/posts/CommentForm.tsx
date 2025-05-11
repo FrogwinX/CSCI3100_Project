@@ -60,7 +60,7 @@ export default function CommentForm({ postId, userId, replyTo, onCancelReply, on
         </div>
       )}
       <textarea
-        className="textarea textarea-bordered w-full min-h-[4rem] rounded-lg border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 transition"
+        className="textarea textarea-bordered w-full min-h-[4rem] rounded-lg border border-base-300 focus:border-primary focus:ring-2 focus:ring-primary/20 transition"
         placeholder={replyTo ? `Reply to ${replyTo.username}...` : "Write a comment..."}
         value={content}
         onChange={(e) => setContent(e.target.value)}
@@ -68,12 +68,12 @@ export default function CommentForm({ postId, userId, replyTo, onCancelReply, on
         disabled={loading}
       />
       <div className="flex justify-between items-center mt-2">
-        <span className="text-xs text-gray-400">{content.length}/500</span>
+        <span className="text-xs text-base-content/70">{content.length}/500</span>
         <button type="submit" className="btn btn-primary rounded-lg px-4 py-1 text-sm" disabled={loading}>
           {loading ? "Posting..." : replyTo ? "Reply" : "Post Comment"}
         </button>
       </div>
-      {error && <div className="text-red-500 mt-1">{error}</div>}
+      {error && <div className="text-error mt-1">{error}</div>}
     </form>
   );
 } 

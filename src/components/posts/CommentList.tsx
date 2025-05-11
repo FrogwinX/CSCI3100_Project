@@ -318,7 +318,7 @@ function CommentItem({
               {/* comment reply */}
               {isMainComment ? (
                 <button
-                  className="btn btn-xs btn-ghost"
+                  className="btn btn-xs btn-ghost text-base-content/70"
                   onClick={() => {
                     setShowReplyBox((v) => !v);
                     setReplyToNumber(undefined);
@@ -329,7 +329,7 @@ function CommentItem({
                 </button>
               ) : (
                 <button
-                  className="btn btn-xs btn-ghost"
+                  className="btn btn-xs btn-ghost text-base-content/70"
                   onClick={() => {
                     setShowSubReplyBox((v) => !v);
                     setSubReplyToNumber(showSubReplyBox ? undefined : commentNumber);
@@ -352,7 +352,7 @@ function CommentItem({
               </div>
             )}
             {/* sub comment reply list */}
-            {!isMainComment && showSubReplyBox && subReplyToNumber && (
+            {showSubReplyBox && (
               <div className="mt-2">
                 <CommentFormInline
                   parentId={mainId}
@@ -375,7 +375,7 @@ function CommentItem({
               <button className="btn btn-sm btn-ghost p-0" onClick={handleLike} title="Like" disabled={isLoading}>
                 <FontAwesomeIcon icon={userLiked ? faThumbsUpSolid : faThumbsUp} size="lg" />
               </button>
-              <span className="text-xs font-semibold">
+              <span className="text-xs font-semibold text-base-content">
                 {Intl.NumberFormat("en", { notation: "compact" }).format(likeCount - dislikeCount)}
               </span>
               <button className="btn btn-sm btn-ghost p-0" onClick={handleDislike} title="Dislike" disabled={isLoading}>
@@ -389,18 +389,18 @@ function CommentItem({
         )}
       </div>
       {/* sub comment (reply) */}
-      {subComments.length > 0 && (
+      {isMainComment && (
         <div className="w-full">
-          {isMainComment && (
+          {isMainComment && subComments.length > 0 && (
             <button
-              className="block text-gray-400 text-sm my-2 hover:underline hover:text-gray-600 w-full text-left"
+              className="block text-base-content/50 text-sm my-2 hover:underline hover:text-base-content w-full text-left"
               style={{ fontFamily: "monospace", letterSpacing: 1 }}
               onClick={toggleSubComments}
             >
               {showSubComments ? "----- Hide comment" : "----- Show comment"}
             </button>
           )}
-          {showSubComments && (
+          {showSubComments && subComments.length > 0 && (
             <div className="mt-2 w-full">
               {subComments.map((child: any, idx: number) => (
                 <CommentItem
