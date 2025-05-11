@@ -18,6 +18,7 @@ export default function PostHeader({
   postUpdatedAt,
   postUserAvatar,
   size = "sm",
+  removePostFromPostlist = (() => { }),
 }: {
   postId: string;
   postUserId: string;
@@ -25,6 +26,7 @@ export default function PostHeader({
   postUpdatedAt: string;
   postUserAvatar: string | null;
   size?: "sm" | "md";
+  removePostFromPostlist: (postId: string) => void;
 }) {
   const router = useRouter();
   const { session } = useSession();
@@ -40,6 +42,7 @@ export default function PostHeader({
   const handleDelete = async (e: MouseEvent) => {
     e.stopPropagation();
     deletePostOrComment(postId);
+    removePostFromPostlist(postId);
   };
 
   const textSize = size === "md" ? "text-sm" : "text-xs";

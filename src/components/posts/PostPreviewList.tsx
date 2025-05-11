@@ -23,8 +23,6 @@ export default function PostList({
   const [hasMore, setHasMore] = useState(true);
   const observerTarget = useRef<HTMLDivElement>(null);
   const [excludedPostIds, setExcludedPostIds] = useState<Set<number>>(new Set());
-  const [fetchAttempts, setFetchAttempts] = useState(0);
-  const MAX_ATTEMPTS = 10; // Limit fetch attempts to prevent infinite loops
 
   // Synchronize local loading state with the global tag context loading state
   useEffect(() => {
@@ -47,13 +45,17 @@ export default function PostList({
     });
   };
 
+  const removePostFromPostlist = (postId: string) => {
+    console.log("Removing post with ID:", postId);
+    setPosts((prevPosts) => prevPosts.filter((post) => post.postId !== postId));
+  }
+
   useEffect(() => {
     setIsLoading(true);
     // Reset states when tags change
     setPosts([]);
     setExcludedPostIds(new Set());
     setHasMore(true);
-    setFetchAttempts(0);
 
     const fetchInitialPosts = async () => {
       try {
@@ -108,7 +110,7 @@ export default function PostList({
   // Effect to handle auto-loading more posts if filtered results are empty
   useEffect(() => {
     // If no posts after filtering, but there might be more, try loading more
-    if (!isLoading && posts.length === 0 && currentPostsFetched.length === 0 && hasMore) {
+    if (!isLoading && (posts.length === 0 || currentPostsFetched.length === 0) && hasMore) {
       loadMorePosts();
     }
   }, [posts, hasMore, currentPostsFetched]);
@@ -214,7 +216,7 @@ export default function PostList({
           {/* Map through posts and add dividers between them */}
           {posts.map((post) => (
             <div key={post.postId} className="w-full">
-              <PostPreview post={post} />
+              <PostPreview post={post} removePostFromPostlist={removePostFromPostlist} />
               {/* Add divider after each post except the last one */}
               <div className="divider my-0"></div>
             </div>

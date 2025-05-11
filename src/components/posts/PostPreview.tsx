@@ -4,7 +4,7 @@ import PostHeader from "@/components/posts/PostHeader";
 import LoadingImage from "./LoadingImage";
 import { Post } from "@/utils/posts";
 
-export default function PostPreview({ post, size = "md" }: { post: Post; size?: "sm" | "md" }) {
+export default function PostPreview({ post, size = "md", removePostFromPostlist }: { post: Post; size?: "sm" | "md"; removePostFromPostlist: (postId: string) => void }) {
   return (
     <PostLink href={`/forum/post/${post.postId}`} className="block" isBlocked={post.isUserBlocked}>
       <div className="card hover:bg-base-200/40 px-2">
@@ -17,6 +17,7 @@ export default function PostPreview({ post, size = "md" }: { post: Post; size?: 
             postUpdatedAt={post.updatedAt}
             postUserAvatar={post.avatar}
             size={size}
+            removePostFromPostlist={removePostFromPostlist}
           />
           {/** Body */}
           <div className="flex gap-4">
