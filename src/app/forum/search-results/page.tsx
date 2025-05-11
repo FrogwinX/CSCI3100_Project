@@ -6,7 +6,7 @@ import PostList from "@/components/posts/PostPreviewList";
 import UserList from "@/components/users/UserPreviewList";
 
 export default function SearchResultsPage() {
-  const [activeTab, setActiveTab] = useState<"posts" | "users">("users");
+  const [activeTab, setActiveTab] = useState<"posts" | "users">("posts");
   const searchParams = useSearchParams();
   const searchInput = searchParams.get('q') || '';
   return (

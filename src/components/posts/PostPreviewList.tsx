@@ -56,43 +56,45 @@ export default function PostList({
 
     const fetchInitialPosts = async () => {
       try {
-        let initialPosts;
-        //switch between getPosts and getSearchPosts based on keyword
-        if (!keyword) {
-          switch (filter) {
-            case "created":
-              initialPosts = await getPosts({ filter, authorUserId });
-              break;
-            default:
-              initialPosts = await getPosts({ filter });
-              break;
+        if (isLoading) {
+          let initialPosts;
+          //switch between getPosts and getSearchPosts based on keyword
+          if (!keyword) {
+            switch (filter) {
+              case "created":
+                initialPosts = await getPosts({ filter, authorUserId });
+                break;
+              default:
+                initialPosts = await getPosts({ filter });
+                break;
+            }
+          } else {
+            initialPosts = await getSearchPosts({ keyword });
           }
-        } else {
-          initialPosts = await getSearchPosts({ keyword });
+          // Scroll to the top of the page smoothly
+          window.scrollTo({ top: 0, behavior: "smooth" });
+
+          // No posts are returned from the API
+          if (!initialPosts || initialPosts.length === 0) {
+            setHasMore(false);
+            return;
+          }
+
+          const filteredPosts = filterPostsByTags(initialPosts);
+
+          // Update excludedPostIds with the initial posts
+          const newExcludedIds = new Set<number>();
+          initialPosts.forEach((post) => newExcludedIds.add(Number(post.postId)));
+          setExcludedPostIds(newExcludedIds);
+
+          setPosts(filteredPosts);
+          setHasMore(initialPosts.length > 0);
+
+          console.log("Initial Posts:", initialPosts);
+          console.log("Filtered Posts:", filteredPosts);
+          console.log("Excluded Post IDs:", Array.from(newExcludedIds));
+          console.log("Selected Tags:", tags);
         }
-        // Scroll to the top of the page smoothly
-        window.scrollTo({ top: 0, behavior: "smooth" });
-
-        // No posts are returned from the API
-        if (!initialPosts || initialPosts.length === 0) {
-          setHasMore(false);
-          return;
-        }
-
-        const filteredPosts = filterPostsByTags(initialPosts);
-
-        // Update excludedPostIds with the initial posts
-        const newExcludedIds = new Set<number>();
-        initialPosts.forEach((post) => newExcludedIds.add(Number(post.postId)));
-        setExcludedPostIds(newExcludedIds);
-
-        setPosts(filteredPosts);
-        setHasMore(initialPosts.length > 0);
-
-        console.log("Initial Posts:", initialPosts);
-        console.log("Filtered Posts:", filteredPosts);
-        console.log("Excluded Post IDs:", Array.from(newExcludedIds));
-        console.log("Selected Tags:", tags);
       } catch (err) {
         console.error("Failed to load posts:", err);
       } finally {

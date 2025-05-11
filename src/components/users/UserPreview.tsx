@@ -1,7 +1,7 @@
 "use client";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faXmark } from "@fortawesome/free-solid-svg-icons";
+import { faXmark, faBan } from "@fortawesome/free-solid-svg-icons";
 import { faHeart, faCommentDots } from "@fortawesome/free-regular-svg-icons";
 import { Users } from "@/utils/users";
 import { userInteract } from "@/utils/profiles";
@@ -11,6 +11,7 @@ import UserAvatar from "@/components/users/UserAvatar";
 
 export default function UserPreview({ user }: { user: Users }) {
   const [isFollowed, setIsFollowed] = useState(user.isUserFollowed);
+  const [isBlocked, setIsBlocked] = useState(user.isUserBlocked);
 
   const handleFollowToggle = (e: React.MouseEvent) => {
     e.preventDefault(); // Prevent navigation when clicking the button
@@ -26,6 +27,22 @@ export default function UserPreview({ user }: { user: Users }) {
       }
     });
   };
+
+  const handleBlockToggle = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent navigation when clicking the button
+    e.stopPropagation(); // Stop event propagation
+
+    // Determine whether to block or unblock based on current state
+    const action = isBlocked ? "unblock" : "block";
+
+    // Call the userInteract function with the appropriate action
+    userInteract(user.userId.toString(), action).then((success) => {
+      if (success) {
+        setIsBlocked(!isBlocked);
+      }
+    });
+  };
+
 
   return (
     <Link href={`/profile/${user.userId}`} className="flex w-full">
@@ -44,6 +61,22 @@ export default function UserPreview({ user }: { user: Users }) {
 
             {/* Follow/Unfollow Button */}
             <div className="flex gap-2">
+              {isBlocked ? (
+                <button
+                  onClick={handleBlockToggle}
+                  className="btn btn-blocks btn-sm btn-primary" //color
+                >
+                  <FontAwesomeIcon icon={faXmark} size="2xl" />
+                  Unblock
+                </button>
+              ) : (
+                <button onClick={handleBlockToggle} className="btn btn-sm btn-error bg-red-400 text-error-content border-none">
+                  <FontAwesomeIcon icon={faBan} size="xl" />
+                  Block
+                </button>
+              )}
+
+
               {isFollowed ? (
                 <button
                   onClick={handleFollowToggle}
