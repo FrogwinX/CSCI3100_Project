@@ -81,7 +81,7 @@ export default function CreatePost() {
     if (!files || files.length === 0) return;
 
     const newImages: File[] = [];
-    let insertTags: string[] = [];
+    const insertTags: string[] = [];
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
@@ -111,41 +111,41 @@ export default function CreatePost() {
       const selection = window.getSelection();
       if (selection && selection.rangeCount > 0) {
         const range = selection.getRangeAt(0);
-        
+
         const imageContainer = document.createElement('div');
         imageContainer.className = 'relative inline-block my-2';
         imageContainer.style.maxWidth = '100%';
-        
+
         const img = document.createElement('img');
         img.src = URL.createObjectURL(newImages[0]);
         img.className = 'max-h-48 rounded-lg';
         img.style.maxWidth = '100%';
         img.dataset.imageId = newImages[0].name;
-        
+
         imageContainer.appendChild(img);
-        
+
         range.deleteContents();
         range.insertNode(imageContainer);
-        
+
         range.setStartAfter(imageContainer);
         range.setEndAfter(imageContainer);
         selection.removeAllRanges();
         selection.addRange(range);
-        
+
         handleContentChange();
       } else {
         const imageContainer = document.createElement('div');
         imageContainer.className = 'relative inline-block my-2';
         imageContainer.style.maxWidth = '100%';
-        
+
         const img = document.createElement('img');
         img.src = URL.createObjectURL(newImages[0]);
         img.className = 'max-h-48 rounded-lg';
         img.style.maxWidth = '100%';
         img.dataset.imageId = newImages[0].name;
-        
+
         imageContainer.appendChild(img);
-        
+
         contentRef.current.appendChild(imageContainer);
         handleContentChange();
       }
@@ -291,8 +291,8 @@ export default function CreatePost() {
         });
 
         let text = div.innerHTML;
-        text = text.replace(/<[^>]+>/g, ''); 
-        text = text.replace(/&nbsp;/g, ' '); 
+        text = text.replace(/<[^>]+>/g, '');
+        text = text.replace(/&nbsp;/g, ' ');
         submitContent = text;
       }
 
@@ -322,16 +322,16 @@ export default function CreatePost() {
   // Add these functions before the return statement
   const insertTag = (type: 'bold' | 'italic' | 'underline') => {
     if (!contentRef.current) return;
-    
+
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0) return;
-    
+
     const range = selection.getRangeAt(0);
     const selectedText = range.toString();
-    
+
     let tagStart = '';
     let tagEnd = '';
-    
+
     switch (type) {
       case 'bold':
         tagStart = '[b]';
@@ -346,11 +346,11 @@ export default function CreatePost() {
         tagEnd = '[/u]';
         break;
     }
-    
+
     const newText = tagStart + selectedText + tagEnd;
     range.deleteContents();
     range.insertNode(document.createTextNode(newText));
-    
+
     // Trigger content change
     handleContentChange();
   };
@@ -375,10 +375,9 @@ export default function CreatePost() {
     });
     setContent((prevContent) => {
       const regex = /\[image:[^\]]+\]/g;
-      let tagsInContent = prevContent.match(regex) || [];
       const newTags = images.map(img => `[image:${img.name}]`);
       let idx = 0;
-      let replaced = prevContent.replace(regex, () => newTags[idx++] || "");
+      const replaced = prevContent.replace(regex, () => newTags[idx++] || "");
       return replaced;
     });
     setDragIndex(null);
@@ -429,9 +428,8 @@ export default function CreatePost() {
                         key={tag.tagId}
                         type="button"
                         onClick={() => toggleTag(tag)}
-                        className={`btn btn-sm ${
-                          tags.some((t) => t.tagId === tag.tagId) ? "btn-primary" : "btn-accent"
-                        }`}
+                        className={`btn btn-sm ${tags.some((t) => t.tagId === tag.tagId) ? "btn-primary" : "btn-accent"
+                          }`}
                       >
                         {tag.tagName}
                       </button>

@@ -23,7 +23,6 @@ export default function EditPost({ params: paramsPromise }: { params: Promise<{ 
   const [existingImages, setExistingImages] = useState<string[]>([]); // Existing image URLs from the post
   const fileInputRef = useRef<HTMLInputElement>(null); // Reference to file input for image upload
   const contentRef = useRef<HTMLDivElement>(null); // Reference to content editable div
-  const [showPreview, setShowPreview] = useState<boolean>(false);   
 
   const { session, loading, refresh } = useSession();
   const router = useRouter();
@@ -271,10 +270,10 @@ export default function EditPost({ params: paramsPromise }: { params: Promise<{ 
     if (contentRef.current) {
       const div = document.createElement("div");
       div.innerHTML = contentRef.current.innerHTML;
-      
+
       // Log original HTML content
       console.log('Original HTML content:', div.innerHTML);
-      
+
       // Replace custom tags with HTML tags
       let content = div.innerHTML;
       content = content.replace(/\[b\](.*?)\[\/b\]/g, '<b>$1</b>');
@@ -284,10 +283,10 @@ export default function EditPost({ params: paramsPromise }: { params: Promise<{ 
       // 彻底去除所有<div>和</div>
       content = content.replace(/<div\s*\/?>/g, '');
       content = content.replace(/<\/div>/g, '');
-      
+
       // Log processed content
       console.log('Processed content:', content);
-      
+
       // Log custom tags found
       const boldTags = (content.match(/\[b\](.*?)\[\/b\]/g) || []).length;
       const italicTags = (content.match(/\[i\](.*?)\[\/i\]/g) || []).length;
@@ -295,7 +294,7 @@ export default function EditPost({ params: paramsPromise }: { params: Promise<{ 
       const brTags = (content.match(/\[br\]/g) || []).length;
       const divTags = (content.match(/\[div\](.*?)\[\/div\]/g) || []).length;
       const imageTags = (content.match(/\[image:[^\]]+\]/g) || []).length;
-      
+
       console.log('Custom tags found:', {
         bold: boldTags,
         italic: italicTags,
@@ -304,7 +303,7 @@ export default function EditPost({ params: paramsPromise }: { params: Promise<{ 
         div: divTags,
         image: imageTags
       });
-      
+
       // Handle images
       const images = div.querySelectorAll("img");
       const remainingImageIds: string[] = [];
@@ -441,24 +440,19 @@ export default function EditPost({ params: paramsPromise }: { params: Promise<{ 
     }
   };
 
-    
-  const handlePreviewToggle = () => {
-    setShowPreview((prev) => !prev);
-  };
-
   // Add these functions before the return statement
   const insertTag = (type: 'bold' | 'italic' | 'underline') => {
     if (!contentRef.current) return;
-    
+
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0) return;
-    
+
     const range = selection.getRangeAt(0);
     const selectedText = range.toString();
-    
+
     let tagStart = '';
     let tagEnd = '';
-    
+
     switch (type) {
       case 'bold':
         tagStart = '[b]';
@@ -473,11 +467,11 @@ export default function EditPost({ params: paramsPromise }: { params: Promise<{ 
         tagEnd = '[/u]';
         break;
     }
-    
+
     const newText = tagStart + selectedText + tagEnd;
     range.deleteContents();
     range.insertNode(document.createTextNode(newText));
-    
+
     // Trigger content change
     handleContentChange();
   };
@@ -530,9 +524,8 @@ export default function EditPost({ params: paramsPromise }: { params: Promise<{ 
                         key={tag.tagId}
                         type="button"
                         onClick={() => toggleTag(tag)}
-                        className={`btn btn-sm ${
-                          tags.some((t) => t.tagId === tag.tagId) ? "btn-primary" : "btn-accent"
-                        }`}
+                        className={`btn btn-sm ${tags.some((t) => t.tagId === tag.tagId) ? "btn-primary" : "btn-accent"
+                          }`}
                       >
                         {tag.tagName}
                       </button>

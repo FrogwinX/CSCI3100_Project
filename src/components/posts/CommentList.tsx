@@ -12,7 +12,6 @@ import { faThumbsUp, faThumbsDown, faTrashAlt } from "@fortawesome/free-regular-
 import { useSession } from "@/hooks/useSession";
 import { getMyComments } from "@/utils/profiles";
 import PostPreview from "@/components/posts/PostPreview";
-import { on } from "events";
 import Link from "next/link";
 
 interface CommentListProps {
@@ -104,10 +103,6 @@ function parseCommentNumber(str: string) {
   return [main, sub];
 }
 
-function stripCommentNumber(str: string) {
-  return str.replace(/^C\d+(?:-\d+)?\s*/, "");
-}
-
 function renderCommentContent(str: string, showNumber: boolean = true) {
   let html = str;
 
@@ -141,7 +136,7 @@ function CommentItem({
   subCommentVisibility,
   setSubCommentVisibility,
   mainCommentId,
-  mainCommentNumber,
+
 }: {
   comment: Post;
   userId: string;
@@ -152,14 +147,10 @@ function CommentItem({
   subCommentVisibility?: Record<string, boolean>;
   setSubCommentVisibility?: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   mainCommentId?: string;
-  mainCommentNumber?: string;
 }) {
   const { session } = useSession();
-  const [showReplyBox, setShowReplyBox] = useState(false);
-  const [replyToNumber, setReplyToNumber] = useState<string | undefined>(undefined);
-  const [replyToSubNumber, setReplyToSubNumber] = useState<string | undefined>(undefined);
   const [showSubReplyBox, setShowSubReplyBox] = useState(false);
-  const [subReplyToNumber, setSubReplyToNumber] = useState<string | undefined>(undefined);
+
 
   const [userLiked, setUserLiked] = useState(comment.isLiked);
   const [userDisliked, setUserDisliked] = useState(comment.isDisliked);
@@ -201,7 +192,7 @@ function CommentItem({
           setDislikeCount((prev: number) => prev - 1);
         }
       }
-    } catch (error) {
+    } catch {
     } finally {
       setIsLoading(false);
     }
@@ -265,19 +256,18 @@ function CommentItem({
   }
 
   const subComments = Array.isArray(comment.commentList)
-    ? comment.commentList.slice().sort((a: any, b: any) => {
-        // Sort sub-comments by their post ID to maintain consistent order
-        return Number(a.postId) - Number(b.postId);
-      })
+    ? comment.commentList.slice().sort((a: Post, b: Post) => {
+      // Sort sub-comments by their post ID to maintain consistent order
+      return Number(a.postId) - Number(b.postId);
+    })
     : [];
 
   // Calculate next sub-comment number based on the highest existing sub-comment number
   let maxSub = 0;
-  subComments.forEach((c: any) => {
+  subComments.forEach((c: Post) => {
     const num = parseCommentNumber(c.content);
     if (num[1] > maxSub) maxSub = num[1];
   });
-  const nextSubNumber = `${commentNumber}-${maxSub + 1}`;
 
   const isMainComment = numberPrefix === "";
   const showSubComments =
@@ -291,7 +281,6 @@ function CommentItem({
   };
 
   const mainId = mainCommentId ?? comment.postId;
-  const mainNumber = mainCommentNumber ?? commentNumber;
   const isMe = userId == comment.userId;
   const showNumberAndReply = numberPrefix !== "None";
 
@@ -339,7 +328,7 @@ function CommentItem({
                 className="btn btn-xs btn-ghost text-base-content/70"
                 onClick={() => {
                   setShowSubReplyBox((v) => !v);
-                  setSubReplyToNumber(showSubReplyBox ? undefined : commentNumber);
+
                 }}
               >
                 {showSubReplyBox ? "Cancel" : "Reply"}
@@ -353,7 +342,6 @@ function CommentItem({
                   userId={session.userId ? String(session.userId) : ""}
                   onSuccess={() => {
                     setShowSubReplyBox(false);
-                    setSubReplyToNumber(undefined);
                     onReplySuccess();
                   }}
                   replyToNumber={commentNumber}
@@ -410,7 +398,7 @@ function CommentItem({
 }
 
 export default function CommentList({ postId, userId }: CommentListProps) {
-  const [comments, setComments] = useState<any[]>([]);
+  const [comments, setComments] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
@@ -422,11 +410,11 @@ export default function CommentList({ postId, userId }: CommentListProps) {
   const fetchComments = async (isInitial: boolean = false) => {
     try {
       setLoading(true);
-      let list = postId
+      const list = postId
         ? await getCommentList(postId, userId, {
-            excludingCommentIdList: isInitial ? [] : Array.from(excludedCommentIds),
-            count: 10,
-          })
+          excludingCommentIdList: isInitial ? [] : Array.from(excludedCommentIds),
+          count: 10,
+        })
         : await getMyComments({ userIdTo: userId });
 
       if (!list || list.length === 0) {
@@ -437,16 +425,16 @@ export default function CommentList({ postId, userId }: CommentListProps) {
       // Update excludedCommentIds with new comments
       setExcludedCommentIds((prevExcludedIds) => {
         const newExcludedIds = new Set(prevExcludedIds);
-        list.forEach((comment: any) => newExcludedIds.add(Number(comment.postId)));
+        list.forEach((comment: Post) => newExcludedIds.add(Number(comment.postId)));
         return newExcludedIds;
       });
 
       if (isInitial) {
         // Sort main comments by post ID to maintain consistent order
-        const sortedList = list.slice().sort((a: any, b: any) => Number(a.postId) - Number(b.postId));
+        const sortedList = list.slice().sort((a: Post, b: Post) => Number(a.postId) - Number(b.postId));
 
         // Add comment numbers based on sorted order
-        const completedList = sortedList.map((c: any, idx: number) => {
+        const completedList = sortedList.map((c: Post, idx: number) => {
           if (!/^C\d+/.test(c.content) && postId) {
             return { ...c, content: `C${idx + 1} ${c.content}` };
           }
@@ -456,7 +444,7 @@ export default function CommentList({ postId, userId }: CommentListProps) {
         setComments(completedList);
         setSubCommentVisibility((prev) => {
           const updated = { ...prev };
-          list.forEach((c: any) => {
+          list.forEach((c: Post) => {
             if (!(c.postId in updated)) {
               updated[c.postId] = false;
             }
@@ -469,7 +457,7 @@ export default function CommentList({ postId, userId }: CommentListProps) {
           const map = new Map();
 
           // Sort all comments by post ID
-          const sortedAll = all.slice().sort((a: any, b: any) => Number(a.postId) - Number(b.postId));
+          const sortedAll = all.slice().sort((a: Post, b: Post) => Number(a.postId) - Number(b.postId));
 
           // Add comment numbers based on sorted order
           sortedAll.forEach((c, idx) => {
@@ -597,7 +585,7 @@ export default function CommentList({ postId, userId }: CommentListProps) {
         {comments.map((post) => (
           <div key={post.postId} className="flex flex-col gap-4 w-full">
             <PostPreview post={post} size="md" />
-            {post.commentList.map((comment: Post, idx: number) => (
+            {post.commentList!.map((comment: Post, idx: number) => (
               <CommentItem
                 key={comment.postId}
                 comment={comment}
@@ -609,7 +597,6 @@ export default function CommentList({ postId, userId }: CommentListProps) {
                 subCommentVisibility={subCommentVisibility}
                 setSubCommentVisibility={setSubCommentVisibility}
                 mainCommentId={post.postId}
-                mainCommentNumber={comment.content.match(/^(C\d+(?:-\d+)?)/)?.[0] || `M${idx + 1}`}
               />
             ))}
             <div className="divider my-0"></div>
@@ -623,7 +610,6 @@ export default function CommentList({ postId, userId }: CommentListProps) {
   return (
     <div className="flex flex-col gap-2">
       {comments.map((comment, idx) => {
-        const commentNumber = `C${idx + 1}`;
         return (
           <CommentItem
             key={comment.postId}
@@ -636,7 +622,6 @@ export default function CommentList({ postId, userId }: CommentListProps) {
             subCommentVisibility={subCommentVisibility}
             setSubCommentVisibility={setSubCommentVisibility}
             mainCommentId={comment.postId}
-            mainCommentNumber={commentNumber}
           />
         );
       })}

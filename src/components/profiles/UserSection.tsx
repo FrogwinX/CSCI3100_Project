@@ -15,7 +15,7 @@ import {
   faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import { useSession } from "@/hooks/useSession";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useRef, useState } from "react";
 import EditableBox from "./EditableBox";
 import { checkUsernameUnique } from "@/utils/authentication";
@@ -23,11 +23,10 @@ import Link from "next/link";
 
 export default function UserInfo({ profile }: { profile: Profile }) {
   const maxImageSize = 1 * 1024 * 1024; // Change this when the config has changed
-  const router = useRouter();
   const { session, refresh } = useSession();
   const [isDropdownMenuOpen, setIsDropdownMenuOpen] = useState(true);
   const [userFollowed, setUserFollowed] = useState(profile.isUserFollowed);
-  const [userBlocked, setUserBlocked] = useState(profile.isUserBlocked);
+  const [userBlocked] = useState(profile.isUserBlocked);
   const [isEditing, setIsEditing] = useState(false);
   const [username, setUsername] = useState(profile.username);
   const [usernameErrorMessage, setUsernameErrorMessage] = useState("");

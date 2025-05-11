@@ -19,11 +19,13 @@ const getUserProfile = cache((userId: string) => {
   return getProfileContent(userId);
 });
 
+type PageURLParams = {
+  userId: string;
+  profileSection?: string[];
+};
+
 export default async function ProfileSectionPage(props: {
-  params: {
-    userId: string;
-    profileSection?: string[];
-  };
+  params: Promise<PageURLParams>;
 }) {
   const params = await props.params;
   const { userId, profileSection } = params;
@@ -34,7 +36,7 @@ export default async function ProfileSectionPage(props: {
   // Decide which section to show based on the URL
   let sectionContent;
 
-  if (["following", "followers", "blocked"].includes(section!) && section) {
+  if (section && validRelationSections.includes(section as UserRelationType)) {
     sectionContent = <UserRelationsTab userId={userId} Section={section as UserRelationType} />;
   } else if (!section && userProfile) {
     // Default to showing the user's profile and posts/comments if no section is specified

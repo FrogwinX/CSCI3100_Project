@@ -350,7 +350,7 @@ export default function Messenger() {
     if (!session.userId || !selectedContact) return;
 
     let uploadedImageIds: number[] = [];
-    let tempImageUrls: string[] = [...filePreviews];
+    const tempImageUrls: string[] = [...filePreviews];
 
     // Upload images if selected
     if (selectedFiles.length > 0) {

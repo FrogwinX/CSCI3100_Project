@@ -14,9 +14,9 @@ const SessionContext = createContext<{
 }>({
   session: defaultSession,
   loading: true,
-  refresh: async () => {},
+  refresh: async () => { },
   unreadCount: 0,
-  refreshUnreadCount: async () => {},
+  refreshUnreadCount: async () => { },
 });
 
 // Provider component
@@ -73,7 +73,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
           return;
         }
         await messagingService.connect(session.token);
-      } catch (error) {
+      } catch {
         // Schedule retry
         connectRetryTimeoutRef.current = setTimeout(() => connectWithRetry(attempt + 1), 500);
       }

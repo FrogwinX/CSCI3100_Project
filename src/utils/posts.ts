@@ -406,14 +406,16 @@ export async function createPost(title: string, content: string, tags: Tag[], im
           throw new Error("Unable to fetch the latest post for navigation");
         }
         const contentToMatch = requestBody.content;
-        const imagesToMatch = images.map(img => img.name);
-        const matched = latestPosts.find(post => {
+        const imagesToMatch = images.map((img) => img.name);
+        const matched = latestPosts.find((post) => {
           const regex = /\[image:[^\]]+\]/g;
-          const tagsInContent = (post.content.match(regex) || []).map(s => s.replace('[image:', '').replace(']', ''));
-          const tagsToMatch = (contentToMatch.match(regex) || []).map(s => s.replace('[image:', '').replace(']', ''));
-          const apiList = (post.imageAPIList || []).map(url => url.split('/').pop() || url);
-          return JSON.stringify(tagsInContent) === JSON.stringify(tagsToMatch) &&
-                 JSON.stringify(apiList) === JSON.stringify(imagesToMatch);
+          const tagsInContent = (post.content.match(regex) || []).map((s) => s.replace("[image:", "").replace("]", ""));
+          const tagsToMatch = (contentToMatch.match(regex) || []).map((s) => s.replace("[image:", "").replace("]", ""));
+          const apiList = (post.imageAPIList || []).map((url) => url.split("/").pop() || url);
+          return (
+            JSON.stringify(tagsInContent) === JSON.stringify(tagsToMatch) &&
+            JSON.stringify(apiList) === JSON.stringify(imagesToMatch)
+          );
         });
         if (matched) {
           postId = matched.postId;
@@ -584,7 +586,7 @@ export async function getCommentList(
   let comments = Array.isArray(data?.data?.commentList) ? data.data.commentList : [];
 
   // Sort comments by comment number
-  comments = comments.slice().sort((a: any, b: any) => {
+  comments = comments.slice().sort((a: Post, b: Post) => {
     const aNum = parseCommentNumber(a.content);
     const bNum = parseCommentNumber(b.content);
 
@@ -604,7 +606,7 @@ export async function getCommentList(
 
   // Apply pagination if options are provided
   if (options.excludingCommentIdList && options.excludingCommentIdList.length > 0) {
-    comments = comments.filter((comment: any) => !options.excludingCommentIdList!.includes(Number(comment.postId)));
+    comments = comments.filter((comment: Post) => !options.excludingCommentIdList!.includes(Number(comment.postId)));
   }
 
   if (options.count) {

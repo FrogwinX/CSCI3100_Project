@@ -1,11 +1,12 @@
 "use client";
 import React, { useState } from "react";
 import { createComment } from "@/utils/posts";
+import { Post } from "@/utils/posts";
 
 interface CommentFormProps {
   postId: string;
   userId: string;
-  replyTo?: any;
+  replyTo?: Post | null;
   onCancelReply?: () => void;
   onCommentSuccess?: () => void;
 }
@@ -25,7 +26,7 @@ export default function CommentForm({ postId, userId, replyTo, onCancelReply, on
     setError(null);
     try {
       let finalContent = content;
-      
+
       // If this is a reply, add the reply-to reference
       if (replyTo) {
         const replyToNumber = replyTo.content.match(/^C\d+(?:-\d+)?/)?.[0];
@@ -33,7 +34,7 @@ export default function CommentForm({ postId, userId, replyTo, onCancelReply, on
           finalContent = `(reply to ${replyToNumber}) ${finalContent}`;
         }
       }
-      
+
       const response = await createComment(postId, userId, finalContent);
       if (response) {
         setContent("");

@@ -23,7 +23,7 @@ function processPreviewContent(content: string): string {
   return processedContent;
 }
 
-export default function PostPreview({ post, size = "md", removePostFromPostlist }: { post: Post; size?: "sm" | "md"; removePostFromPostlist: (postId: string) => void }) {
+export default function PostPreview({ post, size = "md", removePostFromPostlist }: { post: Post; size?: "sm" | "md"; removePostFromPostlist?: (postId: string) => void }) {
   const processdContent = processPreviewContent(post.content);
 
   return (

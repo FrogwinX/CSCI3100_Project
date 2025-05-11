@@ -29,14 +29,14 @@ export default function UserRelationsTab({
     }
   };
 
-  const handleTabClick = (tabName: String) => {
+  const handleTabClick = (tabName: string) => {
     // Only navigate if the clicked tab is not already active
     if (Section !== tabName) {
       router.push(`/profile/${userId}/${tabName}`, { scroll: false });
     }
   };
 
-  const getTabClass = (tabName: String) => {
+  const getTabClass = (tabName: string) => {
     return `tab text-lg ${Section === tabName ? "tab-active" : ""}`;
   };
 

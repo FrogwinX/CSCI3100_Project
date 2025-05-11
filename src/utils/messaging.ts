@@ -305,7 +305,7 @@ export async function getMessageHistory(
 
 export async function getUnreadMessageCount(userId: number): Promise<number> {
   try {
-    let apiUrl = `/api/Chat/getUnreadMessageCount?userId=${userId}`;
+    const apiUrl = `/api/Chat/getUnreadMessageCount?userId=${userId}`;
 
     // Fetch data from the API
     const response = await fetch(apiUrl, {

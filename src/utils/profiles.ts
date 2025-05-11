@@ -93,7 +93,7 @@ export async function getProfileContent(userIdTo: string): Promise<Profile | nul
 export async function updateProfile(username: string, description: string, avatar: File | null): Promise<void> {
   try {
     const session = await getSession();
-    let apiUrl = `${API_BASE_URL}/api/Profile/updatePersonalProfile`;
+    const apiUrl = `${API_BASE_URL}/api/Profile/updatePersonalProfile`;
 
     const requestBody =
       username === session.username
@@ -153,7 +153,7 @@ export async function userInteract(
     const isRemoveAction = interaction === "unfollow" || interaction === "unblock";
     const session = await getSession();
 
-    let apiUrl = `${API_BASE_URL}/api/Profile/${interaction}User`;
+    const apiUrl = `${API_BASE_URL}/api/Profile/${interaction}User`;
 
     const response = await fetch(apiUrl, {
       method: isRemoveAction ? "DELETE" : "POST",
