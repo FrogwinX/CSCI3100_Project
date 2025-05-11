@@ -336,7 +336,8 @@ export async function createPost(title: string, content: string, tags: Tag[], im
       tag: tags.map((tag) => tag.tagName),
       attachTo: 0,
     };
-    console.log("content", content);
+    console.log("[CreatePost] requestBody:", requestBody);
+    console.log("[CreatePost] images:", images);
 
     // Create FormData for multipart/form-data request
     const formData = new FormData();
@@ -392,12 +393,33 @@ export async function createPost(title: string, content: string, tags: Tag[], im
       // New format: data.data is an object like { isSuccess: true }
       isSuccess = (data.data as { isSuccess: boolean }).isSuccess;
       if (isSuccess) {
-        // Backend did not return postId, fetch the latest post
-        const latestPosts = await getPosts({ filter: "latest", count: 1 });
+        // Backend did not return postId, fetch the latest posts and match
+        const latestPosts = await getPosts({ filter: "latest", count: 10 });
         if (!latestPosts || latestPosts.length === 0) {
           throw new Error("Unable to fetch the latest post for navigation");
         }
-        postId = latestPosts[0].postId;
+        // 比對content和imageAPIList
+        const contentToMatch = requestBody.content;
+        const imagesToMatch = images.map(img => img.name);
+        const matched = latestPosts.find(post => {
+          // 比對content（只比對[image:xxx]順序）
+          const regex = /\[image:[^\]]+\]/g;
+          const tagsInContent = (post.content.match(regex) || []).map(s => s.replace('[image:', '').replace(']', ''));
+          const tagsToMatch = (contentToMatch.match(regex) || []).map(s => s.replace('[image:', '').replace(']', ''));
+          // 比對imageAPIList（只比對檔名）
+          const apiList = (post.imageAPIList || []).map(url => url.split('/').pop() || url);
+          return JSON.stringify(tagsInContent) === JSON.stringify(tagsToMatch) &&
+                 JSON.stringify(apiList) === JSON.stringify(imagesToMatch);
+        });
+        if (matched) {
+          postId = matched.postId;
+          console.log("[CreatePost] Matched post:", matched);
+          console.log("[CreatePost] API imageAPIList:", matched.imageAPIList);
+        } else {
+          // fallback: 用最新一篇
+          postId = latestPosts[0].postId;
+          console.log("[CreatePost] Fallback to latest post:", latestPosts[0]);
+        }
       }
     } else {
       throw new Error("Unexpected response format from backend");

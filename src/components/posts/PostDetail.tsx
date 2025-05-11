@@ -6,6 +6,39 @@ import { Post } from "@/utils/posts";
 
 function processContent(content: string, imageList: string[] | null): React.ReactNode[] {
   const parts: React.ReactNode[] = [];
+  
+  // Log original content
+  console.log('Original content:', content);
+  
+  // First replace custom tags with HTML tags
+  let processedContent = content;
+  processedContent = processedContent.replace(/\[div\]/g, '');
+  processedContent = processedContent.replace(/\[\/div\]/g, '');
+  processedContent = processedContent.replace(/\[b\](.*?)\[\/b\]/g, '<b>$1</b>');
+  processedContent = processedContent.replace(/\[i\](.*?)\[\/i\]/g, '<i>$1</i>');
+  processedContent = processedContent.replace(/\[u\](.*?)\[\/u\]/g, '<u>$1</u>');
+  processedContent = processedContent.replace(/\[br\]/g, '<br>');
+
+  // Log processed content
+  console.log('Processed content:', processedContent);
+  
+  // Log custom tags found
+  const boldTags = (content.match(/\[b\](.*?)\[\/b\]/g) || []).length;
+  const italicTags = (content.match(/\[i\](.*?)\[\/i\]/g) || []).length;
+  const underlineTags = (content.match(/\[u\](.*?)\[\/u\]/g) || []).length;
+  const brTags = (content.match(/\[br\]/g) || []).length;
+  const divTags = (content.match(/\[div\](.*?)\[\/div\]/g) || []).length;
+  const imageTags = (content.match(/\[image:[^\]]+\]/g) || []).length;
+  
+  console.log('Custom tags found:', {
+    bold: boldTags,
+    italic: italicTags,
+    underline: underlineTags,
+    br: brTags,
+    div: divTags,
+    image: imageTags
+  });
+
   const regex = /\[image:[^\]]+\]/g; // Regex to find image placeholders
   let lastIndex = 0;
   let match;
@@ -13,15 +46,15 @@ function processContent(content: string, imageList: string[] | null): React.Reac
 
   if (!imageList || imageList.length === 0) {
     // If no images, render the whole content, respecting HTML including <br>
-    parts.push(<div key="content-no-images" dangerouslySetInnerHTML={{ __html: content }} />);
+    parts.push(<div key="content-no-images" dangerouslySetInnerHTML={{ __html: processedContent }} />);
     return parts;
   }
 
   // Find all image placeholders
-  while ((match = regex.exec(content)) !== null) {
+  while ((match = regex.exec(processedContent)) !== null) {
     // Add the text part before the match
     if (match.index > lastIndex) {
-      const textSegment = content.substring(lastIndex, match.index);
+      const textSegment = processedContent.substring(lastIndex, match.index);
       // Render text segment, allowing HTML
       parts.push(<div key={`text-${lastIndex}`} dangerouslySetInnerHTML={{ __html: textSegment }} />);
     }
@@ -52,8 +85,8 @@ function processContent(content: string, imageList: string[] | null): React.Reac
   }
 
   // Add any remaining text after the last match
-  if (lastIndex < content.length) {
-    const textSegment = content.substring(lastIndex);
+  if (lastIndex < processedContent.length) {
+    const textSegment = processedContent.substring(lastIndex);
     // Render the final text segment
     parts.push(<div key={`text-${lastIndex}`} dangerouslySetInnerHTML={{ __html: textSegment }} />);
   }

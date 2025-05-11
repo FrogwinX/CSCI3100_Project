@@ -228,17 +228,25 @@ export default function EditPost({ params: paramsPromise }: { params: Promise<{ 
         // Add the image to the images state
         setImages((prevImages) => [...prevImages, file]);
 
-        // Display the image in the editor using a temporary URL and insert a placeholder
-        const imgSrc = URL.createObjectURL(file);
-        const imgElement = document.createElement("img");
-        imgElement.src = imgSrc;
-        imgElement.alt = "Uploaded Image";
-        imgElement.dataset.imageId = imageAPI; // Use imageAPI as the image ID
-        imgElement.style.maxWidth = "100%";
-        imgElement.style.height = "auto";
+        // 在光標處插入 [image:xxx]
         if (contentRef.current) {
-          contentRef.current.appendChild(imgElement);
-          contentRef.current.appendChild(document.createElement("br"));
+          const selection = window.getSelection();
+          if (selection && selection.rangeCount > 0) {
+            const range = selection.getRangeAt(0);
+            const placeholder = `[image:${imageAPI}]`;
+            range.deleteContents();
+            range.insertNode(document.createTextNode(placeholder));
+            // 移動光標到placeholder之後
+            range.collapse(false);
+            selection.removeAllRanges();
+            selection.addRange(range);
+            // 觸發內容變更
+            handleContentChange();
+          } else {
+            // 沒有光標時直接加到最後
+            contentRef.current.appendChild(document.createTextNode(`[image:${imageAPI}]`));
+            handleContentChange();
+          }
         }
       } catch (error) {
         console.error("Error uploading image:", error);
@@ -263,6 +271,41 @@ export default function EditPost({ params: paramsPromise }: { params: Promise<{ 
     if (contentRef.current) {
       const div = document.createElement("div");
       div.innerHTML = contentRef.current.innerHTML;
+      
+      // Log original HTML content
+      console.log('Original HTML content:', div.innerHTML);
+      
+      // Replace custom tags with HTML tags
+      let content = div.innerHTML;
+      content = content.replace(/\[b\](.*?)\[\/b\]/g, '<b>$1</b>');
+      content = content.replace(/\[i\](.*?)\[\/i\]/g, '<i>$1</i>');
+      content = content.replace(/\[u\](.*?)\[\/u\]/g, '<u>$1</u>');
+      content = content.replace(/<br\s*\/?>/g, '[br]');
+      // 彻底去除所有<div>和</div>
+      content = content.replace(/<div\s*\/?>/g, '');
+      content = content.replace(/<\/div>/g, '');
+      
+      // Log processed content
+      console.log('Processed content:', content);
+      
+      // Log custom tags found
+      const boldTags = (content.match(/\[b\](.*?)\[\/b\]/g) || []).length;
+      const italicTags = (content.match(/\[i\](.*?)\[\/i\]/g) || []).length;
+      const underlineTags = (content.match(/\[u\](.*?)\[\/u\]/g) || []).length;
+      const brTags = (content.match(/\[br\]/g) || []).length;
+      const divTags = (content.match(/\[div\](.*?)\[\/div\]/g) || []).length;
+      const imageTags = (content.match(/\[image:[^\]]+\]/g) || []).length;
+      
+      console.log('Custom tags found:', {
+        bold: boldTags,
+        italic: italicTags,
+        underline: underlineTags,
+        br: brTags,
+        div: divTags,
+        image: imageTags
+      });
+      
+      // Handle images
       const images = div.querySelectorAll("img");
       const remainingImageIds: string[] = [];
 
@@ -289,29 +332,11 @@ export default function EditPost({ params: paramsPromise }: { params: Promise<{ 
       setExistingImages((prevImages) => {
         return prevImages.filter((imageUrl) => remainingImageIds.includes(imageUrl));
       });
-      
 
       // Update images to only include new uploads still present in the content
       setImages((prevImages) => {
         return prevImages.filter((image) => remainingImageIds.includes(image.name));
       });
-      console.log("remainingImageIds", remainingImageIds, "existingImages", existingImages);
-
-      console.log("After deletion imageAPIList:", existingImages);
-      console.log("After deletion [image:x] tags in text:", cleanText.match(/\[image:(?:image-)?(\d+)\.jpg\]/g) || []);
-
-      const imageIndexes = (cleanText.match(/\[image:(?:image-)?(\d+)\.jpg\]/g) || [])
-        .map(tag => Number(tag.match(/\[image:(?:image-)?(\d+)\.jpg\]/)?.[1] ?? 0));
-      console.log("x values in [image:x]:", imageIndexes);
-      // Check if continuous
-      const isContinuous = imageIndexes.every((val, idx) => val === idx + 1);
-      console.log("Are x values continuous and starting from 1:", isContinuous);
-
-      const brTags = cleanText.match(/\[br\]/g) || [];
-      console.log("Number of [br] tags:", brTags.length);
-
-      const htmlTags = cleanText.match(/<[^>]+>/g) || [];
-      console.log("Remaining html tags:", htmlTags);
     }
   };
 
@@ -421,6 +446,42 @@ export default function EditPost({ params: paramsPromise }: { params: Promise<{ 
     setShowPreview((prev) => !prev);
   };
 
+  // Add these functions before the return statement
+  const insertTag = (type: 'bold' | 'italic' | 'underline') => {
+    if (!contentRef.current) return;
+    
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return;
+    
+    const range = selection.getRangeAt(0);
+    const selectedText = range.toString();
+    
+    let tagStart = '';
+    let tagEnd = '';
+    
+    switch (type) {
+      case 'bold':
+        tagStart = '[b]';
+        tagEnd = '[/b]';
+        break;
+      case 'italic':
+        tagStart = '[i]';
+        tagEnd = '[/i]';
+        break;
+      case 'underline':
+        tagStart = '[u]';
+        tagEnd = '[/u]';
+        break;
+    }
+    
+    const newText = tagStart + selectedText + tagEnd;
+    range.deleteContents();
+    range.insertNode(document.createTextNode(newText));
+    
+    // Trigger content change
+    handleContentChange();
+  };
+
   return (
     <div className="w-full px-4 pt-4 pb-6 min-h-screen">
       <h1 className="text-4xl font-bold mb-6">Edit Post</h1>
@@ -492,13 +553,13 @@ export default function EditPost({ params: paramsPromise }: { params: Promise<{ 
           </label>
           <div className="border border-base-300 rounded-t-lg">
             <div className="bg-base-200 p-2 flex space-x-1 border-b border-base-300">
-              <button type="button" className="btn btn-ghost btn-xs text-base-content/70">
+              <button type="button" className="btn btn-ghost btn-xs text-base-content/70" onClick={() => insertTag('bold')}>
                 <span className="font-bold">B</span>
               </button>
-              <button type="button" className="btn btn-ghost btn-xs text-base-content/70">
+              <button type="button" className="btn btn-ghost btn-xs text-base-content/70" onClick={() => insertTag('italic')}>
                 <span className="italic">I</span>
               </button>
-              <button type="button" className="btn btn-ghost btn-xs text-base-content/70">
+              <button type="button" className="btn btn-ghost btn-xs text-base-content/70" onClick={() => insertTag('underline')}>
                 <span className="underline">U</span>
               </button>
               <button type="button" className="btn btn-ghost btn-xs text-base-content/70" onClick={handleClipClick}>
