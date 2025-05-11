@@ -106,27 +106,50 @@ export default function CreatePost() {
     if (newImages.length === 0) return;
     setImages((prevImages) => [...prevImages, ...newImages]);
 
-    // 在光標處插入多個 [image:xxx]
     if (contentRef.current) {
-      contentRef.current.focus(); // 確保focus不會跑到title
+      contentRef.current.focus();
       const selection = window.getSelection();
       if (selection && selection.rangeCount > 0) {
         const range = selection.getRangeAt(0);
-        const placeholder = insertTags.join('');
+        
+        const imageContainer = document.createElement('div');
+        imageContainer.className = 'relative inline-block my-2';
+        imageContainer.style.maxWidth = '100%';
+        
+        const img = document.createElement('img');
+        img.src = URL.createObjectURL(newImages[0]);
+        img.className = 'max-h-48 rounded-lg';
+        img.style.maxWidth = '100%';
+        img.dataset.imageId = newImages[0].name;
+        
+        imageContainer.appendChild(img);
+        
         range.deleteContents();
-        range.insertNode(document.createTextNode(placeholder));
-        // 移動光標到placeholder之後
-        range.collapse(false);
+        range.insertNode(imageContainer);
+        
+        range.setStartAfter(imageContainer);
+        range.setEndAfter(imageContainer);
         selection.removeAllRanges();
         selection.addRange(range);
+        
         handleContentChange();
       } else {
-        // 沒有光標時直接加到最後
-        contentRef.current.appendChild(document.createTextNode(insertTags.join('')));
+        const imageContainer = document.createElement('div');
+        imageContainer.className = 'relative inline-block my-2';
+        imageContainer.style.maxWidth = '100%';
+        
+        const img = document.createElement('img');
+        img.src = URL.createObjectURL(newImages[0]);
+        img.className = 'max-h-48 rounded-lg';
+        img.style.maxWidth = '100%';
+        img.dataset.imageId = newImages[0].name;
+        
+        imageContainer.appendChild(img);
+        
+        contentRef.current.appendChild(imageContainer);
         handleContentChange();
       }
     } else {
-      // 沒有contentRef時直接setContent
       setContent((prev) => prev + insertTags.join(''));
     }
   };
@@ -146,61 +169,34 @@ export default function CreatePost() {
   // Handle changes in the content editable div
   const handleContentChange = () => {
     if (contentRef.current) {
-      // Get the HTML content and replace images with placeholders
-      const div = document.createElement("div");
+      const div = document.createElement('div');
       div.innerHTML = contentRef.current.innerHTML;
-      
-      // Log original HTML content
-      console.log('Original HTML content:', div.innerHTML);
-      
-      // Replace custom tags with HTML tags
-      let content = div.innerHTML;
-      content = content.replace(/\[b\](.*?)\[\/b\]/g, '<b>$1</b>');
-      content = content.replace(/\[i\](.*?)\[\/i\]/g, '<i>$1</i>');
-      content = content.replace(/\[u\](.*?)\[\/u\]/g, '<u>$1</u>');
-      content = content.replace(/<br\s*\/?>/g, '[br]');
-      // 彻底去除所有<div>和</div>
-      content = content.replace(/<div\s*\/?>/g, '');
-      content = content.replace(/<\/div>/g, '');
-      
-      // Log processed content
-      console.log('Processed content:', content);
-      
-      // Log custom tags found
-      const boldTags = (content.match(/\[b\](.*?)\[\/b\]/g) || []).length;
-      const italicTags = (content.match(/\[i\](.*?)\[\/i\]/g) || []).length;
-      const underlineTags = (content.match(/\[u\](.*?)\[\/u\]/g) || []).length;
-      const brTags = (content.match(/\[br\]/g) || []).length;
-      const divTags = (content.match(/\[div\](.*?)\[\/div\]/g) || []).length;
-      const imageTags = (content.match(/\[image:[^\]]+\]/g) || []).length;
-      
-      console.log('Custom tags found:', {
-        bold: boldTags,
-        italic: italicTags,
-        underline: underlineTags,
-        br: brTags,
-        div: divTags,
-        image: imageTags
-      });
-      
-      // Handle images
-      const images = div.querySelectorAll("img");
+
+      const buttons = Array.from(div.getElementsByTagName('button'));
+      buttons.forEach(btn => btn.remove());
+
+      const images = Array.from(div.getElementsByTagName('img'));
+      const remainingImageIds: string[] = [];
+
       images.forEach((img) => {
-        const fileName = img.dataset.fileName || "";
-        if (fileName) {
-          const placeholder = `[image:${fileName}]`;
+        const imageId = img.dataset.imageId || "";
+        if (imageId) {
+          const placeholder = `[image:${imageId}]`;
           const textNode = document.createTextNode(placeholder);
-          img.parentNode?.replaceChild(textNode, img);
+          img.parentElement?.replaceChild(textNode, img);
+          remainingImageIds.push(imageId);
         }
       });
 
-      // Preserve the HTML structure
       const formattedContent = div.innerHTML;
       setContent(formattedContent);
 
-      // Calculate the text length (excluding image placeholders)
       const cleanText = div.textContent || "";
       setTextLength(getTextLength(cleanText));
+
+      setImages((prevImages) => {
+        return prevImages.filter((image) => remainingImageIds.includes(image.name));
+      });
     }
   };
 
@@ -279,7 +275,28 @@ export default function CreatePost() {
     setSubmitError(null);
 
     try {
-      const postId = await createPost(title, content, tags, images);
+      let submitContent = content;
+      if (contentRef.current) {
+        const div = document.createElement('div');
+        div.innerHTML = contentRef.current.innerHTML;
+
+        const images = Array.from(div.getElementsByTagName('img'));
+        images.forEach((img) => {
+          const imageId = img.dataset.imageId || "";
+          if (imageId) {
+            const placeholder = `[image:${imageId}]`;
+            const textNode = document.createTextNode(placeholder);
+            img.parentElement?.replaceChild(textNode, img);
+          }
+        });
+
+        let text = div.innerHTML;
+        text = text.replace(/<[^>]+>/g, ''); 
+        text = text.replace(/&nbsp;/g, ' '); 
+        submitContent = text;
+      }
+
+      const postId = await createPost(title, submitContent, tags, images);
       if (postId) {
         // Navigate to the newly created post's page
         router.push(`/forum/post/${postId}`);
@@ -350,18 +367,15 @@ export default function CreatePost() {
       dragOverIndex.current = null;
       return;
     }
-    // 調整 images 狀態
     setImages((prev) => {
       const newArr = [...prev];
       const [removed] = newArr.splice(dragIndex, 1);
       newArr.splice(dragOverIndex.current!, 0, removed);
       return newArr;
     });
-    // 調整 content 裡的 [image:xxx] 順序
     setContent((prevContent) => {
       const regex = /\[image:[^\]]+\]/g;
       let tagsInContent = prevContent.match(regex) || [];
-      // 用新順序替換
       const newTags = images.map(img => `[image:${img.name}]`);
       let idx = 0;
       let replaced = prevContent.replace(regex, () => newTags[idx++] || "");
@@ -473,20 +487,26 @@ export default function CreatePost() {
         </div>
         {images.length > 0 && (
           <div className="flex gap-2 flex-wrap my-2">
-            {images.map((img, idx) => (
-              <div
-                key={img.name}
-                draggable
-                onDragStart={() => handleDragStart(idx)}
-                onDragOver={e => { e.preventDefault(); handleDragOver(idx); }}
-                onDrop={handleDrop}
-                className={`relative border rounded p-1 bg-base-200 ${dragIndex === idx ? 'ring-2 ring-primary' : ''}`}
-                style={{ width: 80, height: 80 }}
-              >
-                <img src={URL.createObjectURL(img)} alt={img.name} className="object-cover w-full h-full rounded" />
-                <div className="absolute top-0 right-0 text-xs bg-error text-white rounded px-1 cursor-pointer" onClick={() => setImages(images.filter((_, i) => i !== idx))}>×</div>
-              </div>
-            ))}
+            {(() => {
+              const tagOrder = (content.match(/\[image:([^\]]+)\]/g) || []).map(tag => tag.replace('[image:', '').replace(']', ''));
+              const orderedImages = tagOrder
+                .map(name => images.find(img => img.name === name))
+                .filter(Boolean) as File[];
+              return orderedImages.map((img, idx) => (
+                <div
+                  key={img.name}
+                  draggable
+                  onDragStart={() => handleDragStart(idx)}
+                  onDragOver={e => { e.preventDefault(); handleDragOver(idx); }}
+                  onDrop={handleDrop}
+                  className={`relative border rounded p-1 bg-base-200 ${dragIndex === idx ? 'ring-2 ring-primary' : ''}`}
+                  style={{ width: 80, height: 80 }}
+                >
+                  <img src={URL.createObjectURL(img)} alt={img.name} className="object-cover w-full h-full rounded" />
+                  <div className="absolute top-0 right-0 text-xs bg-error text-white rounded px-1 cursor-pointer" onClick={() => setImages(images.filter((_, i) => images[i].name !== img.name))}>×</div>
+                </div>
+              ));
+            })()}
           </div>
         )}
         {submitError && <p className="text-error">{submitError}</p>}

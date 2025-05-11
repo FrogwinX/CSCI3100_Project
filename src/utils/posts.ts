@@ -405,15 +405,12 @@ export async function createPost(title: string, content: string, tags: Tag[], im
         if (!latestPosts || latestPosts.length === 0) {
           throw new Error("Unable to fetch the latest post for navigation");
         }
-        // 比對content和imageAPIList
         const contentToMatch = requestBody.content;
         const imagesToMatch = images.map(img => img.name);
         const matched = latestPosts.find(post => {
-          // 比對content（只比對[image:xxx]順序）
           const regex = /\[image:[^\]]+\]/g;
           const tagsInContent = (post.content.match(regex) || []).map(s => s.replace('[image:', '').replace(']', ''));
           const tagsToMatch = (contentToMatch.match(regex) || []).map(s => s.replace('[image:', '').replace(']', ''));
-          // 比對imageAPIList（只比對檔名）
           const apiList = (post.imageAPIList || []).map(url => url.split('/').pop() || url);
           return JSON.stringify(tagsInContent) === JSON.stringify(tagsToMatch) &&
                  JSON.stringify(apiList) === JSON.stringify(imagesToMatch);
@@ -423,7 +420,6 @@ export async function createPost(title: string, content: string, tags: Tag[], im
           console.log("[CreatePost] Matched post:", matched);
           console.log("[CreatePost] API imageAPIList:", matched.imageAPIList);
         } else {
-          // fallback: 用最新一篇
           postId = latestPosts[0].postId;
           console.log("[CreatePost] Fallback to latest post:", latestPosts[0]);
         }

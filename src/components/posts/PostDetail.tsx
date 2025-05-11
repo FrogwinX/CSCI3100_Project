@@ -62,22 +62,26 @@ function processContent(content: string, imageList: string[] | null): React.Reac
     // Check if there's a corresponding image URL
     if (imageIndex < imageList.length) {
       const imageUrl = imageList[imageIndex];
-      // Add the LoadingImage component
+      // Add the LoadingImage component with a container for better styling
       parts.push(
-        <LoadingImage
-          key={`image-${imageIndex}`}
-          src={imageUrl}
-          alt={`Post image ${imageIndex + 1}`}
-          className="object-contain rounded-md max-h-96 mx-auto"
-        />
+        <div key={`image-container-${imageIndex}`} className="my-4">
+          <LoadingImage
+            key={`image-${imageIndex}`}
+            src={imageUrl}
+            alt={`Post image ${imageIndex + 1}`}
+            className="object-contain rounded-lg max-h-96 mx-auto"
+          />
+        </div>
       );
       imageIndex++;
     } else {
       // Placeholder for missing image
       parts.push(
-        <span key={`missing-${imageIndex}`} className="italic text-base-content/50">
-          [Image not available]
-        </span>
+        <div key={`missing-${imageIndex}`} className="my-4 p-4 bg-base-200 rounded-lg text-center">
+          <span className="italic text-base-content/50">
+            [Image not available]
+          </span>
+        </div>
       );
     }
 
