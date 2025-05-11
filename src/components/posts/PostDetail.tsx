@@ -6,22 +6,22 @@ import { Post } from "@/utils/posts";
 
 function processContent(content: string, imageList: string[] | null): React.ReactNode[] {
   const parts: React.ReactNode[] = [];
-  
+
   // Log original content
-  console.log('Original content:', content);
-  
+  console.log("Original content:", content);
+
   // First replace custom tags with HTML tags
   let processedContent = content;
-  processedContent = processedContent.replace(/\[div\]/g, '');
-  processedContent = processedContent.replace(/\[\/div\]/g, '');
-  processedContent = processedContent.replace(/\[b\](.*?)\[\/b\]/g, '<b>$1</b>');
-  processedContent = processedContent.replace(/\[i\](.*?)\[\/i\]/g, '<i>$1</i>');
-  processedContent = processedContent.replace(/\[u\](.*?)\[\/u\]/g, '<u>$1</u>');
-  processedContent = processedContent.replace(/\[br\]/g, '<br>');
+  processedContent = processedContent.replace(/\[div\]/g, "");
+  processedContent = processedContent.replace(/\[\/div\]/g, "");
+  processedContent = processedContent.replace(/\[b\](.*?)\[\/b\]/g, "<b>$1</b>");
+  processedContent = processedContent.replace(/\[i\](.*?)\[\/i\]/g, "<i>$1</i>");
+  processedContent = processedContent.replace(/\[u\](.*?)\[\/u\]/g, "<u>$1</u>");
+  processedContent = processedContent.replace(/\[br\]/g, "<br>");
 
   // Log processed content
-  console.log('Processed content:', processedContent);
-  
+  console.log("Processed content:", processedContent);
+
   // Log custom tags found
   const boldTags = (content.match(/\[b\](.*?)\[\/b\]/g) || []).length;
   const italicTags = (content.match(/\[i\](.*?)\[\/i\]/g) || []).length;
@@ -29,14 +29,14 @@ function processContent(content: string, imageList: string[] | null): React.Reac
   const brTags = (content.match(/\[br\]/g) || []).length;
   const divTags = (content.match(/\[div\](.*?)\[\/div\]/g) || []).length;
   const imageTags = (content.match(/\[image:[^\]]+\]/g) || []).length;
-  
-  console.log('Custom tags found:', {
+
+  console.log("Custom tags found:", {
     bold: boldTags,
     italic: italicTags,
     underline: underlineTags,
     br: brTags,
     div: divTags,
-    image: imageTags
+    image: imageTags,
   });
 
   const regex = /\[image:[^\]]+\]/g; // Regex to find image placeholders
@@ -78,9 +78,7 @@ function processContent(content: string, imageList: string[] | null): React.Reac
       // Placeholder for missing image
       parts.push(
         <div key={`missing-${imageIndex}`} className="my-4 p-4 bg-base-200 rounded-lg text-center">
-          <span className="italic text-base-content/50">
-            [Image not available]
-          </span>
+          <span className="italic text-base-content/50">[Image not available]</span>
         </div>
       );
     }

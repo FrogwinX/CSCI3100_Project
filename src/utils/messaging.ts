@@ -120,7 +120,7 @@ export class MessagingService {
       this.updateStatus(ConnectionStatus.CONNECTING);
 
       try {
-        const socket = new SockJS("https://flowchatbackend.azurewebsites.net/chat", null, {
+        const socket = new SockJS("http://localhost:8080/chat", null, {
           // Specify preferred transports to avoid unnecessary fallback attempts
           transports: ["xhr-streaming", "websocket", "xhr-polling"],
         });
