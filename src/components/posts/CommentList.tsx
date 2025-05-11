@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState, useRef } from "react";
-import { getCommentList, createComment, Post } from "@/utils/posts";
+import { getCommentList, createComment, Post, deletePostOrComment } from "@/utils/posts";
 import UserAvatar from "@/components/users/UserAvatar";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -8,10 +8,11 @@ import {
   faThumbsDown as faThumbsDownSolid,
   faEllipsis,
 } from "@fortawesome/free-solid-svg-icons";
-import { faThumbsUp, faThumbsDown } from "@fortawesome/free-regular-svg-icons";
+import { faThumbsUp, faThumbsDown, faTrashAlt } from "@fortawesome/free-regular-svg-icons";
 import { useSession } from "@/hooks/useSession";
 import { getMyComments } from "@/utils/profiles";
 import PostPreview from "@/components/posts/PostPreview";
+import { on } from "events";
 
 interface CommentListProps {
   postId?: string;
@@ -106,28 +107,24 @@ function stripCommentNumber(str: string) {
   return str.replace(/^C\d+(?:-\d+)?\s*/, "");
 }
 
-function renderCommentContent(str: string, showNumber: boolean, selfNumber?: string) {
+function renderCommentContent(str: string, showNumber: boolean = true) {
   let html = str;
 
-  if (!showNumber) {
-    if (selfNumber) {
-      const regex = new RegExp(`^${selfNumber}\\s*`);
-      html = html.replace(regex, "");
-    } else {
-      html = html.replace(/^C\d+(?:-\d+)?\s*/, "");
-    }
-    html = html.replace(/\(reply to (C\d+(?:-\d+)?)\)\s*/, '<span style="color:#2563eb;font-size:0.95em;font-weight:400;">$1</span> ');
+  if (showNumber) {
+    // Style the "(reply to C<number>)" part
+    html = html.replace(
+      /\(reply to (C\d+(?:-\d+)?)\)\s*/,
+      '<span style="color:#2563eb;font-size:0.95em;font-weight:400;">$1</span> '
+    );
+    // Style the "C<number>" prefix
+    html = html.replace(/^(C\d+(?:-\d+)?)(\s+)/, "");
   } else {
-    // highlight the reply-to reference
-    html = html.replace(
-      /\(reply to (C\d+(?:-\d+)?)\)/,
-      '<span style="color:#2563eb;font-size:0.95em;font-weight:400;">$1</span>'
-    );
-    // highlight the leading comment number
-    html = html.replace(
-      /^(C\d+(?:-\d+)?)(?=\s)/,
-      '<span style="color:#2563eb;font-size:0.95em;font-weight:400;">$1</span>'
-    );
+    // Remove "None-{number}" prefix if present
+    html = html.replace(/^None-\d+\s*/, "");
+    // Style the "C<number>" prefix
+    html = html.replace(/^(C\d+(?:-\d+)?)(\s+)/, "");
+    // Remove "(reply to C<number>)" part
+    html = html.replace(/\(reply to (C\d+(?:-\d+)?)\)\s*/, "");
   }
 
   return html;
@@ -145,7 +142,7 @@ function CommentItem({
   mainCommentId,
   mainCommentNumber,
 }: {
-  comment: any;
+  comment: Post;
   userId: string;
   onReplySuccess: () => void;
   showLikeDislike?: boolean;
@@ -245,14 +242,21 @@ function CommentItem({
     }
   };
 
+  const handleDelete = async (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.stopPropagation();
+    await deletePostOrComment(comment.postId);
+    onReplySuccess();
+  };
+
   // Extract comment number from content or generate new one
   const extractCommentNumber = (content: string) => {
     const match = content.match(/^C\d+(?:-\d+)?/);
     return match ? match[0] : null;
   };
 
-  const commentNumber = extractCommentNumber(comment.content) || (numberPrefix ? `${numberPrefix}-${index + 1}` : `C${index + 1}`);
-  
+  const commentNumber =
+    extractCommentNumber(comment.content) || (numberPrefix ? `${numberPrefix}-${index + 1}` : `C${index + 1}`);
+
   // Update content with comment number if not present
   let contentWithNumber = comment.content;
   if (!extractCommentNumber(contentWithNumber)) {
@@ -287,6 +291,8 @@ function CommentItem({
 
   const mainId = mainCommentId ?? comment.postId;
   const mainNumber = mainCommentNumber ?? commentNumber;
+  const isMe = userId == comment.userId;
+  const showNumberAndReply = numberPrefix !== "None";
 
   return (
     <div id={comment.postId} className={`flex flex-col border-l-2 border-base-300 pl-6 pb-2 w-full`}>
@@ -295,9 +301,11 @@ function CommentItem({
           <UserAvatar src={comment.avatar} size="md" />
           <div className="ml-3 w-full">
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-xs text-base-content font-mono bg-base-200 rounded px-1.5 py-0.5 mr-1 align-middle">
-                {commentNumber}
-              </span>
+              {showNumberAndReply && (
+                <span className="text-xs text-base-content font-mono bg-base-200 rounded px-1.5 py-0.5 mr-1 align-middle">
+                  {commentNumber}
+                </span>
+              )}
               <span className="font-semibold text-base align-middle">{comment.username}</span>
               <span className="text-xs text-base-content/70 align-middle">
                 {new Date(comment.updatedAt).toLocaleString(undefined, {
@@ -310,35 +318,35 @@ function CommentItem({
               </span>
             </div>
             <div className="text-base-content break-words whitespace-pre-wrap">
-              <span
-                dangerouslySetInnerHTML={{ __html: renderCommentContent(contentWithNumber, false, commentNumber) }}
-              />
+              <span dangerouslySetInnerHTML={{ __html: renderCommentContent(contentWithNumber, showNumberAndReply) }} />
             </div>
-            <div className="flex gap-2 mt-2">
-              {/* comment reply */}
-              {isMainComment ? (
-                <button
-                  className="btn btn-xs btn-ghost text-base-content/70"
-                  onClick={() => {
-                    setShowReplyBox((v) => !v);
-                    setReplyToNumber(undefined);
-                    setReplyToSubNumber(undefined);
-                  }}
-                >
-                  {showReplyBox && !replyToSubNumber ? "Cancel" : "Reply"}
-                </button>
-              ) : (
-                <button
-                  className="btn btn-xs btn-ghost text-base-content/70"
-                  onClick={() => {
-                    setShowSubReplyBox((v) => !v);
-                    setSubReplyToNumber(showSubReplyBox ? undefined : commentNumber);
-                  }}
-                >
-                  {showSubReplyBox ? "Cancel" : "Reply"}
-                </button>
-              )}
-            </div>
+            {showNumberAndReply && (
+              <div className="flex gap-2 mt-2">
+                {/* comment reply */}
+                {isMainComment ? (
+                  <button
+                    className="btn btn-xs btn-ghost text-base-content/70"
+                    onClick={() => {
+                      setShowReplyBox((v) => !v);
+                      setReplyToNumber(undefined);
+                      setReplyToSubNumber(undefined);
+                    }}
+                  >
+                    {showReplyBox && !replyToSubNumber ? "Cancel" : "Reply"}
+                  </button>
+                ) : (
+                  <button
+                    className="btn btn-xs btn-ghost text-base-content/70"
+                    onClick={() => {
+                      setShowSubReplyBox((v) => !v);
+                      setSubReplyToNumber(showSubReplyBox ? undefined : commentNumber);
+                    }}
+                  >
+                    {showSubReplyBox ? "Cancel" : "Reply"}
+                  </button>
+                )}
+              </div>
+            )}
             {/* comment reply list */}
             {isMainComment && showReplyBox && !replyToSubNumber && (
               <div className="mt-2">
@@ -370,21 +378,35 @@ function CommentItem({
           </div>
         </div>
         {showLikeDislike && (
-          <div className="flex flex-row items-center gap-1">
-            <div className="flex items-center bg-base-200 rounded-xl px-3 py-1 gap-2 mt-1">
-              <button className="btn btn-sm btn-ghost p-0" onClick={handleLike} title="Like" disabled={isLoading}>
+          <div className="flex flex-row items-center gap-0">
+            <div className="bg-base-200 rounded-xl">
+              <button className="btn btn-sm btn-ghost" onClick={handleLike} title="Like" disabled={isLoading}>
                 <FontAwesomeIcon icon={userLiked ? faThumbsUpSolid : faThumbsUp} size="lg" />
               </button>
               <span className="text-xs font-semibold text-base-content">
                 {Intl.NumberFormat("en", { notation: "compact" }).format(likeCount - dislikeCount)}
               </span>
-              <button className="btn btn-sm btn-ghost p-0" onClick={handleDislike} title="Dislike" disabled={isLoading}>
+              <button className="btn btn-sm btn-ghost" onClick={handleDislike} title="Dislike" disabled={isLoading}>
                 <FontAwesomeIcon icon={userDisliked ? faThumbsDownSolid : faThumbsDown} size="lg" />
               </button>
             </div>
-            <button className="btn btn-sm btn-ghost btn-circle" title="More options">
-              <FontAwesomeIcon icon={faEllipsis} size="lg" />
-            </button>
+            {isMe && (
+              <div className="dropdown dropdown-end">
+                <div tabIndex={0} role="button" className={`btn btn-sm btn-ghost btn-circle`}>
+                  <FontAwesomeIcon icon={faEllipsis} size="lg" />
+                </div>
+                <ul tabIndex={0} className="dropdown-content menu bg-base-100 rounded-box z-10 shadow-lg w-26">
+                  {/* Show edit/delete only if user is author */}
+
+                  <li className="w-full">
+                    <a onClick={handleDelete}>
+                      <FontAwesomeIcon icon={faTrashAlt} />
+                      <span>Delete</span>
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -425,7 +447,7 @@ function CommentItem({
   );
 }
 
-export default function CommentList({ postId, userId, onReplySuccess }: CommentListProps) {
+export default function CommentList({ postId, userId }: CommentListProps) {
   const [comments, setComments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -459,15 +481,15 @@ export default function CommentList({ postId, userId, onReplySuccess }: CommentL
       if (isInitial) {
         // Sort main comments by post ID to maintain consistent order
         const sortedList = list.slice().sort((a: any, b: any) => Number(a.postId) - Number(b.postId));
-        
+
         // Add comment numbers based on sorted order
         const completedList = sortedList.map((c: any, idx: number) => {
-          if (!/^C\d+/.test(c.content)) {
+          if (!/^C\d+/.test(c.content) && postId) {
             return { ...c, content: `C${idx + 1} ${c.content}` };
           }
           return c;
         });
-        
+
         setComments(completedList);
         setSubCommentVisibility((prev) => {
           const updated = { ...prev };
@@ -482,19 +504,19 @@ export default function CommentList({ postId, userId, onReplySuccess }: CommentL
         setComments((prevComments) => {
           const all = [...prevComments, ...list];
           const map = new Map();
-          
+
           // Sort all comments by post ID
           const sortedAll = all.slice().sort((a: any, b: any) => Number(a.postId) - Number(b.postId));
-          
+
           // Add comment numbers based on sorted order
           sortedAll.forEach((c, idx) => {
-            if (!/^C\d+/.test(c.content)) {
+            if (!/^C\d+/.test(c.content) && postId) {
               map.set(c.postId, { ...c, content: `C${idx + 1} ${c.content}` });
             } else {
               map.set(c.postId, c);
             }
           });
-          
+
           return Array.from(map.values());
         });
       }
@@ -541,6 +563,7 @@ export default function CommentList({ postId, userId, onReplySuccess }: CommentL
     fetchComments(true);
   };
 
+  // If postId is not provided, it is my comments list
   if (!postId) {
     return (
       <div className="flex flex-col">
@@ -569,6 +592,7 @@ export default function CommentList({ postId, userId, onReplySuccess }: CommentL
     );
   }
 
+  // If postId is provided, it is a post's comment list
   return (
     <div className="flex flex-col gap-2">
       {comments.map((comment, idx) => {
