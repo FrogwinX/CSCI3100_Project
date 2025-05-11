@@ -18,6 +18,7 @@ export default function PostList({
 }) {
   const { selectedTags: tags, setPostsLoading } = useTagContext();
   const [posts, setPosts] = useState<Post[]>([]);
+  const [currentPostsFetched, setCurrentPostsFetched] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hasMore, setHasMore] = useState(true);
   const observerTarget = useRef<HTMLDivElement>(null);
@@ -56,45 +57,43 @@ export default function PostList({
 
     const fetchInitialPosts = async () => {
       try {
-        if (isLoading) {
-          let initialPosts;
-          //switch between getPosts and getSearchPosts based on keyword
-          if (!keyword) {
-            switch (filter) {
-              case "created":
-                initialPosts = await getPosts({ filter, authorUserId });
-                break;
-              default:
-                initialPosts = await getPosts({ filter });
-                break;
-            }
-          } else {
-            initialPosts = await getSearchPosts({ keyword });
+        let initialPosts;
+        //switch between getPosts and getSearchPosts based on keyword
+        if (!keyword) {
+          switch (filter) {
+            case "created":
+              initialPosts = await getPosts({ filter, authorUserId });
+              break;
+            default:
+              initialPosts = await getPosts({ filter });
+              break;
           }
-          // Scroll to the top of the page smoothly
-          window.scrollTo({ top: 0, behavior: "smooth" });
-
-          // No posts are returned from the API
-          if (!initialPosts || initialPosts.length === 0) {
-            setHasMore(false);
-            return;
-          }
-
-          const filteredPosts = filterPostsByTags(initialPosts);
-
-          // Update excludedPostIds with the initial posts
-          const newExcludedIds = new Set<number>();
-          initialPosts.forEach((post) => newExcludedIds.add(Number(post.postId)));
-          setExcludedPostIds(newExcludedIds);
-
-          setPosts(filteredPosts);
-          setHasMore(initialPosts.length > 0);
-
-          console.log("Initial Posts:", initialPosts);
-          console.log("Filtered Posts:", filteredPosts);
-          console.log("Excluded Post IDs:", Array.from(newExcludedIds));
-          console.log("Selected Tags:", tags);
+        } else {
+          initialPosts = await getSearchPosts({ keyword });
         }
+        // Scroll to the top of the page smoothly
+        window.scrollTo({ top: 0, behavior: "smooth" });
+
+        // No posts are returned from the API
+        if (!initialPosts || initialPosts.length === 0) {
+          setHasMore(false);
+          return;
+        }
+
+        const filteredPosts = filterPostsByTags(initialPosts);
+
+        // Update excludedPostIds with the initial posts
+        const newExcludedIds = new Set<number>();
+        initialPosts.forEach((post) => newExcludedIds.add(Number(post.postId)));
+        setExcludedPostIds(newExcludedIds);
+
+        setPosts(filteredPosts);
+        setHasMore(initialPosts.length > 0);
+
+        console.log("Initial Posts:", initialPosts);
+        console.log("Filtered Posts:", filteredPosts);
+        console.log("Excluded Post IDs:", Array.from(newExcludedIds));
+        console.log("Selected Tags:", tags);
       } catch (err) {
         console.error("Failed to load posts:", err);
       } finally {
@@ -108,11 +107,11 @@ export default function PostList({
   // Effect to handle auto-loading more posts if filtered results are empty
   useEffect(() => {
     // If no posts after filtering, but there might be more, try loading more
-    if (!isLoading && posts.length === 0 && hasMore && fetchAttempts < MAX_ATTEMPTS) {
+    if (!isLoading && currentPostsFetched.length === 0 && hasMore && fetchAttempts < MAX_ATTEMPTS) {
       setFetchAttempts((prev) => prev + 1);
       loadMorePosts();
     }
-  }, [posts, hasMore, fetchAttempts]);
+  }, [currentPostsFetched, hasMore, fetchAttempts]);
 
   // Infinite scrolling setup
   useEffect(() => {
@@ -189,9 +188,11 @@ export default function PostList({
         return newExcludedIds;
       });
 
-      console.log("New Posts:", newPosts);
-      console.log("Filtered Posts:", filteredPosts);
 
+      console.log("Load more Posts:", newPosts);
+      console.log("excluded:", excludedPostIds)
+
+      setCurrentPostsFetched(filteredPosts);
       setPosts((prevPosts) => [...prevPosts, ...filteredPosts]);
 
       // If got posts but none passed the filter
