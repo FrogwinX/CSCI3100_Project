@@ -20,11 +20,11 @@ export default function UserStat({
   const pathName = usePathname();
 
   return (
-    <Link href={`${pathName}/${type}`} className="flex items-center gap-3 text-xl">
+    <div className="flex items-center gap-3 text-xl">
       {Intl.NumberFormat("en", {
         notation: "compact",
       }).format(data)}
       <h1 className="text-xl text-base-content/70">{title}</h1>
-    </Link>
+    </div>
   );
 }
