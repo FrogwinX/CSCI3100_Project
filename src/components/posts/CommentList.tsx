@@ -13,6 +13,7 @@ import { useSession } from "@/hooks/useSession";
 import { getMyComments } from "@/utils/profiles";
 import PostPreview from "@/components/posts/PostPreview";
 import { on } from "events";
+import Link from "next/link";
 
 interface CommentListProps {
   postId?: string;
@@ -294,204 +295,118 @@ function CommentItem({
   const isMe = userId == comment.userId;
   const showNumberAndReply = numberPrefix !== "None";
 
-  if (isMainComment) {
-    return (
-      <div id={comment.postId} className="flex flex-col border-l-2 border-base-300 pl-6 pb-2 w-full">
-        <div className="flex justify-between w-full items-start gap-4">
-          <div className="flex flex-grow items-start min-w-0">
+  const commentDisplaySection = (
+    <>
+      <div className="flex items-center gap-2 mb-1">
+        {showNumberAndReply && (
+          <span className="text-xs text-base-content font-mono bg-base-200 rounded px-1.5 py-0.5 mr-1 align-middle">
+            {commentNumber}
+          </span>
+        )}
+        <span className="font-semibold text-base align-middle">{comment.username}</span>
+        <span className="text-xs text-base-content/70 align-middle">
+          {new Date(comment.updatedAt).toLocaleString(undefined, {
+            year: "2-digit",
+            month: "numeric",
+            day: "numeric",
+            hour: "numeric",
+            minute: "numeric",
+          })}
+        </span>
+      </div>
+      <div className="text-base-content break-words whitespace-pre-wrap">
+        <span dangerouslySetInnerHTML={{ __html: renderCommentContent(contentWithNumber, showNumberAndReply) }} />
+      </div>
+    </>
+  );
+
+  return (
+    <div id={`comment-${comment.postId}`} className="flex justify-between w-full items-start gap-4">
+      <div className="ml-8 flex flex-col border-l-2 border-base-300 pl-6 pb-2 w-full flex-grow min-w-0">
+        <div className="flex items-start min-w-0">
+          <Link href={`/profile/${comment.userId}`}>
             <UserAvatar src={comment.avatar} size="md" />
-            <div className="ml-3 w-full min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-xs text-base-content font-mono bg-base-200 rounded px-1.5 py-0.5 mr-1 align-middle">
-                  {commentNumber}
-                </span>
-                <span className="font-semibold text-base align-middle">{comment.username}</span>
-                <span className="text-xs text-base-content/70 align-middle">
-                  {new Date(comment.updatedAt).toLocaleString(undefined, {
-                    year: "2-digit",
-                    month: "numeric",
-                    day: "numeric",
-                    hour: "numeric",
-                    minute: "numeric",
-                  })}
-                </span>
-              </div>
-              <div className="text-base-content break-words whitespace-pre-wrap">
-                <span
-                  dangerouslySetInnerHTML={{ __html: renderCommentContent(contentWithNumber, false) }}
+          </Link>
+          <div className="ml-3 w-full min-w-0">
+            {!showNumberAndReply && mainCommentId ? (
+              <Link href={`/forum/post/${mainCommentId}#comment-${comment.postId}`}>{commentDisplaySection}</Link>
+            ) : (
+              commentDisplaySection // Render directly if not navigable or no parent post info
+            )}
+            <div className="flex gap-2 mt-2">
+              {/* comment reply */}
+              <button
+                className="btn btn-xs btn-ghost text-base-content/70"
+                onClick={() => {
+                  setShowSubReplyBox((v) => !v);
+                  setSubReplyToNumber(showSubReplyBox ? undefined : commentNumber);
+                }}
+              >
+                {showSubReplyBox ? "Cancel" : "Reply"}
+              </button>
+            </div>
+            {/* comment reply list */}
+            {showSubReplyBox && (
+              <div className="mt-2">
+                <CommentFormInline
+                  parentId={mainId}
+                  userId={session.userId ? String(session.userId) : ""}
+                  onSuccess={() => {
+                    setShowSubReplyBox(false);
+                    setSubReplyToNumber(undefined);
+                    onReplySuccess();
+                  }}
+                  replyToNumber={commentNumber}
+                  nextSubNumber={undefined}
                 />
               </div>
-              <div className="flex gap-2 mt-2">
-                {/* comment reply */}
-                <button
-                  className="btn btn-xs btn-ghost text-base-content/70"
-                  onClick={() => {
-                    setShowReplyBox((v) => !v);
-                    setReplyToNumber(undefined);
-                    setReplyToSubNumber(undefined);
-                  }}
-                >
-                  {showReplyBox && !replyToSubNumber ? "Cancel" : "Reply"}
-                </button>
-              </div>
-              {/* comment reply list */}
-              {isMainComment && showReplyBox && !replyToSubNumber && (
-                <div className="mt-2">
-                  <CommentFormInline
-                    parentId={comment.postId}
-                    userId={session.userId ? String(session.userId) : ""}
-                    onSuccess={onReplySuccess}
-                    replyToNumber={undefined}
-                    nextSubNumber={nextSubNumber}
-                  />
-                </div>
-              )}
-              {/* show/hide sub comment button */}
-              {isMainComment && subComments.length > 0 && (
-                <button
-                  className="block text-base-content/50 text-sm my-2 hover:underline hover:text-base-content w-full text-left"
-                  style={{ fontFamily: "monospace", letterSpacing: 1 }}
-                  onClick={toggleSubComments}
-                >
-                  {showSubComments ? "----- Hide comment" : "----- Show comment"}
-                </button>
-              )}
-            </div>
-          </div>
-          {showLikeDislike && (
-            <div className="flex flex-row items-center gap-1">
-              <div className="flex items-center bg-base-200 rounded-xl px-3 py-1 gap-2 mt-1">
-                <button className="btn btn-sm btn-ghost p-0" onClick={handleLike} title="Like" disabled={isLoading}>
-                  <FontAwesomeIcon icon={userLiked ? faThumbsUpSolid : faThumbsUp} size="lg" />
-                </button>
-                <span className="text-xs font-semibold text-base-content">
-                  {Intl.NumberFormat("en", { notation: "compact" }).format(likeCount - dislikeCount)}
-                </span>
-                <button className="btn btn-sm btn-ghost p-0" onClick={handleDislike} title="Dislike" disabled={isLoading}>
-                  <FontAwesomeIcon icon={userDisliked ? faThumbsDownSolid : faThumbsDown} size="lg" />
-                </button>
-              </div>
-              <button className="btn btn-sm btn-ghost btn-circle" title="More options">
-                <FontAwesomeIcon icon={faEllipsis} size="lg" />
+            )}
+            {/* show/hide sub comment button */}
+            {subComments.length > 0 && (
+              <button
+                className="block text-base-content/50 text-sm my-2 hover:underline hover:text-base-content w-full text-left"
+                style={{ fontFamily: "monospace", letterSpacing: 1 }}
+                onClick={toggleSubComments}
+              >
+                {showSubComments ? "----- Hide comment" : "----- Show comment"}
               </button>
+            )}
+          </div>
+        </div>
+      </div>
+      {showLikeDislike && (
+        <div className="flex flex-row items-center gap-1">
+          <div className="flex items-center bg-base-200 rounded-xl px-3 py-1 gap-2 mt-1">
+            <button className="btn btn-sm btn-ghost p-0" onClick={handleLike} title="Like" disabled={isLoading}>
+              <FontAwesomeIcon icon={userLiked ? faThumbsUpSolid : faThumbsUp} size="lg" />
+            </button>
+            <span className="text-xs font-semibold text-base-content">
+              {Intl.NumberFormat("en", { notation: "compact" }).format(likeCount - dislikeCount)}
+            </span>
+            <button className="btn btn-sm btn-ghost p-0" onClick={handleDislike} title="Dislike" disabled={isLoading}>
+              <FontAwesomeIcon icon={userDisliked ? faThumbsDownSolid : faThumbsDown} size="lg" />
+            </button>
+          </div>
+          {isMe && (
+            <div className="dropdown dropdown-end">
+              <div tabIndex={0} role="button" className={`btn btn-sm btn-ghost btn-circle`}>
+                <FontAwesomeIcon icon={faEllipsis} size="lg" />
+              </div>
+              <ul tabIndex={0} className="dropdown-content menu bg-base-100 rounded-box z-10 shadow-lg w-26">
+                {/* Show edit/delete only if user is author */}
+                <li className="w-full">
+                  <a onClick={handleDelete}>
+                    <FontAwesomeIcon icon={faTrashAlt} />
+                    <span>Delete</span>
+                  </a>
+                </li>
+              </ul>
             </div>
           )}
         </div>
-        {/* sub comment (reply) */}
-        {isMainComment && (
-          <div className="w-full">
-            {showSubComments && subComments.length > 0 && (
-              <div className="mt-2 w-full">
-                {subComments.map((child: any, idx: number) => (
-                  <CommentItem
-                    key={child.postId}
-                    userId={userId}
-                    comment={child}
-                    onReplySuccess={onReplySuccess}
-                    showLikeDislike={showLikeDislike}
-                    numberPrefix={commentNumber}
-                    index={idx}
-                    subCommentVisibility={subCommentVisibility}
-                    setSubCommentVisibility={setSubCommentVisibility}
-                    mainCommentId={mainCommentId}
-                    mainCommentNumber={mainCommentNumber}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    );
-  } else {
-    return (
-      <div className="flex justify-between w-full items-start gap-4">
-        <div className="ml-8 flex flex-col border-l-2 border-base-300 pl-6 pb-2 w-full flex-grow min-w-0">
-          <div className="flex items-start min-w-0">
-            <UserAvatar src={comment.avatar} size="md" />
-            <div className="ml-3 w-full min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-xs text-base-content font-mono bg-base-200 rounded px-1.5 py-0.5 mr-1 align-middle">
-                  {commentNumber}
-                </span>
-                <span className="font-semibold text-base align-middle">{comment.username}</span>
-                <span className="text-xs text-base-content/70 align-middle">
-                  {new Date(comment.updatedAt).toLocaleString(undefined, {
-                    year: "2-digit",
-                    month: "numeric",
-                    day: "numeric",
-                    hour: "numeric",
-                    minute: "numeric",
-                  })}
-                </span>
-              </div>
-              <div className="text-base-content break-words whitespace-pre-wrap">
-                <span
-                  dangerouslySetInnerHTML={{ __html: renderCommentContent(contentWithNumber, false) }}
-                />
-              </div>
-              <div className="flex gap-2 mt-2">
-                {/* comment reply */}
-                <button
-                  className="btn btn-xs btn-ghost text-base-content/70"
-                  onClick={() => {
-                    setShowSubReplyBox((v) => !v);
-                    setSubReplyToNumber(showSubReplyBox ? undefined : commentNumber);
-                  }}
-                >
-                  {showSubReplyBox ? "Cancel" : "Reply"}
-                </button>
-              </div>
-              {/* comment reply list */}
-              {showSubReplyBox && (
-                <div className="mt-2">
-                  <CommentFormInline
-                    parentId={mainId}
-                    userId={session.userId ? String(session.userId) : ""}
-                    onSuccess={() => {
-                      setShowSubReplyBox(false);
-                      setSubReplyToNumber(undefined);
-                      onReplySuccess();
-                    }}
-                    replyToNumber={commentNumber}
-                    nextSubNumber={undefined}
-                  />
-                </div>
-              )}
-              {/* show/hide sub comment button */}
-              {subComments.length > 0 && (
-                <button
-                  className="block text-base-content/50 text-sm my-2 hover:underline hover:text-base-content w-full text-left"
-                  style={{ fontFamily: "monospace", letterSpacing: 1 }}
-                  onClick={toggleSubComments}
-                >
-                  {showSubComments ? "----- Hide comment" : "----- Show comment"}
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-        {showLikeDislike && (
-          <div className="flex flex-row items-center gap-1">
-            <div className="flex items-center bg-base-200 rounded-xl px-3 py-1 gap-2 mt-1">
-              <button className="btn btn-sm btn-ghost p-0" onClick={handleLike} title="Like" disabled={isLoading}>
-                <FontAwesomeIcon icon={userLiked ? faThumbsUpSolid : faThumbsUp} size="lg" />
-              </button>
-              <span className="text-xs font-semibold text-base-content">
-                {Intl.NumberFormat("en", { notation: "compact" }).format(likeCount - dislikeCount)}
-              </span>
-              <button className="btn btn-sm btn-ghost p-0" onClick={handleDislike} title="Dislike" disabled={isLoading}>
-                <FontAwesomeIcon icon={userDisliked ? faThumbsDownSolid : faThumbsDown} size="lg" />
-              </button>
-            </div>
-            <button className="btn btn-sm btn-ghost btn-circle" title="More options">
-              <FontAwesomeIcon icon={faEllipsis} size="lg" />
-            </button>
-          </div>
-        )}
-      </div>
-    );
-  }
+      )}
+    </div>
+  );
 }
 
 export default function CommentList({ postId, userId }: CommentListProps) {
@@ -502,6 +417,7 @@ export default function CommentList({ postId, userId }: CommentListProps) {
   const observerTarget = useRef<HTMLDivElement>(null);
   const [excludedCommentIds, setExcludedCommentIds] = useState<Set<number>>(new Set());
   const [subCommentVisibility, setSubCommentVisibility] = useState<Record<string, boolean>>({});
+  const [scrolledToHash, setScrolledToHash] = useState(false); // New state to track scroll
 
   const fetchComments = async (isInitial: boolean = false) => {
     try {
@@ -578,7 +494,71 @@ export default function CommentList({ postId, userId }: CommentListProps) {
 
   useEffect(() => {
     fetchComments(true);
-  }, [postId, userId]);
+    setScrolledToHash(false); // Reset scroll status when postId or userId changes
+  }, [postId, userId]); // Removed onReplySuccessProp from dependencies
+
+  // Scroll to a comment if a hash is present in the URL
+  useEffect(() => {
+    if (!scrolledToHash && !loading && comments.length > 0 && window.location.hash) {
+      const hash = window.location.hash;
+      const targetCommentId = hash.substring(1);
+
+      if (!targetCommentId.startsWith("comment-")) return;
+
+      const actualIdToFind = targetCommentId.replace("comment-", "");
+
+      let targetElement: HTMLElement | null = null;
+
+      // Function to recursively search for the comment and its parent if it's a sub-comment
+      const findCommentAndParent = (
+        commentList: Post[],
+        idToFind: string
+      ): { target: Post | null; parent: Post | null } => {
+        for (const comment of commentList) {
+          if (comment.postId.toString() === idToFind) {
+            return { target: comment, parent: null }; // Found as a main comment
+          }
+          if (comment.commentList && comment.commentList.length > 0) {
+            for (const subComment of comment.commentList) {
+              if (subComment.postId.toString() === idToFind) {
+                return { target: subComment, parent: comment }; // Found as a sub-comment
+              }
+            }
+          }
+        }
+        return { target: null, parent: null };
+      };
+
+      const { target: foundComment, parent: foundParentComment } = findCommentAndParent(comments, actualIdToFind);
+
+      if (foundComment) {
+        if (foundParentComment) {
+          // It's a sub-comment, ensure its parent is expanded
+          const parentId = foundParentComment.postId.toString();
+          if (!subCommentVisibility[parentId]) {
+            setSubCommentVisibility((prev) => ({ ...prev, [parentId]: true }));
+            // We've changed state to expand. Scrolling will be attempted in the next render cycle
+            // when the sub-comment is visible. We don't set scrolledToHash yet.
+            // To make it scroll after expansion, we can rely on this effect re-running
+            // or use a small timeout, but re-running is cleaner.
+            return; // Exit and let the effect re-run after state update
+          }
+        }
+
+        // Now attempt to find the element in the DOM and scroll
+        // Ensure the ID used for getElementById matches exactly what's in the DOM
+        targetElement = document.getElementById(targetCommentId); // e.g., "comment-123"
+
+        if (targetElement) {
+          // Use a timeout to allow the DOM to update if a parent was just expanded
+          setTimeout(() => {
+            targetElement!.scrollIntoView({ behavior: "smooth", block: "center" });
+            setScrolledToHash(true);
+          }, 100); // Small delay for DOM update
+        }
+      }
+    }
+  }, [comments, loading, scrolledToHash, subCommentVisibility]);
 
   // Infinite scrolling observer
   useEffect(() => {
@@ -628,7 +608,7 @@ export default function CommentList({ postId, userId }: CommentListProps) {
                 index={idx}
                 subCommentVisibility={subCommentVisibility}
                 setSubCommentVisibility={setSubCommentVisibility}
-                mainCommentId={comment.postId}
+                mainCommentId={post.postId}
                 mainCommentNumber={comment.content.match(/^(C\d+(?:-\d+)?)/)?.[0] || `M${idx + 1}`}
               />
             ))}
