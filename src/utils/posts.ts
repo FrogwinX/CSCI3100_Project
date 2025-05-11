@@ -60,6 +60,13 @@ interface CreatePostResponse {
   };
 }
 
+interface DeletePostReponse {
+  message: string;
+  data: {
+    isSuccess: boolean;
+  };
+}
+
 export async function getAllTags(): Promise<Tag[]> {
   try {
     const session = await getSession();
@@ -584,17 +591,17 @@ export async function getCommentList(
   comments = comments.slice().sort((a: any, b: any) => {
     const aNum = parseCommentNumber(a.content);
     const bNum = parseCommentNumber(b.content);
-    
+
     // First compare main comment numbers
     if (aNum[0] !== bNum[0]) {
       return aNum[0] - bNum[0];
     }
-    
+
     // If main numbers are equal, compare sub-comment numbers
     if (aNum[1] !== bNum[1]) {
       return aNum[1] - bNum[1];
     }
-    
+
     // If both numbers are equal, sort by timestamp
     return new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
   });
@@ -642,6 +649,38 @@ export async function createComment(postId: string, userId: string, content: str
 
     const data = await response.json();
     return data;
+  } catch (error) {
+    console.error("Error creating comment:", error);
+    throw error;
+  }
+}
+
+export async function deletePostOrComment(postId: string) {
+  const apiUrl = `${API_BASE_URL}/api/Forum/deletePostOrComment`;
+  const session = await getSession();
+
+  try {
+    const response = await fetch(apiUrl, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${session.token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        userId: session.userId,
+        postId: parseInt(postId, 10),
+      }),
+    });
+
+    const data: DeletePostReponse = await response.json();
+
+    console.log("response", data.message);
+
+    if (data.data.isSuccess) {
+      console.error("Failed to delete post:", data.message);
+    }
+
+    return;
   } catch (error) {
     console.error("Error creating comment:", error);
     throw error;

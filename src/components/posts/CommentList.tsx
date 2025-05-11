@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState, useRef } from "react";
-import { getCommentList, createComment, Post } from "@/utils/posts";
+import { getCommentList, createComment, Post, deletePostOrComment } from "@/utils/posts";
 import UserAvatar from "@/components/users/UserAvatar";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -8,10 +8,11 @@ import {
   faThumbsDown as faThumbsDownSolid,
   faEllipsis,
 } from "@fortawesome/free-solid-svg-icons";
-import { faThumbsUp, faThumbsDown } from "@fortawesome/free-regular-svg-icons";
+import { faThumbsUp, faThumbsDown, faTrashAlt } from "@fortawesome/free-regular-svg-icons";
 import { useSession } from "@/hooks/useSession";
 import { getMyComments } from "@/utils/profiles";
 import PostPreview from "@/components/posts/PostPreview";
+import { on } from "events";
 
 interface CommentListProps {
   postId?: string;
@@ -106,28 +107,24 @@ function stripCommentNumber(str: string) {
   return str.replace(/^C\d+(?:-\d+)?\s*/, "");
 }
 
-function renderCommentContent(str: string, showNumber: boolean, selfNumber?: string) {
+function renderCommentContent(str: string, showNumber: boolean = true) {
   let html = str;
 
-  if (!showNumber) {
-    if (selfNumber) {
-      const regex = new RegExp(`^${selfNumber}\\s*`);
-      html = html.replace(regex, "");
-    } else {
-      html = html.replace(/^C\d+(?:-\d+)?\s*/, "");
-    }
-    html = html.replace(/\(reply to (C\d+(?:-\d+)?)\)\s*/, '<span style="color:#2563eb;font-size:0.95em;font-weight:400;">$1</span> ');
+  if (showNumber) {
+    // Style the "(reply to C<number>)" part
+    html = html.replace(
+      /\(reply to (C\d+(?:-\d+)?)\)\s*/,
+      '<span style="color:#2563eb;font-size:0.95em;font-weight:400;">$1</span> '
+    );
+    // Style the "C<number>" prefix
+    html = html.replace(/^(C\d+(?:-\d+)?)(\s+)/, "");
   } else {
-    // highlight the reply-to reference
-    html = html.replace(
-      /\(reply to (C\d+(?:-\d+)?)\)/,
-      '<span style="color:#2563eb;font-size:0.95em;font-weight:400;">$1</span>'
-    );
-    // highlight the leading comment number
-    html = html.replace(
-      /^(C\d+(?:-\d+)?)(?=\s)/,
-      '<span style="color:#2563eb;font-size:0.95em;font-weight:400;">$1</span>'
-    );
+    // Remove "None-{number}" prefix if present
+    html = html.replace(/^None-\d+\s*/, "");
+    // Style the "C<number>" prefix
+    html = html.replace(/^(C\d+(?:-\d+)?)(\s+)/, "");
+    // Remove "(reply to C<number>)" part
+    html = html.replace(/\(reply to (C\d+(?:-\d+)?)\)\s*/, "");
   }
 
   return html;
@@ -145,7 +142,7 @@ function CommentItem({
   mainCommentId,
   mainCommentNumber,
 }: {
-  comment: any;
+  comment: Post;
   userId: string;
   onReplySuccess: () => void;
   showLikeDislike?: boolean;
@@ -245,14 +242,21 @@ function CommentItem({
     }
   };
 
+  const handleDelete = async (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.stopPropagation();
+    await deletePostOrComment(comment.postId);
+    onReplySuccess();
+  };
+
   // Extract comment number from content or generate new one
   const extractCommentNumber = (content: string) => {
     const match = content.match(/^C\d+(?:-\d+)?/);
     return match ? match[0] : null;
   };
 
-  const commentNumber = extractCommentNumber(comment.content) || (numberPrefix ? `${numberPrefix}-${index + 1}` : `C${index + 1}`);
-  
+  const commentNumber =
+    extractCommentNumber(comment.content) || (numberPrefix ? `${numberPrefix}-${index + 1}` : `C${index + 1}`);
+
   // Update content with comment number if not present
   let contentWithNumber = comment.content;
   if (!extractCommentNumber(contentWithNumber)) {
@@ -287,6 +291,8 @@ function CommentItem({
 
   const mainId = mainCommentId ?? comment.postId;
   const mainNumber = mainCommentNumber ?? commentNumber;
+  const isMe = userId == comment.userId;
+  const showNumberAndReply = numberPrefix !== "None";
 
   if (isMainComment) {
     return (
@@ -312,7 +318,7 @@ function CommentItem({
               </div>
               <div className="text-base-content break-words whitespace-pre-wrap">
                 <span
-                  dangerouslySetInnerHTML={{ __html: renderCommentContent(contentWithNumber, false, commentNumber) }}
+                  dangerouslySetInnerHTML={{ __html: renderCommentContent(contentWithNumber, false) }}
                 />
               </div>
               <div className="flex gap-2 mt-2">
@@ -421,7 +427,7 @@ function CommentItem({
               </div>
               <div className="text-base-content break-words whitespace-pre-wrap">
                 <span
-                  dangerouslySetInnerHTML={{ __html: renderCommentContent(contentWithNumber, false, commentNumber) }}
+                  dangerouslySetInnerHTML={{ __html: renderCommentContent(contentWithNumber, false) }}
                 />
               </div>
               <div className="flex gap-2 mt-2">
@@ -488,7 +494,7 @@ function CommentItem({
   }
 }
 
-export default function CommentList({ postId, userId, onReplySuccess }: CommentListProps) {
+export default function CommentList({ postId, userId }: CommentListProps) {
   const [comments, setComments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -522,15 +528,15 @@ export default function CommentList({ postId, userId, onReplySuccess }: CommentL
       if (isInitial) {
         // Sort main comments by post ID to maintain consistent order
         const sortedList = list.slice().sort((a: any, b: any) => Number(a.postId) - Number(b.postId));
-        
+
         // Add comment numbers based on sorted order
         const completedList = sortedList.map((c: any, idx: number) => {
-          if (!/^C\d+/.test(c.content)) {
+          if (!/^C\d+/.test(c.content) && postId) {
             return { ...c, content: `C${idx + 1} ${c.content}` };
           }
           return c;
         });
-        
+
         setComments(completedList);
         setSubCommentVisibility((prev) => {
           const updated = { ...prev };
@@ -545,19 +551,19 @@ export default function CommentList({ postId, userId, onReplySuccess }: CommentL
         setComments((prevComments) => {
           const all = [...prevComments, ...list];
           const map = new Map();
-          
+
           // Sort all comments by post ID
           const sortedAll = all.slice().sort((a: any, b: any) => Number(a.postId) - Number(b.postId));
-          
+
           // Add comment numbers based on sorted order
           sortedAll.forEach((c, idx) => {
-            if (!/^C\d+/.test(c.content)) {
+            if (!/^C\d+/.test(c.content) && postId) {
               map.set(c.postId, { ...c, content: `C${idx + 1} ${c.content}` });
             } else {
               map.set(c.postId, c);
             }
           });
-          
+
           return Array.from(map.values());
         });
       }
@@ -604,6 +610,7 @@ export default function CommentList({ postId, userId, onReplySuccess }: CommentL
     fetchComments(true);
   };
 
+  // If postId is not provided, it is my comments list
   if (!postId) {
     return (
       <div className="flex flex-col">
@@ -632,6 +639,7 @@ export default function CommentList({ postId, userId, onReplySuccess }: CommentL
     );
   }
 
+  // If postId is provided, it is a post's comment list
   return (
     <div className="flex flex-col gap-2">
       {comments.map((comment, idx) => {
