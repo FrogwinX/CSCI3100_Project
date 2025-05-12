@@ -4,8 +4,6 @@ import { getSession } from "@/utils/sessions";
 import { Users } from "@/utils/users";
 import { Post } from "@/utils/posts";
 
-const API_BASE_URL = process.env.API_BASE_URL;
-
 export interface Profile {
   userId: string;
   username: string;

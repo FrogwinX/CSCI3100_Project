@@ -54,7 +54,6 @@ interface ResetPasswordData {
 // Helper function for API calls to reduce repetition
 async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<ApiResponse<T>> {
   try {
-    const API_BASE_URL = process.env.API_BASE_URL;
     const response = await fetch(`https://flowchatbackend.azurewebsites.net/api${endpoint}`, options);
     const result: ApiResponse<T> = await response.json();
     return result;

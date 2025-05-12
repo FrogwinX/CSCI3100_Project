@@ -4,7 +4,6 @@ import { NextRequest, NextResponse } from "next/server";
 type Params = Promise<{ action: string[] }>;
 
 // Backend API URL
-const API_BASE_URL = process.env.API_BASE_URL;
 
 // Helper function to get token and user ID from session
 async function getAuthInfo(): Promise<{ token: string; userId: number | null }> {
