@@ -38,7 +38,7 @@ export async function getSearchUser(
   try {
     const session = await getSession();
 
-    let apiUrl = `${API_BASE_URL}/api/Forum/searchUser?`;
+    let apiUrl = `https://flowchatbackend.azurewebsites.net/api/Forum/searchUser?`;
     // Add query parameters
     apiUrl += `userId=${session.userId}`; // Add userId to the URL
     apiUrl += `&keyword=${options.keyword}`; // Add keyword to the URL

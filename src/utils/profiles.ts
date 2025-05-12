@@ -59,7 +59,7 @@ interface GetMyCommentsReponse {
 export async function getProfileContent(userIdTo: string): Promise<Profile | null> {
   try {
     const session = await getSession();
-    let apiUrl = `${API_BASE_URL}/api/Profile/getProfileContent?userIdFrom=${session.userId}`;
+    let apiUrl = `https://flowchatbackend.azurewebsites.net/api/Profile/getProfileContent?userIdFrom=${session.userId}`;
 
     if (userIdTo === "0") {
       apiUrl += `&userIdTo=${session.userId}`;
@@ -93,7 +93,7 @@ export async function getProfileContent(userIdTo: string): Promise<Profile | nul
 export async function updateProfile(username: string, description: string, avatar: File | null): Promise<void> {
   try {
     const session = await getSession();
-    const apiUrl = `${API_BASE_URL}/api/Profile/updatePersonalProfile`;
+    const apiUrl = `https://flowchatbackend.azurewebsites.net/api/Profile/updatePersonalProfile`;
 
     const requestBody =
       username === session.username
@@ -153,7 +153,7 @@ export async function userInteract(
     const isRemoveAction = interaction === "unfollow" || interaction === "unblock";
     const session = await getSession();
 
-    const apiUrl = `${API_BASE_URL}/api/Profile/${interaction}User`;
+    const apiUrl = `https://flowchatbackend.azurewebsites.net/api/Profile/${interaction}User`;
 
     const response = await fetch(apiUrl, {
       method: isRemoveAction ? "DELETE" : "POST",
@@ -192,7 +192,7 @@ export async function getUserRelations(options: {
   try {
     const session = await getSession();
 
-    let apiUrl = `${API_BASE_URL}/api/Profile/`;
+    let apiUrl = `https://flowchatbackend.azurewebsites.net/api/Profile/`;
 
     switch (options.relationship) {
       case "following":
@@ -263,7 +263,7 @@ export async function getMyComments(
   try {
     const session = await getSession();
     // Build the API URL based on the filter
-    let apiUrl = `${API_BASE_URL}/api/Profile/getMyCommentPreviewList?`;
+    let apiUrl = `https://flowchatbackend.azurewebsites.net/api/Profile/getMyCommentPreviewList?`;
 
     // Add query parameters
     apiUrl += `userIdFrom=${session.userId}&userIdTo=${options.userIdTo}`;

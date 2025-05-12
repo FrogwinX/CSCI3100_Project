@@ -60,7 +60,7 @@ export async function POST(request: NextRequest, props: { params: Params }) {
     // Handle FormData for image upload
     const formData = await request.formData();
 
-    response = await fetch(`${API_BASE_URL}/api/${actionPath}`, {
+    response = await fetch(`https://flowchatbackend.azurewebsites.net/api/${actionPath}`, {
       method: "POST",
       headers: {
         Authorization: token,
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest, props: { params: Params }) {
     try {
       const body = await request.json();
 
-      response = await fetch(`${API_BASE_URL}/api/${actionPath}`, {
+      response = await fetch(`https://flowchatbackend.azurewebsites.net/api/${actionPath}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -96,7 +96,7 @@ export async function DELETE(request: NextRequest, props: { params: Params }) {
   const body = await request.json();
   const { token } = await getAuthInfo();
 
-  const response = await fetch(`${API_BASE_URL}/api/${actionPath}`, {
+  const response = await fetch(`https://flowchatbackend.azurewebsites.net/api/${actionPath}`, {
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",
@@ -116,12 +116,15 @@ export async function GET(request: NextRequest, props: { params: Params }) {
   const searchParams = url.search;
   const { token, userId } = await getAuthInfo();
 
-  const response = await fetch(`${API_BASE_URL}/api/${actionPath}${searchParams}&userId=${userId}`, {
-    method: "GET",
-    headers: {
-      Authorization: token,
-    },
-  });
+  const response = await fetch(
+    `https://flowchatbackend.azurewebsites.net/api/${actionPath}${searchParams}&userId=${userId}`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: token,
+      },
+    }
+  );
 
   return handleApiResponse(response);
 }

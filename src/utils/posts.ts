@@ -70,7 +70,7 @@ interface DeletePostReponse {
 export async function getAllTags(): Promise<Tag[]> {
   try {
     const session = await getSession();
-    const apiUrl = `${API_BASE_URL}/api/Forum/getAllTag`;
+    const apiUrl = `https://flowchatbackend.azurewebsites.net/api/Forum/getAllTag`;
 
     // Fetch data from the API
     const response = await fetch(apiUrl, {
@@ -112,7 +112,7 @@ export async function getPosts(
   try {
     const session = await getSession();
     // Build the API URL based on the filter
-    let apiUrl = `${API_BASE_URL}/api/Forum/`;
+    let apiUrl = `https://flowchatbackend.azurewebsites.net/api/Forum/`;
     switch (options.filter) {
       case "latest":
         apiUrl += `getLatestPostPreviewList?`;
@@ -124,7 +124,7 @@ export async function getPosts(
         apiUrl += "getFollowingPostPreviewList?";
         break;
       case "created":
-        apiUrl = `${API_BASE_URL}/api/Profile/getMyPostPreviewList?`;
+        apiUrl = `https://flowchatbackend.azurewebsites.net/api/Profile/getMyPostPreviewList?`;
         break;
     }
 
@@ -210,7 +210,7 @@ export async function getSearchPosts(
   try {
     const session = await getSession();
 
-    let apiUrl = `${API_BASE_URL}/api/Forum/searchPost?`;
+    let apiUrl = `https://flowchatbackend.azurewebsites.net/api/Forum/searchPost?`;
 
     // Add query parameters
     apiUrl += `userId=${session.userId}`; // Add userId to the URL
@@ -278,7 +278,7 @@ export async function getPostById(postId: string): Promise<Post | null> {
   try {
     const session = await getSession();
 
-    const apiUrl = `${API_BASE_URL}/api/Forum/getPostContent?userId=${session.userId}&postId=${postId}`;
+    const apiUrl = `https://flowchatbackend.azurewebsites.net/api/Forum/getPostContent?userId=${session.userId}&postId=${postId}`;
 
     // Fetch data from the API
     const response = await fetch(apiUrl, {
@@ -360,7 +360,7 @@ export async function createPost(title: string, content: string, tags: Tag[], im
 
     console.log(images);
 
-    const apiUrl = `${API_BASE_URL}/api/Forum/createPostOrComment`;
+    const apiUrl = `https://flowchatbackend.azurewebsites.net/api/Forum/createPostOrComment`;
     const response = await fetch(apiUrl, {
       method: "POST",
       headers: {
@@ -495,7 +495,7 @@ export async function updatePost(
     }
 
     // API endpoint for updating a post or comment
-    const apiUrl = `${API_BASE_URL}/api/Forum/updatePostOrComment`;
+    const apiUrl = `https://flowchatbackend.azurewebsites.net/api/Forum/updatePostOrComment`;
     const response = await fetch(apiUrl, {
       method: "PUT", // Use PUT method for updating
       headers: {
@@ -574,7 +574,7 @@ export async function getCommentList(
     count?: number;
   } = {}
 ) {
-  const apiUrl = `${API_BASE_URL}/api/Forum/getCommentList?postId=${postId}&userId=${userId}`;
+  const apiUrl = `https://flowchatbackend.azurewebsites.net/api/Forum/getCommentList?postId=${postId}&userId=${userId}`;
   const session = await getSession();
   const response = await fetch(apiUrl, {
     headers: {
@@ -618,7 +618,7 @@ export async function getCommentList(
 
 // Create a comment for a post
 export async function createComment(postId: string, userId: string, content: string) {
-  const apiUrl = `${API_BASE_URL}/api/Forum/createPostOrComment`;
+  const apiUrl = `https://flowchatbackend.azurewebsites.net/api/Forum/createPostOrComment`;
   const session = await getSession();
   const requestBody = {
     userId: parseInt(userId, 10),
@@ -654,7 +654,7 @@ export async function createComment(postId: string, userId: string, content: str
 }
 
 export async function deletePostOrComment(postId: string) {
-  const apiUrl = `${API_BASE_URL}/api/Forum/deletePostOrComment`;
+  const apiUrl = `https://flowchatbackend.azurewebsites.net/api/Forum/deletePostOrComment`;
   const session = await getSession();
 
   try {
