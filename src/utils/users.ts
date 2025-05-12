@@ -1,8 +1,6 @@
 "use server";
 import { getSession } from "@/utils/sessions";
 
-const API_BASE_URL = process.env.API_BASE_URL;
-
 export interface Users {
   userId: number;
   username: string;
