@@ -565,7 +565,7 @@ export default function Messenger() {
 
     try {
       // First, search existing contacts for matches
-      const matchingContacts = contacts.filter(contact =>
+      const matchingContacts = contacts.filter((contact) =>
         contact.contactUsername.toLowerCase().includes(username.toLowerCase())
       );
       setContacts(matchingContacts);
@@ -582,10 +582,10 @@ export default function Messenger() {
       }
 
       //for each user in users, do:
-      users.forEach(user => {
+      users.forEach((user) => {
         // Check if we already have a contact with the user
         const foundUserId = user.userId;
-        const existingContact = contacts.find(contact => contact.contactUserId === foundUserId);
+        const existingContact = contacts.find((contact) => contact.contactUserId === foundUserId);
 
         if (existingContact) {
           // If we have an existing conversation, select it
@@ -613,12 +613,11 @@ export default function Messenger() {
 
         // Update the contacts list and select the new contact
 
-        setContacts(prev => [...prev, newContact]);
+        setContacts((prev) => [...prev, newContact]);
         setConversation([]);
         setSearchInput("");
         setShowConversation(true);
       });
-
     } catch (error) {
       console.error("Error searching for user:", error);
       alert("Error searching for user. Please try again.");
@@ -639,8 +638,9 @@ export default function Messenger() {
       <div className="bg-base-200 min-h-full flex flex-grow w-6/8 shadow-lg">
         {/* Contact List (Left)*/}
         <div
-          className={`w-full lg:w-1/3 flex flex-col bg-base-100 shadow-md ${showConversation ? "hidden md:flex" : "flex"
-            }`}
+          className={`w-full lg:w-1/3 flex flex-col bg-base-100 shadow-md ${
+            showConversation ? "hidden md:flex" : "flex"
+          }`}
         >
           <div className="flex flex-col p-2 gap-2">
             <h1 className="text-3xl font-bold mt-6">Contacts</h1>
@@ -660,41 +660,40 @@ export default function Messenger() {
             </div>
           </div>
           <ul className="list overflow-y-auto">
-            {/* Please create a contact component */}
             {connectionStatus !== ConnectionStatus.CONNECTED ? (
               [1, 2, 3, 4, 5, 6].map((item) => <LoadingContact key={item} />)
             ) : contacts.length === 0 ? (
-              <p className="text-base-content/50 text-center mt-4 break-words text-wrap mx-16">
-                No contacts.
-              </p>
+              <p className="text-base-content/50 text-center mt-4 break-words text-wrap mx-16">No contacts.</p>
             ) : (
               contacts.map((contact) => (
                 <li
                   key={contact.contactUserId}
-                  className={`cursor-pointer p-2 hover:bg-base-200 ${selectedContact?.contactUserId === contact.contactUserId ? "bg-base-200" : ""
-                    }`}
+                  className={`cursor-pointer p-2 hover:bg-base-200 ${
+                    selectedContact?.contactUserId === contact.contactUserId ? "bg-base-200" : ""
+                  }`}
                   onClick={() => handleContactSelect(contact)}
                 >
                   <div className="flex place-content-between items-start">
                     <UserAvatar src={contact.contactUserAvatar} username={contact.contactUsername} size="lg" />
                     <span className="text-xs text-base-content/50">
-                      {new Date(contact.sentAt).toLocaleString(undefined, {
-                        dateStyle: "short",
-                        timeStyle: "short",
-                      })}
+                      {contact.sentAt &&
+                        new Date(contact.sentAt).toLocaleString(undefined, {
+                          dateStyle: "short",
+                          timeStyle: "short",
+                        })}
                     </span>
                   </div>
                   <div className="flex justify-between items-center text-md">
                     <span className="truncate">
-                      {contact.userIdFrom === session.userId ? "You: " : ""}
+                      {contact.userIdFrom === session.userId && contact.sentAt ? "You: " : ""}
 
                       {contact.latestMessage ? (
                         contact.latestMessage
-                      ) : (
+                      ) : contact.sentAt ? (
                         <span className="italic opacity-80">
                           <FontAwesomeIcon icon={faFileImage} /> Image
                         </span>
-                      )}
+                      ) : null}
                     </span>
                     {contact.unreadMessageCount > 0 && (
                       <span className="badge badge-info badge-sm text-info-content">{contact.unreadMessageCount}</span>
