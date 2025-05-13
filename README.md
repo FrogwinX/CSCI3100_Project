@@ -31,7 +31,7 @@ a focus on discussion engagements, FlowChat fosters a vibrant online community.
 
 ## Current Phase Requirement
 > [!IMPORTANT]
-> 12 May | Project Demo
+> Project Done
 
 
 ## Development Schedule
@@ -59,7 +59,7 @@ a focus on discussion engagements, FlowChat fosters a vibrant online community.
 | [v] | 09 May | Design and Implementation (Final Version) | 10% |
 | [v] | 09 May | Testing Document | 10% |
 | [v] | 09 May | Release Notes and User Manual | 5% |
-| [ ] | 12 May | Project Demo | 45% |
+| [v] | 12 May | Project Demo | 45% |
 
 
 ## Grading
@@ -79,6 +79,7 @@ This project accounts for **30%** of the course grade, including:
 ## Log History
 | Date | Comments | Revised By |
 | :---: | --- | --- |
+| 13 May | Project done and open  | Edwin |
 | 11 May | Schedule updated and testing, user manual doc links updated  | Edwin |
 | 11 Mar | Schedule and tool links updated | Edwin |
 | 16 Feb | API Specification added | Edwin |
