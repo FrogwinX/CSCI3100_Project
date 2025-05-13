@@ -136,7 +136,6 @@ function CommentItem({
   subCommentVisibility,
   setSubCommentVisibility,
   mainCommentId,
-
 }: {
   comment: Post;
   userId: string;
@@ -150,8 +149,6 @@ function CommentItem({
 }) {
   const { session } = useSession();
   const [showSubReplyBox, setShowSubReplyBox] = useState(false);
-
-
   const [userLiked, setUserLiked] = useState(comment.isLiked);
   const [userDisliked, setUserDisliked] = useState(comment.isDisliked);
   const [likeCount, setLikeCount] = useState(comment.likeCount);
@@ -257,9 +254,9 @@ function CommentItem({
 
   const subComments = Array.isArray(comment.commentList)
     ? comment.commentList.slice().sort((a: Post, b: Post) => {
-      // Sort sub-comments by their post ID to maintain consistent order
-      return Number(a.postId) - Number(b.postId);
-    })
+        // Sort sub-comments by their post ID to maintain consistent order
+        return Number(a.postId) - Number(b.postId);
+      })
     : [];
 
   // Calculate next sub-comment number based on the highest existing sub-comment number
@@ -274,6 +271,7 @@ function CommentItem({
     isMainComment && subCommentVisibility && comment.postId in subCommentVisibility
       ? subCommentVisibility[comment.postId]
       : true;
+
   const toggleSubComments = () => {
     if (isMainComment && setSubCommentVisibility) {
       setSubCommentVisibility((prev) => ({ ...prev, [comment.postId]: !prev[comment.postId] }));
@@ -320,21 +318,18 @@ function CommentItem({
             {!showNumberAndReply && mainCommentId ? (
               <Link href={`/forum/post/${mainCommentId}#comment-${comment.postId}`}>{commentDisplaySection}</Link>
             ) : (
-              commentDisplaySection // Render directly if not navigable or no parent post info
+              commentDisplaySection
             )}
             <div className="flex gap-2 mt-2">
-              {/* comment reply */}
               <button
                 className="btn btn-xs btn-ghost text-base-content/70"
                 onClick={() => {
                   setShowSubReplyBox((v) => !v);
-
                 }}
               >
                 {showSubReplyBox ? "Cancel" : "Reply"}
               </button>
             </div>
-            {/* comment reply list */}
             {showSubReplyBox && (
               <div className="mt-2">
                 <CommentFormInline
@@ -349,8 +344,7 @@ function CommentItem({
                 />
               </div>
             )}
-            {/* show/hide sub comment button */}
-            {subComments.length > 0 && (
+            {isMainComment && subComments.length > 0 && (
               <button
                 className="block text-base-content/50 text-sm my-2 hover:underline hover:text-base-content w-full text-left"
                 style={{ fontFamily: "monospace", letterSpacing: 1 }}
@@ -358,6 +352,22 @@ function CommentItem({
               >
                 {showSubComments ? "----- Hide comment" : "----- Show comment"}
               </button>
+            )}
+            {showSubComments && subComments.length > 0 && (
+              <div className="mt-2">
+                {subComments.map((subComment, subIdx) => (
+                  <CommentItem
+                    key={subComment.postId}
+                    comment={subComment}
+                    userId={userId}
+                    onReplySuccess={onReplySuccess}
+                    showLikeDislike={showLikeDislike}
+                    numberPrefix={commentNumber}
+                    index={subIdx}
+                    mainCommentId={mainId}
+                  />
+                ))}
+              </div>
             )}
           </div>
         </div>
@@ -381,7 +391,6 @@ function CommentItem({
                 <FontAwesomeIcon icon={faEllipsis} size="lg" />
               </div>
               <ul tabIndex={0} className="dropdown-content menu bg-base-100 rounded-box z-10 shadow-lg w-26">
-                {/* Show edit/delete only if user is author */}
                 <li className="w-full">
                   <a onClick={handleDelete}>
                     <FontAwesomeIcon icon={faTrashAlt} />

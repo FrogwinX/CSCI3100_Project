@@ -7,9 +7,6 @@ import { Post } from "@/utils/posts";
 function processContent(content: string, imageList: string[] | null): React.ReactNode[] {
   const parts: React.ReactNode[] = [];
 
-  // Log original content
-  console.log("Original content:", content);
-
   // First replace custom tags with HTML tags
   let processedContent = content;
   processedContent = processedContent.replace(/\[div\]/g, "");
@@ -18,9 +15,6 @@ function processContent(content: string, imageList: string[] | null): React.Reac
   processedContent = processedContent.replace(/\[i\](.*?)\[\/i\]/g, "<i>$1</i>");
   processedContent = processedContent.replace(/\[u\](.*?)\[\/u\]/g, "<u>$1</u>");
   processedContent = processedContent.replace(/\[br\]/g, "<br>");
-
-  // Log processed content
-  console.log("Processed content:", processedContent);
 
   // Log custom tags found
   const boldTags = (content.match(/\[b\](.*?)\[\/b\]/g) || []).length;

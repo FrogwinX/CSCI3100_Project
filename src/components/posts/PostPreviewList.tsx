@@ -6,6 +6,7 @@ import { Post } from "@/utils/posts";
 import { getPosts, getSearchPosts } from "@/utils/posts";
 import { useTagContext } from "@/hooks/useTags";
 import LoadingPostPreview from "@/components/posts/LoadingPostPreview";
+// import { Tag } from "@/utils/posts";
 
 export default function PostList({
   filter,
@@ -23,6 +24,7 @@ export default function PostList({
   const [hasMore, setHasMore] = useState(true);
   const observerTarget = useRef<HTMLDivElement>(null);
   const [excludedPostIds, setExcludedPostIds] = useState<Set<number>>(new Set());
+  // const [lastTags, setLastTags] = useState<Tag[]>([]);
 
   // Synchronize local loading state with the global tag context loading state
   useEffect(() => {
@@ -50,6 +52,58 @@ export default function PostList({
     setPosts((prevPosts) => prevPosts.filter((post) => post.postId !== postId));
   }
 
+  const fetchInitialPosts = async () => {
+    console.log("Fetching initial posts...");
+    setIsLoading(true);
+    try {
+      let initialPosts;
+      //switch between getPosts and getSearchPosts based on keyword
+      if (!keyword) {
+        switch (filter) {
+          case "created":
+            initialPosts = await getPosts({ filter, authorUserId, count: 10 });
+            break;
+          default:
+            initialPosts = await getPosts({ filter, count: 10 });
+            break;
+        }
+      } else {
+        initialPosts = await getSearchPosts({ keyword });
+      }
+      // Scroll to the top of the page smoothly
+      window.scrollTo({ top: 0, behavior: "smooth" });
+
+      // No posts are returned from the API
+      if (!initialPosts || initialPosts.length === 0) {
+        setHasMore(false);
+        return;
+      }
+
+      const filteredPosts = filterPostsByTags(initialPosts);
+      setCurrentPostsFetched(filteredPosts);
+      // if (tags !== lastTags) {
+      //   setLastTags(tags); // Update lastTags to the current tags
+      // }
+
+      // Update excludedPostIds with the initial posts
+      const newExcludedIds = new Set<number>();
+      initialPosts.forEach((post) => newExcludedIds.add(Number(post.postId)));
+      setExcludedPostIds(newExcludedIds);
+
+      setPosts(filteredPosts);
+      setHasMore(initialPosts.length > 0);
+
+      // console.log("Initial Posts:", initialPosts);
+      // console.log("Filtered Posts:", filteredPosts);
+      // console.log("Excluded Post IDs:", Array.from(newExcludedIds));
+      // console.log("Selected Tags:", tags);
+    } catch (err) {
+      console.error("Failed to load posts:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     setIsLoading(true);
     // Reset states when tags change
@@ -57,62 +111,30 @@ export default function PostList({
     setExcludedPostIds(new Set());
     setHasMore(true);
 
-    const fetchInitialPosts = async () => {
-      try {
-        let initialPosts;
-        //switch between getPosts and getSearchPosts based on keyword
-        if (!keyword) {
-          switch (filter) {
-            case "created":
-              initialPosts = await getPosts({ filter, authorUserId });
-              break;
-            default:
-              initialPosts = await getPosts({ filter });
-              break;
-          }
-        } else {
-          initialPosts = await getSearchPosts({ keyword });
-        }
-        // Scroll to the top of the page smoothly
-        window.scrollTo({ top: 0, behavior: "smooth" });
-
-        // No posts are returned from the API
-        if (!initialPosts || initialPosts.length === 0) {
-          setHasMore(false);
-          return;
-        }
-
-        const filteredPosts = filterPostsByTags(initialPosts);
-        setCurrentPostsFetched(filteredPosts);
-
-        // Update excludedPostIds with the initial posts
-        const newExcludedIds = new Set<number>();
-        initialPosts.forEach((post) => newExcludedIds.add(Number(post.postId)));
-        setExcludedPostIds(newExcludedIds);
-
-        setPosts(filteredPosts);
-        setHasMore(initialPosts.length > 0);
-
-        console.log("Initial Posts:", initialPosts);
-        console.log("Filtered Posts:", filteredPosts);
-        console.log("Excluded Post IDs:", Array.from(newExcludedIds));
-        console.log("Selected Tags:", tags);
-      } catch (err) {
-        console.error("Failed to load posts:", err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchInitialPosts();
-  }, [filter, tags, keyword]); // Refetch when tags or filter or keyword change
+
+    // console.log("Trigger fetchInitialPosts on filter/tags/keyword change");
+    // console.log("Selected tags:", tags);
+    // console.log("Keyword:", keyword);
+  }, [tags, keyword]); // Refetch when tags or filter or keyword change
 
   // Effect to handle auto-loading more posts if filtered results are empty
   useEffect(() => {
     // If no posts after filtering, but there might be more, try loading more
+
+    // console.log("Checking if more posts need to be loaded...");
+    // console.log("number of Current posts fetched:", currentPostsFetched.length);
+    // console.log("Posts after after filter in this fetch:", posts);
+    // console.log("Has more:", hasMore);
+
     if (!isLoading && (posts.length === 0 || currentPostsFetched.length === 0) && hasMore) {
+      console.log("No posts after filtering, loading more...");
       loadMorePosts();
     }
+    else {
+      console.log("Posts available or no more to load, not loading more.");
+    }
+
   }, [posts, hasMore, currentPostsFetched]);
 
   // Infinite scrolling setup
@@ -120,6 +142,7 @@ export default function PostList({
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && hasMore && !isLoading) {
+          console.log("Post bottom reached, loading more posts...");
           loadMorePosts();
         }
       },
@@ -195,8 +218,21 @@ export default function PostList({
       console.log("excluded:", excludedPostIds)
 
       setCurrentPostsFetched(filteredPosts);
+      // if (tags !== lastTags) {
+      //   setLastTags(tags); // Update lastTags to the current tags
+      // }
+      setPosts((prevPosts) => {
+        // Get existing post IDs for deduplication
+        const existingPostIds = new Set(prevPosts.map(post => post.postId));
 
-      setPosts((prevPosts) => [...prevPosts, ...filteredPosts]);
+        // Filter out posts that already exist in the current state
+        const uniqueNewPosts = filteredPosts.filter(post => !existingPostIds.has(post.postId));
+
+        console.log(`Found ${filteredPosts.length - uniqueNewPosts.length} duplicate posts that were discarded`);
+
+        // Only append posts that don't already exist
+        return [...prevPosts, ...uniqueNewPosts];
+      });
 
       // If got posts but none passed the filter
       if (filteredPosts.length === 0 && newPosts.length > 0) {
